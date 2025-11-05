@@ -1,4 +1,8 @@
-.PHONY: setup run test clean help db-up db-down db-logs db-shell
+.PHONY: setup run test clean help db-up db-down db-logs db-shell build
+
+build:
+	@echo "Building the project..."
+	@cargo build
 
 help:
 	@echo "Available commands:"
@@ -12,7 +16,7 @@ help:
 	@echo "  db-shell - Connect to the database shell"
 	@echo "  help     - Show this help message"
 
-setup:
+setup: build
 	@echo "Setting up the project..."
 	@echo "Starting PostgreSQL database..."
 	@docker-compose up -d
