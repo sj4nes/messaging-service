@@ -1,0 +1,30 @@
+openapi: 3.0.3
+info:
+  title: Messaging Service — Health API
+  version: 0.1.0
+servers:
+  - url: http://localhost:{port}
+    variables:
+      port:
+        default: '8080'
+paths:
+  /healthz:
+    get:
+      summary: Liveness probe
+      operationId: getHealth
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [ok]
+                  timestamp:
+                    type: string
+                    format: date-time
+                  version:
+                    type: string
