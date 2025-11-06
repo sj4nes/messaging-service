@@ -14,7 +14,8 @@ get_repo_root() {
         git rev-parse --show-toplevel
     else
         # Fall back to script location for non-git repos
-        local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+        local script_dir
+        script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
         (cd "$script_dir/../../.." && pwd)
     fi
 }
@@ -34,7 +35,8 @@ get_current_branch() {
     fi
 
     # For non-git repos, try to find the latest feature directory
-    local repo_root=$(get_repo_root)
+    local repo_root
+    repo_root=$(get_repo_root)
     local specs_dir="$repo_root/specs"
 
     if [[ -d "$specs_dir" ]]; then
@@ -43,7 +45,8 @@ get_current_branch() {
 
         for dir in "$specs_dir"/*; do
             if [[ -d "$dir" ]]; then
-                local dirname=$(basename "$dir")
+                local dirname
+                dirname=$(basename "$dir")
                 if [[ "$dirname" =~ ^([0-9]{3})- ]]; then
                     local number=${BASH_REMATCH[1]}
                     number=$((10#$number))
@@ -71,7 +74,8 @@ has_git() {
 
 # Check if we have jujutsu available (by repo marker)
 has_jj() {
-    local repo_root=$(get_repo_root)
+    local repo_root
+    repo_root=$(get_repo_root)
     [[ -d "$repo_root/.jj" ]]
 }
 
@@ -88,8 +92,10 @@ current_vcs() {
 # Outputs one name per line
 list_feature_markers() {
     local short_name="$1"
-    local vcs=$(current_vcs)
-    local repo_root=$(get_repo_root)
+    local vcs
+    vcs=$(current_vcs)
+    local repo_root
+    repo_root=$(get_repo_root)
 
     if [[ -z "$short_name" ]]; then
         return 0
@@ -112,7 +118,8 @@ list_feature_markers() {
 # Create a feature marker (bookmark in JJ, branch in Git)
 create_feature_marker() {
     local name="$1"
-    local vcs=$(current_vcs)
+    local vcs
+    vcs=$(current_vcs)
     if [[ -z "$name" ]]; then
         echo "[specify] ERROR: create_feature_marker requires a name" >&2
         return 1
@@ -192,8 +199,10 @@ find_feature_dir_by_prefix() {
 }
 
 get_feature_paths() {
-    local repo_root=$(get_repo_root)
-    local current_branch=$(get_current_branch)
+    local repo_root
+    repo_root=$(get_repo_root)
+    local current_branch
+    current_branch=$(get_current_branch)
     local has_git_repo="false"
 
     if has_git; then
@@ -201,7 +210,8 @@ get_feature_paths() {
     fi
 
     # Use prefix-based lookup to support multiple branches per spec
-    local feature_dir=$(find_feature_dir_by_prefix "$repo_root" "$current_branch")
+    local feature_dir
+    feature_dir=$(find_feature_dir_by_prefix "$repo_root" "$current_branch")
 
     cat <<EOF
 REPO_ROOT='$repo_root'

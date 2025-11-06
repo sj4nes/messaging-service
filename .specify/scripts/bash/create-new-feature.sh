@@ -88,15 +88,17 @@ check_existing_branches() {
     git fetch --all --prune 2>/dev/null || true
     
     # Find all branches matching the pattern using git ls-remote (more reliable)
-    local remote_branches=$(git ls-remote --heads origin 2>/dev/null | grep -E "refs/heads/[0-9]+-${short_name}$" | sed 's/.*\/\([0-9]*\)-.*/\1/' | sort -n)
+        local remote_branches
+        remote_branches=$(git ls-remote --heads origin 2>/dev/null | grep -E "refs/heads/[0-9]+-${short_name}$" | sed 's#.*/\([0-9]*\)-.*#\1#' | sort -n)
     
     # Also check local branches
-    local local_branches=$(git branch 2>/dev/null | grep -E "^[* ]*[0-9]+-${short_name}$" | sed 's/^[* ]*//' | sed 's/-.*//' | sort -n)
+        local local_branches
+        local_branches=$(git branch 2>/dev/null | grep -E "^[* ]*[0-9]+-${short_name}$" | sed 's/^[* ]*//' | sed 's/-.*//' | sort -n)
     
     # Check specs directory as well
     local spec_dirs=""
     if [ -d "$SPECS_DIR" ]; then
-        spec_dirs=$(find "$SPECS_DIR" -maxdepth 1 -type d -name "[0-9]*-${short_name}" 2>/dev/null | xargs -n1 basename 2>/dev/null | sed 's/-.*//' | sort -n)
+           spec_dirs=$(find "$SPECS_DIR" -maxdepth 1 -type d -name "[0-9]*-${short_name}" -print0 2>/dev/null | xargs -0 -n1 basename 2>/dev/null | sed 's/-.*//' | sort -n)
     fi
     
     # Combine all sources and get the highest number
@@ -148,7 +150,8 @@ generate_branch_name() {
     local stop_words="^(i|a|an|the|to|for|of|in|on|at|by|with|from|is|are|was|were|be|been|being|have|has|had|do|does|did|will|would|should|could|can|may|might|must|shall|this|that|these|those|my|your|our|their|want|need|add|get|set)$"
     
     # Convert to lowercase and split into words
-    local clean_name=$(echo "$description" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/ /g')
+    local clean_name
+    clean_name=$(echo "$description" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/ /g')
     
     # Filter words: remove stop words and words shorter than 3 chars (unless they're uppercase acronyms in original)
     local meaningful_words=()
@@ -200,25 +203,32 @@ get_next_number_for_short_name() {
     local short_name="$1"
     local max_num=0
 
-    # JJ bookmarks
-    if [ "$HAS_JJ" = true ]; then
-        if jj bookmark list -T '{name}\n' >/dev/null 2>&1; then
-            jj bookmark list -T '{name}\n' 2>/dev/null | grep -E "^[0-9]+-${short_name}$" | sed 's/-.*//' | sort -n | tail -1 | { read -r n || true; echo "${n:-0}"; }
-        else
-            jj bookmark list 2>/dev/null | awk '{print $1}' | grep -E "^[0-9]+-${short_name}$" | sed 's/-.*//' | sort -n | tail -1 | { read -r n || true; echo "${n:-0}"; }
-        fi | { read -r n || true; [ -n "$n" ] && max_num=$n; }
-    fi
+        # JJ bookmarks
+        if [ "$HAS_JJ" = true ]; then
+            local n
+            if jj bookmark list -T '{name}\n' >/dev/null 2>&1; then
+                n=$(jj bookmark list -T '{name}\n' 2>/dev/null | grep -E "^[0-9]+-${short_name}$" | sed 's/-.*//' | sort -n | tail -1)
+            else
+                n=$(jj bookmark list 2>/dev/null | awk '{print $1}' | grep -E "^[0-9]+-${short_name}$" | sed 's/-.*//' | sort -n | tail -1)
+            fi
+            if [ -n "$n" ] && [ "$n" -gt "$max_num" ]; then max_num=$n; fi
+        fi
 
-    # Git branches (remote + local)
-    if [ "$HAS_GIT" = true ]; then
-        git ls-remote --heads origin 2>/dev/null | grep -E "refs/heads/[0-9]+-${short_name}$" | sed 's#.*/##' | sed 's/-.*//' | sort -n | tail -1 | { read -r n || true; [ -n "$n" ] && [ "$n" -gt "$max_num" ] && max_num=$n; }
-        git branch 2>/dev/null | sed 's/^[* ]*//' | grep -E "^[0-9]+-${short_name}$" | sed 's/-.*//' | sort -n | tail -1 | { read -r n || true; [ -n "$n" ] && [ "$n" -gt "$max_num" ] && max_num=$n; }
-    fi
+        # Git branches (remote + local)
+        if [ "$HAS_GIT" = true ]; then
+            local n
+            n=$(git ls-remote --heads origin 2>/dev/null | grep -E "refs/heads/[0-9]+-${short_name}$" | sed 's#.*/##' | sed 's/-.*//' | sort -n | tail -1)
+            if [ -n "$n" ] && [ "$n" -gt "$max_num" ]; then max_num=$n; fi
+            n=$(git branch 2>/dev/null | sed 's/^[* ]*//' | grep -E "^[0-9]+-${short_name}$" | sed 's/-.*//' | sort -n | tail -1)
+            if [ -n "$n" ] && [ "$n" -gt "$max_num" ]; then max_num=$n; fi
+        fi
 
-    # specs directories
-    if [ -d "$SPECS_DIR" ]; then
-        find "$SPECS_DIR" -maxdepth 1 -type d -name "[0-9][0-9][0-9]-${short_name}" -exec basename {} \; | sed 's/-.*//' | sort -n | tail -1 | { read -r n || true; [ -n "$n" ] && [ "$n" -gt "$max_num" ] && max_num=$n; }
-    fi
+        # specs directories
+        if [ -d "$SPECS_DIR" ]; then
+            local n
+            n=$(find "$SPECS_DIR" -maxdepth 1 -type d -name "[0-9][0-9][0-9]-${short_name}" -exec basename {} \; | sed 's/-.*//' | sort -n | tail -1)
+            if [ -n "$n" ] && [ "$n" -gt "$max_num" ]; then max_num=$n; fi
+        fi
 
     echo $((max_num + 1))
 }
@@ -242,7 +252,7 @@ if [ ${#BRANCH_NAME} -gt $MAX_BRANCH_LENGTH ]; then
     # Truncate suffix at word boundary if possible
     TRUNCATED_SUFFIX=$(echo "$BRANCH_SUFFIX" | cut -c1-$MAX_SUFFIX_LENGTH)
     # Remove trailing hyphen if truncation created one
-    TRUNCATED_SUFFIX=$(echo "$TRUNCATED_SUFFIX" | sed 's/-$//')
+    TRUNCATED_SUFFIX=${TRUNCATED_SUFFIX%-}
     
     ORIGINAL_BRANCH_NAME="$BRANCH_NAME"
     BRANCH_NAME="${FEATURE_NUM}-${TRUNCATED_SUFFIX}"
