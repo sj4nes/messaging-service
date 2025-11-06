@@ -17,7 +17,7 @@ As a platform engineer, I need a canonical, human-readable catalog of messaging 
 
 **Acceptance Scenarios**:
 
-1. **Given** the list of core aggregates (Customer, Contact, Provider, Endpoint), **When** reviewing the catalog, **Then** each lifecycle action is represented by an event type with a clear description and example payload.
+1. **Given** the list of core aggregates (Customer, Contact, Provider, Channel), **When** reviewing the catalog, **Then** each lifecycle action is represented by an event type with a clear description and example payload.
 2. **Given** two different teams, **When** they describe a "customer disabled" scenario, **Then** both reference the same event name and required fields.
 
 ---
@@ -50,7 +50,8 @@ As a product stakeholder, I need core lifecycle events for Customers, Contacts, 
 1. Customer: CustomerCreated, CustomerUpdated, CustomerEnabled, CustomerDisabled.
 2. Contact: ContactCreated, ContactUpdated, ContactDeleted.
 3. Provider: ProviderConfigured, ProviderUpdated, ProviderDisabled, ProviderEnabled.
-4. Endpoint mapping: EndpointMapped, EndpointUnmapped, EndpointUpdated.
+4. Channel: ChannelMapped, ChannelUnmapped, ChannelUpdated.
+5. Conversation: ConversationCreated, ConversationUpdated, ConversationClosed, ConversationReopened, ConversationParticipantAdded, ConversationParticipantRemoved, ConversationArchived.
 
 ---
 
@@ -65,7 +66,7 @@ As a product stakeholder, I need core lifecycle events for Customers, Contacts, 
 
 ### Functional Requirements
 
-- **FR-001 (Catalog)**: Define a canonical list of event types covering lifecycle transitions for Customers, Contacts, Providers, and Endpoints, each with: name, purpose, required fields, and example payload.
+- **FR-001 (Catalog)**: Define a canonical list of event types covering lifecycle transitions for Customers, Contacts, Providers, Channels, and Conversations, each with: name, purpose, required fields, and example payload.
 - **FR-002 (Envelope)**: All events MUST include an envelope with: event_name, event_id, aggregate_type, aggregate_id, occurred_at (UTC), actor (system/user), version (int), and optional idempotency_key.
 - **FR-003 (Semantics)**: Each event MUST state invariants (what changed, what did not), preconditions, and postconditions in business terms.
 - **FR-004 (Validation)**: Provide a validation checklist (technology-agnostic) to confirm envelope and required fields for any event instance.
@@ -78,8 +79,20 @@ As a product stakeholder, I need core lifecycle events for Customers, Contacts, 
 - **Customer**: Organization using the platform. Key attributes in events: customer_id, status, name, changed_fields, reason.
 - **Contact**: End-user or prospect. Event attributes: contact_id, customer_id, status, changed_fields.
 - **Provider**: Messaging provider configuration for a customer. Event attributes: provider_id, customer_id, kind, status, changed_fields.
-- **Endpoint Mapping**: Mapping from address/number/email to provider and customer. Event attributes: mapping_id, customer_id, kind, address, normalized, action.
+- **Channel**: Customer-owned channel used to send/receive messages (e.g., phone number, email). Event attributes: channel_id, customer_id, kind, address, normalized, provider_id (servicing provider), action.
 - **Event Envelope**: event_name, event_id, aggregate_type, aggregate_id, occurred_at (UTC), actor, version, idempotency_key.
+ - **Conversation**: Thread grouping related messages. Event attributes: conversation_id, customer_id, status (open/closed/archived), topic, changed_fields, participant_ids (for add/remove events). Identity note: the tuple (customer_id, channel_id, contact_id) identifies a conversation for routing and grouping in this spec.
+
+### Non-Functional Quality Attributes
+
+(No runtime guarantees in this spec; definitions are transport‑agnostic. Privacy and redaction covered under FR‑005.)
+ - **Conversation**: Thread grouping related messages. Event attributes: conversation_id, customer_id, status (open/closed/archived), topic, changed_fields, participant_ids (for add/remove events).
+
+## Clarifications
+
+### Session 2025-11-05
+
+- Q: Should conversation lifecycle and participant-change events be included in the domain event catalog? → A: Yes — add ConversationCreated, ConversationUpdated, ConversationClosed, ConversationReopened, ConversationParticipantAdded, ConversationParticipantRemoved, ConversationArchived.
 
 ## Success Criteria *(mandatory)*
 
@@ -89,3 +102,10 @@ As a product stakeholder, I need core lifecycle events for Customers, Contacts, 
 - **SC-002**: 100% of event definitions include envelope, required fields, and example payloads.
 - **SC-003**: Validation checklist applied to 10 sampled events yields 0 critical failures (envelope/required fields missing).
 - **SC-004**: Stakeholder sign-off achieved (≥ 2 cross-functional reps) with no open clarifications in the spec.
+
+## Clarifications
+
+### Session 2025-11-05
+
+- Q: Should conversation lifecycle and participant-change events be included in the domain event catalog? → A: Yes — add ConversationCreated, ConversationUpdated, ConversationClosed, ConversationReopened, ConversationParticipantAdded, ConversationParticipantRemoved, ConversationArchived.
+- Q: Rename "endpoint" events to "channel" events and define channel semantics? → A: Yes — replace EndpointMapped/EndpointUnmapped/EndpointUpdated with ChannelMapped/ChannelUnmapped/ChannelUpdated; a Channel is a customer-owned address (phone/email) serviced by a Provider; conversation identity uses (customer_id, channel_id, contact_id); conversations can be open, resumed, or closed as messages occur.
