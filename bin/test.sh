@@ -107,4 +107,114 @@ curl -X GET "$BASE_URL/api/conversations/1/messages" \
   -H "$CONTENT_TYPE" \
   -w "\nStatus: %{http_code}\n\n"
 
+# Test 9-12: Idempotency checks (second identical request with same Idempotency-Key should be accepted without duplicate processing)
+echo "9. Testing idempotent SMS (first call)..."
+curl -X POST "$BASE_URL/api/messages/sms" \
+  -H "$CONTENT_TYPE" \
+  -H "Idempotency-Key: idem-sms-001" \
+  -d '{
+    "from": "+12016661234",
+    "to": "+18045551234",
+    "type": "sms",
+    "body": "Idempotent test SMS.",
+    "attachments": null,
+    "timestamp": "2024-11-01T14:05:00Z"
+  }' \
+  -w "\nStatus: %{http_code}\n\n"
+
+echo "10. Testing idempotent SMS (second call, same key)..."
+curl -X POST "$BASE_URL/api/messages/sms" \
+  -H "$CONTENT_TYPE" \
+  -H "Idempotency-Key: idem-sms-001" \
+  -d '{
+    "from": "+12016661234",
+    "to": "+18045551234",
+    "type": "sms",
+    "body": "Idempotent test SMS.",
+    "attachments": null,
+    "timestamp": "2024-11-01T14:05:00Z"
+  }' \
+  -w "\nStatus: %{http_code}\n\n"
+
+echo "11. Testing idempotent Email (first and second calls)..."
+curl -X POST "$BASE_URL/api/messages/email" \
+  -H "$CONTENT_TYPE" \
+  -H "Idempotency-Key: idem-email-001" \
+  -d '{
+    "from": "user@usehatchapp.com",
+    "to": "contact@gmail.com",
+    "body": "Idempotent email message.",
+    "attachments": ["https://example.com/doc.pdf"],
+    "timestamp": "2024-11-01T14:06:00Z"
+  }' \
+  -w "\nStatus: %{http_code}\n\n"
+
+curl -X POST "$BASE_URL/api/messages/email" \
+  -H "$CONTENT_TYPE" \
+  -H "Idempotency-Key: idem-email-001" \
+  -d '{
+    "from": "user@usehatchapp.com",
+    "to": "contact@gmail.com",
+    "body": "Idempotent email message.",
+    "attachments": ["https://example.com/doc.pdf"],
+    "timestamp": "2024-11-01T14:06:00Z"
+  }' \
+  -w "\nStatus: %{http_code}\n\n"
+
+echo "12. Testing idempotent Webhook SMS (first and second calls)..."
+curl -X POST "$BASE_URL/api/webhooks/sms" \
+  -H "$CONTENT_TYPE" \
+  -H "Idempotency-Key: idem-wh-sms-001" \
+  -d '{
+    "from": "+18045551234",
+    "to": "+12016661234",
+    "type": "sms",
+    "messaging_provider_id": "message-idem-1",
+    "body": "Incoming idempotent SMS",
+    "attachments": null,
+    "timestamp": "2024-11-01T14:07:00Z"
+  }' \
+  -w "\nStatus: %{http_code}\n\n"
+
+curl -X POST "$BASE_URL/api/webhooks/sms" \
+  -H "$CONTENT_TYPE" \
+  -H "Idempotency-Key: idem-wh-sms-001" \
+  -d '{
+    "from": "+18045551234",
+    "to": "+12016661234",
+    "type": "sms",
+    "messaging_provider_id": "message-idem-1",
+    "body": "Incoming idempotent SMS",
+    "attachments": null,
+    "timestamp": "2024-11-01T14:07:00Z"
+  }' \
+  -w "\nStatus: %{http_code}\n\n"
+
+echo "13. Testing idempotent Webhook Email (first and second calls)..."
+curl -X POST "$BASE_URL/api/webhooks/email" \
+  -H "$CONTENT_TYPE" \
+  -H "Idempotency-Key: idem-wh-email-001" \
+  -d '{
+    "from": "contact@gmail.com",
+    "to": "user@usehatchapp.com",
+    "xillio_id": "message-idem-2",
+    "body": "<html><body>Incoming idempotent email</body></html>",
+    "attachments": ["https://example.com/received-document.pdf"],
+    "timestamp": "2024-11-01T14:08:00Z"
+  }' \
+  -w "\nStatus: %{http_code}\n\n"
+
+curl -X POST "$BASE_URL/api/webhooks/email" \
+  -H "$CONTENT_TYPE" \
+  -H "Idempotency-Key: idem-wh-email-001" \
+  -d '{
+    "from": "contact@gmail.com",
+    "to": "user@usehatchapp.com",
+    "xillio_id": "message-idem-2",
+    "body": "<html><body>Incoming idempotent email</body></html>",
+    "attachments": ["https://example.com/received-document.pdf"],
+    "timestamp": "2024-11-01T14:08:00Z"
+  }' \
+  -w "\nStatus: %{http_code}\n\n"
+
 echo "=== Test script completed ===" 
