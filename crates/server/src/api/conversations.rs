@@ -5,7 +5,7 @@ use axum::{
 };
 use serde_json::json;
 
-pub async fn list_conversations(
+pub(crate) async fn list_conversations(
     State(_state): State<crate::AppState>,
 ) -> (StatusCode, Json<serde_json::Value>) {
     // Stubbed list with paging metadata
@@ -18,7 +18,7 @@ pub async fn list_conversations(
     (StatusCode::OK, Json(payload))
 }
 
-pub async fn list_messages(
+pub(crate) async fn list_messages(
     State(_state): State<crate::AppState>,
     Path(_id): Path<String>,
 ) -> (StatusCode, Json<serde_json::Value>) {

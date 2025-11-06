@@ -4,7 +4,7 @@ use serde_json::json;
 use crate::queue::inbound_events::InboundEvent;
 use crate::types::{WebhookEmailRequest, WebhookSmsRequest};
 
-pub async fn post_sms(
+pub(crate) async fn post_sms(
     State(state): State<crate::AppState>,
     Json(body): Json<WebhookSmsRequest>,
 ) -> (StatusCode, Json<serde_json::Value>) {
@@ -37,7 +37,7 @@ pub async fn post_sms(
     (StatusCode::ACCEPTED, Json(json!({ "status": "accepted" })))
 }
 
-pub async fn post_email(
+pub(crate) async fn post_email(
     State(state): State<crate::AppState>,
     Json(body): Json<WebhookEmailRequest>,
 ) -> (StatusCode, Json<serde_json::Value>) {

@@ -52,7 +52,7 @@ pub(crate) struct AppState {
     queue: InboundQueue,
 }
 
-pub fn build_router(health_path: &str, state: AppState) -> Router {
+fn build_router(health_path: &str, state: AppState) -> Router {
     let path = health_path.to_string();
     Router::new()
         .route(&path, get(health_handler))
