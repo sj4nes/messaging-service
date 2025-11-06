@@ -21,6 +21,7 @@ pub mod middleware {
     pub mod content_type;
     pub mod idempotency;
     pub mod limits;
+    pub mod logging;
     pub mod rate_limit;
 }
 pub mod queue {
@@ -96,6 +97,8 @@ pub fn build_router(health_path: &str, state: AppState) -> Router {
         .layer(crate::middleware::limits::body_limit(
             state.api.max_body_bytes,
         ))
+        // Outermost: request logging
+        .layer(axmw::from_fn(crate::middleware::logging::log_requests))
         .with_state(state)
 }
 
