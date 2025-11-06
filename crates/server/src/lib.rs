@@ -253,18 +253,15 @@ async fn circuit_breaker_layer(
     req: Request<Body>,
     next: Next,
 ) -> Response {
-    match state.breaker.before_request() {
-        BreakerState::Open => {
-            let (status, body) = crate::errors::service_unavailable("Temporarily unavailable");
-            let mut resp = (status, body).into_response();
-            let secs = state.breaker.recovery_timeout.as_secs().to_string();
-            if let Ok(v) = axum::http::HeaderValue::from_str(&secs) {
-                resp.headers_mut()
-                    .insert(axum::http::header::RETRY_AFTER, v);
-            }
-            return resp;
+    if state.breaker.before_request() == BreakerState::Open {
+        let (status, body) = crate::errors::service_unavailable("Temporarily unavailable");
+        let mut resp = (status, body).into_response();
+        let secs = state.breaker.recovery_timeout.as_secs().to_string();
+        if let Ok(v) = axum::http::HeaderValue::from_str(&secs) {
+            resp.headers_mut()
+                .insert(axum::http::header::RETRY_AFTER, v);
         }
-        _ => {}
+        return resp;
     }
     let response = next.run(req).await;
     // Update breaker based on response status
