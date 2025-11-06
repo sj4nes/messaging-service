@@ -23,19 +23,20 @@ This checklist is generated from the spec and plan. Complete tasks top-to-bottom
 
 ## Phase 3 — User Story 1 (P1): Start service and verify health
 
-- [ ] T013 [US1] Wire server main to load config and init logging in crates/server/src/main.rs
-- [ ] T014 [US1] Add Axum/Tokio server binding on configured PORT in crates/server/src/main.rs
-- [ ] T015 [US1] Implement GET health route at HEALTH_PATH returning {"status":"ok"} in crates/server/src/main.rs
-- [ ] T016 [P] [US1] Add integration test that starts server on ephemeral port and asserts 200/JSON payload in crates/server/tests/health.rs
-- [ ] T017 [P] [US1] Emit startup and request logs; assert presence in test or via capturing logs in crates/server/tests/health.rs
-- [ ] T018 [US1] Update specs/002-setup-12fa-server/quickstart.md with run instructions and curl example (actual ports/paths)
+- [X] T013 [US1] Wire server main to load config and init logging in crates/server/src/main.rs
+- [X] T014 [US1] Add Axum/Tokio server binding on configured PORT in crates/server/src/main.rs
+- [X] T015 [US1] Implement GET health route at HEALTH_PATH returning {"status":"ok"} in crates/server/src/main.rs
+- [X] T016 [P] [US1] Add integration test that starts server on ephemeral port and asserts 200/JSON payload in crates/server/tests/health.rs
+- [X] T017 [P] [US1] Emit startup and request logs; assert presence in test or via capturing logs in crates/server/tests/health.rs
+- [X] T018 [US1] Update specs/002-setup-12fa-server/quickstart.md with run instructions and curl example (actual ports/paths)
+
 
 ## Phase 4 — User Story 2 (P2): Configuration precedence and defaults
 
-- [ ] T019 [US2] Implement precedence (env > .env > defaults) in crates/core/src/config.rs with explicit ordering
-- [ ] T020 [P] [US2] Add tests for precedence conflicts (LOG_LEVEL, PORT) in crates/core/src/config.rs
-- [ ] T021 [P] [US2] Add tests for defaults when unset in crates/core/src/config.rs
-- [ ] T022 [US2] Log resolved config and source precedence at startup in crates/server/src/main.rs
+- [X] T019 [US2] Implement precedence (env > .env > defaults) in crates/core/src/config.rs with explicit ordering
+- [X] T020 [P] [US2] Add tests for precedence conflicts (LOG_LEVEL, PORT) in crates/core/src/config.rs
+- [X] T021 [P] [US2] Add tests for defaults when unset in crates/core/src/config.rs
+- [X] T022 [US2] Log resolved config and source precedence at startup in crates/server/src/main.rs
 
 ## Phase 5 — User Story 3 (P3): Graceful shutdown and error handling
 

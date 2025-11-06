@@ -16,12 +16,12 @@ This feature bootstraps a minimal service with configuration via environment/.en
   - `LOG_LEVEL` (default: info)
 - .env file (optional): values are loaded but overridden by environment variables.
 
-## Try it (once code is scaffolded)
+## Try it
 
 ```bash
 # From repository root
 # Run server (will be crates/server in the workspace)
-cargo run -p server
+cargo run -p messaging-server
 
 # Health check
 curl -i http://localhost:8080/healthz

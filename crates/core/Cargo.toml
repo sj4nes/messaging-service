@@ -13,3 +13,4 @@ tracing-subscriber = { version = "0.3.20", features = ["fmt", "env-filter"] }
 
 [dev-dependencies]
 rstest = "0.26.1"
+tempfile = "3.12.0"
