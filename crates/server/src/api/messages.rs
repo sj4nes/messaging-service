@@ -6,13 +6,19 @@ use axum::{
 use serde_json::json;
 
 use crate::queue::inbound_events::InboundEvent;
-use crate::types::{EmailRequest, SmsRequest};
+use crate::types::{EmailRequest, SmsRequest, Validate};
 
 pub(crate) async fn post_sms(
     State(state): State<crate::AppState>,
     headers: HeaderMap,
     Json(body): Json<SmsRequest>,
 ) -> (StatusCode, Json<serde_json::Value>) {
+    if let Err(msg) = body.validate(&state.api) {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(json!({ "code": "bad_request", "message": msg })),
+        );
+    }
     // Idempotency: if key exists and seen already, return 202 without re-enqueueing
     if let Some(key) = headers.get("idempotency-key").and_then(|v| v.to_str().ok()) {
         if !state.idempotency.seen_or_insert(key) {
@@ -53,6 +59,12 @@ pub(crate) async fn post_email(
     headers: HeaderMap,
     Json(body): Json<EmailRequest>,
 ) -> (StatusCode, Json<serde_json::Value>) {
+    if let Err(msg) = body.validate(&state.api) {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(json!({ "code": "bad_request", "message": msg })),
+        );
+    }
     if let Some(key) = headers.get("idempotency-key").and_then(|v| v.to_str().ok()) {
         if !state.idempotency.seen_or_insert(key) {
             return (StatusCode::ACCEPTED, Json(json!({ "status": "accepted" })));

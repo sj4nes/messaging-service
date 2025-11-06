@@ -1,5 +1,11 @@
 use serde::{Deserialize, Serialize};
 
+use crate::config::ApiConfig;
+
+pub trait Validate {
+    fn validate(&self, api: &ApiConfig) -> Result<(), String>;
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SmsEmailBase {
     pub from: String,
@@ -19,6 +25,35 @@ pub struct SmsRequest {
     pub timestamp: String,
 }
 
+impl Validate for SmsRequest {
+    fn validate(&self, api: &ApiConfig) -> Result<(), String> {
+        if self.from.trim().is_empty() || self.to.trim().is_empty() {
+            return Err("'from' and 'to' are required".into());
+        }
+        if self.body.trim().is_empty() {
+            return Err("'body' is required".into());
+        }
+        let t = self.r#type.to_ascii_lowercase();
+        if t != "sms" && t != "mms" {
+            return Err("'type' must be 'sms' or 'mms'".into());
+        }
+        if let Some(atts) = &self.attachments {
+            if atts.len() > api.max_attachments {
+                return Err(format!(
+                    "too many attachments (max {})",
+                    api.max_attachments
+                ));
+            }
+            if t == "mms" && atts.is_empty() {
+                return Err("mms requires at least one attachment".into());
+            }
+        } else if t == "mms" {
+            return Err("mms requires at least one attachment".into());
+        }
+        Ok(())
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EmailRequest {
     pub from: String,
@@ -26,6 +61,26 @@ pub struct EmailRequest {
     pub body: String,                     // may contain HTML
     pub attachments: Option<Vec<String>>, // URLs
     pub timestamp: String,
+}
+
+impl Validate for EmailRequest {
+    fn validate(&self, api: &ApiConfig) -> Result<(), String> {
+        if self.from.trim().is_empty() || self.to.trim().is_empty() {
+            return Err("'from' and 'to' are required".into());
+        }
+        if self.body.trim().is_empty() {
+            return Err("'body' is required".into());
+        }
+        if let Some(atts) = &self.attachments {
+            if atts.len() > api.max_attachments {
+                return Err(format!(
+                    "too many attachments (max {})",
+                    api.max_attachments
+                ));
+            }
+        }
+        Ok(())
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

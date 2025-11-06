@@ -29,8 +29,8 @@ Plan: specs/005-api-ingest-endpoints/plan.md
 Goal: Accept validated POSTs to /api/messages/sms and /api/messages/email, enqueue, return 202.
 Independent Test: Use bin/test.sh POSTs; expect 202 and event id in response; verify enqueue.
 
-- [ ] T015 [P] [US1] Define SMS/MMS request schema validation in crates/server/src/types.rs
-- [ ] T016 [P] [US1] Define Email request schema validation in crates/server/src/types.rs
+- [X] T015 [P] [US1] Define SMS/MMS request schema validation in crates/server/src/types.rs
+- [X] T016 [P] [US1] Define Email request schema validation in crates/server/src/types.rs
 - [X] T017 [US1] Implement POST /api/messages/sms handler in crates/server/src/api/messages.rs
 - [X] T018 [US1] Implement POST /api/messages/email handler in crates/server/src/api/messages.rs
 - [X] T019 [US1] Integrate idempotency behavior in message handlers in crates/server/src/api/messages.rs
@@ -45,10 +45,10 @@ Independent Test: Use bin/test.sh webhooks; observe 429 under bursts and 503 dur
 
 - [X] T023 [US2] Implement POST /api/webhooks/sms handler in crates/server/src/api/webhooks.rs
 - [X] T024 [US2] Implement POST /api/webhooks/email handler in crates/server/src/api/webhooks.rs
-- [ ] T025 [US2] Apply per-IP and per-sender rate limits to webhook endpoints in crates/server/src/middleware/rate_limit.rs
-- [ ] T026 [US2] Integrate circuit breaker checks for webhook routes in crates/server/src/middleware/circuit_breaker.rs
-- [ ] T027 [US2] Enqueue inbound_events for webhook handlers in crates/server/src/queue/inbound_events.rs
-- [ ] T028 [US2] Update OpenAPI for webhook POSTs in specs/005-api-ingest-endpoints/contracts/openapi.yaml
+- [X] T025 [US2] Apply per-IP and per-sender rate limits to webhook endpoints in crates/server/src/middleware/rate_limit.rs
+- [X] T026 [US2] Integrate circuit breaker checks for webhook routes in crates/server/src/middleware/circuit_breaker.rs
+- [X] T027 [US2] Enqueue inbound_events for webhook handlers in crates/server/src/queue/inbound_events.rs
+- [X] T028 [US2] Update OpenAPI for webhook POSTs in specs/005-api-ingest-endpoints/contracts/openapi.yaml
 
 ## Phase 5 — User Story 3 (P2): Retrieve conversations
 

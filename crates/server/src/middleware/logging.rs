@@ -34,7 +34,7 @@ pub async fn log_requests(req: Request<Body>, next: Next) -> Response {
     let resp = next.run(req).await;
 
     let status = resp.status().as_u16();
-    let took_ms = start.elapsed().as_millis();
+    let took_us = start.elapsed().as_micros();
 
     tracing::info!(
         target = "server",
@@ -42,7 +42,7 @@ pub async fn log_requests(req: Request<Body>, next: Next) -> Response {
         %method,
         path = %path,
         status = status,
-        duration_ms = took_ms,
+        duration_us = took_us,
         client_ip = %ip,
         "handled request"
     );
