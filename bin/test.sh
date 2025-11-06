@@ -6,11 +6,24 @@
 # - Compatible with macOS bash 3.x (no associative arrays used)
 
 BASE_URL="${BASE_URL:-http://localhost:8080}"
-SHOW_BODY="${SHOW_BODY:-false}" # set SHOW_BODY=true to print response bodies
+# Default to showing response bodies; override with SHOW_BODY=false
+SHOW_BODY="${SHOW_BODY:-true}"
+
+# Resolve script directory for locating default tests file
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+TESTS_FILE_DEFAULT="$SCRIPT_DIR/../tests/http/tests.json"
+TESTS_FILE="${TESTS_FILE:-$TESTS_FILE_DEFAULT}"
 
 echo "=== Messaging Service Test Runner ==="
 echo "Base URL: $BASE_URL"
 echo
+
+# If modern tooling (jq) is available, prefer JSON-defined test cases for easier editing.
+USE_JSON_TESTS=false
+if command -v jq >/dev/null 2>&1 && [ -f "$TESTS_FILE" ]; then
+  USE_JSON_TESTS=true
+  echo "Using tests file: $TESTS_FILE"
+fi
 
 # Utility: join multiple -H flags from a single header string using '||' as separator
 #   Example: "Header1: v1||Header2: v2"
@@ -74,7 +87,17 @@ run_test() {
   fi
   echo "  Expect: $expect  Got: $code  => $pass"
   if [ "$SHOW_BODY" = "true" ]; then
-    echo "  Response body:" && sed 's/^/    /' "$tmp_body"
+    echo "  Response body:"
+    if command -v jq >/dev/null 2>&1; then
+      # Try to pretty print JSON responses; fall back to raw if not JSON
+      if jq . >/dev/null 2>&1 < "$tmp_body"; then
+        jq . < "$tmp_body" | sed 's/^/    /'
+      else
+        sed 's/^/    /' "$tmp_body"
+      fi
+    else
+      sed 's/^/    /' "$tmp_body"
+    fi
   fi
   echo
 
@@ -87,258 +110,90 @@ run_test() {
   fi
 }
 
-# Define test cases (parallel arrays)
-NAMES=(
-  "Send SMS"
-  "Send MMS"
-  "Send Email"
-  "Webhook SMS"
-  "Webhook MMS"
-  "Webhook Email"
-  "List conversations"
-  "List messages for conversation"
-  "Idempotent SMS (first)"
-  "Idempotent SMS (second)"
-  "Idempotent Email (first)"
-  "Idempotent Email (second)"
-  "Idempotent Webhook SMS (first)"
-  "Idempotent Webhook SMS (second)"
-  "Invalid SMS type"
-  "MMS without attachments"
-  "Email empty body"
-  "GET conversations unacceptable Accept"
-  "MMS with empty attachments array"
-)
-
-METHODS=(
-  POST # 1 Send SMS
-  POST # 2 Send MMS
-  POST # 3 Send Email
-  POST # 4 Webhook SMS
-  POST # 5 Webhook MMS
-  POST # 6 Webhook Email
-  GET  # 7 List conversations
-  GET  # 8 List messages for conversation
-  POST # 9 Idempotent SMS (first)
-  POST # 10 Idempotent SMS (second)
-  POST # 11 Idempotent Email (first)
-  POST # 12 Idempotent Email (second)
-  POST # 13 Idempotent Webhook SMS (first)
-  POST # 14 Idempotent Webhook SMS (second)
-  POST # 15 Invalid SMS type
-  POST # 16 MMS without attachments
-  POST # 17 Email empty body
-  GET  # 18 GET conversations unacceptable Accept
-  POST # 19 MMS with empty attachments array
-)
-
-PATHS=(
-  "/api/messages/sms"
-  "/api/messages/sms"
-  "/api/messages/email"
-  "/api/webhooks/sms"
-  "/api/webhooks/sms"
-  "/api/webhooks/email"
-  "/api/conversations"
-  "/api/conversations/1/messages"
-  "/api/messages/sms"
-  "/api/messages/sms"
-  "/api/messages/email"
-  "/api/messages/email"
-  "/api/webhooks/sms"
-  "/api/webhooks/sms"
-  "/api/messages/sms"
-  "/api/messages/sms"
-  "/api/messages/email"
-  "/api/conversations"
-  "/api/messages/sms"
-)
-
-# Headers per test (use '||' to separate multiple headers)
-HEADERS=(
-  ""
-  ""
-  ""
-  ""
-  ""
-  ""
-  ""
-  ""
-  "Idempotency-Key: idem-sms-001"
-  "Idempotency-Key: idem-sms-001"
-  "Idempotency-Key: idem-email-001"
-  "Idempotency-Key: idem-email-001"
-  "Idempotency-Key: idem-wh-sms-001"
-  "Idempotency-Key: idem-wh-sms-001"
-  ""
-  ""
-  ""
-  "Accept: text/plain"
-  ""
-)
-
-# Bodies (empty string means no -d will be sent)
-BODIES=(
-  '{
-    "from": "+12016661234",
-    "to": "+18045551234",
-    "type": "sms",
-    "body": "Hello! This is a test SMS message.",
-    "attachments": null,
-    "timestamp": "2024-11-01T14:00:00Z"
-  }'
-  '{
-    "from": "+12016661234",
-    "to": "+18045551234",
-    "type": "mms",
-    "body": "Hello! This is a test MMS message with attachment.",
-    "attachments": ["https://example.com/image.jpg"],
-    "timestamp": "2024-11-01T14:00:00Z"
-  }'
-  '{
-    "from": "user@usehatchapp.com",
-    "to": "contact@gmail.com",
-    "body": "Hello! This is a test email message with <b>HTML</b> formatting.",
-    "attachments": ["https://example.com/document.pdf"],
-    "timestamp": "2024-11-01T14:00:00Z"
-  }'
-  '{
-    "from": "+18045551234",
-    "to": "+12016661234",
-    "type": "sms",
-    "messaging_provider_id": "message-1",
-    "body": "This is an incoming SMS message",
-    "attachments": null,
-    "timestamp": "2024-11-01T14:00:00Z"
-  }'
-  '{
-    "from": "+18045551234",
-    "to": "+12016661234",
-    "type": "mms",
-    "messaging_provider_id": "message-2",
-    "body": "This is an incoming MMS message",
-    "attachments": ["https://example.com/received-image.jpg"],
-    "timestamp": "2024-11-01T14:00:00Z"
-  }'
-  '{
-    "from": "contact@gmail.com",
-    "to": "user@usehatchapp.com",
-    "xillio_id": "message-3",
-    "body": "<html><body>This is an incoming email with <b>HTML</b> content</body></html>",
-    "attachments": ["https://example.com/received-document.pdf"],
-    "timestamp": "2024-11-01T14:00:00Z"
-  }'
-  ""
-  ""
-  '{
-    "from": "+12016661234",
-    "to": "+18045551234",
-    "type": "sms",
-    "body": "Idempotent test SMS.",
-    "attachments": null,
-    "timestamp": "2024-11-01T14:05:00Z"
-  }'
-  '{
-    "from": "+12016661234",
-    "to": "+18045551234",
-    "type": "sms",
-    "body": "Idempotent test SMS.",
-    "attachments": null,
-    "timestamp": "2024-11-01T14:05:00Z"
-  }'
-  '{
-    "from": "user@usehatchapp.com",
-    "to": "contact@gmail.com",
-    "body": "Idempotent email message.",
-    "attachments": ["https://example.com/doc.pdf"],
-    "timestamp": "2024-11-01T14:06:00Z"
-  }'
-  '{
-    "from": "user@usehatchapp.com",
-    "to": "contact@gmail.com",
-    "body": "Idempotent email message.",
-    "attachments": ["https://example.com/doc.pdf"],
-    "timestamp": "2024-11-01T14:06:00Z"
-  }'
-  '{
-    "from": "+18045551234",
-    "to": "+12016661234",
-    "type": "sms",
-    "messaging_provider_id": "message-idem-1",
-    "body": "Incoming idempotent SMS",
-    "attachments": null,
-    "timestamp": "2024-11-01T14:07:00Z"
-  }'
-  '{
-    "from": "+18045551234",
-    "to": "+12016661234",
-    "type": "sms",
-    "messaging_provider_id": "message-idem-1",
-    "body": "Incoming idempotent SMS",
-    "attachments": null,
-    "timestamp": "2024-11-01T14:07:00Z"
-  }'
-  '{
-    "from": "+12016661234",
-    "to": "+18045551234",
-    "type": "smsx",
-    "body": "Invalid type should fail",
-    "attachments": null,
-    "timestamp": "2024-11-01T14:10:00Z"
-  }'
-  '{
-    "from": "+12016661234",
-    "to": "+18045551234",
-    "type": "mms",
-    "body": "MMS requires at least one attachment",
-    "attachments": null,
-    "timestamp": "2024-11-01T14:11:00Z"
-  }'
-  '{
-    "from": "user@usehatchapp.com",
-    "to": "contact@gmail.com",
-    "body": "",
-    "attachments": null,
-    "timestamp": "2024-11-01T14:12:00Z"
-  }'
-  ""
-  '{
-    "from": "+12016661234",
-    "to": "+18045551234",
-    "type": "mms",
-    "body": "Empty attachments array should fail",
-    "attachments": [],
-    "timestamp": "2024-11-01T14:13:00Z"
-  }'
-)
-
-EXPECTS=(
-  202 202 202 202 202 202 200 200
-  202 202 202 202 202 202 400 400 400 406 400
-)
-
-# Execute all tests
-TOTAL=${#NAMES[@]}
 PASS_COUNT=0
 FAIL_COUNT=0
 
-for ((i=0; i<TOTAL; i++)); do
-  name="${NAMES[$i]}"
-  method="${METHODS[$i]}"
-  path="${PATHS[$i]}"
-  headers="${HEADERS[$i]}"
-  body="${BODIES[$i]}"
-  expect="${EXPECTS[$i]}"
+if [ "$USE_JSON_TESTS" = true ]; then
+  TOTAL=$(jq 'length' "$TESTS_FILE")
+  INDEX=1
+  while IFS= read -r test; do
+    name=$(jq -r '.name' <<< "$test")
+    method=$(jq -r '.method' <<< "$test")
+    path=$(jq -r '.path' <<< "$test")
+    expect=$(jq -r '.expect' <<< "$test")
+    headers_joined=$(jq -r '(.headers // []) | join("||")' <<< "$test")
+    body_json=$(jq -c 'if .body == null then "" else .body end' <<< "$test")
+    # jq -c returns '""' for empty string; strip surrounding quotes to get empty
+    if [ "$body_json" = '""' ]; then body_json=""; fi
 
-  if run_test "$((i+1))" "$name" "$method" "$path" "$headers" "$body" "$expect"; then
-    PASS_COUNT=$((PASS_COUNT+1))
-  else
-    FAIL_COUNT=$((FAIL_COUNT+1))
-  fi
-done
+    if run_test "$INDEX" "$name" "$method" "$path" "$headers_joined" "$body_json" "$expect"; then
+      PASS_COUNT=$((PASS_COUNT+1))
+    else
+      FAIL_COUNT=$((FAIL_COUNT+1))
+    fi
+    INDEX=$((INDEX+1))
+  done < <(jq -c '.[]' "$TESTS_FILE")
+else
+  # Fallback: legacy arrays for environments without jq
+  NAMES=(
+    "Send SMS" "Send MMS" "Send Email" "Webhook SMS" "Webhook MMS" "Webhook Email"
+    "List conversations" "List messages for conversation"
+    "Idempotent SMS (first)" "Idempotent SMS (second)"
+    "Idempotent Email (first)" "Idempotent Email (second)"
+    "Idempotent Webhook SMS (first)" "Idempotent Webhook SMS (second)"
+    "Invalid SMS type" "MMS without attachments" "Email empty body"
+    "GET conversations unacceptable Accept" "MMS with empty attachments array"
+  )
+  METHODS=(POST POST POST POST POST POST GET GET POST POST POST POST POST POST POST POST POST GET POST)
+  PATHS=(
+    "/api/messages/sms" "/api/messages/sms" "/api/messages/email" "/api/webhooks/sms" "/api/webhooks/sms" "/api/webhooks/email"
+    "/api/conversations" "/api/conversations/1/messages"
+    "/api/messages/sms" "/api/messages/sms" "/api/messages/email" "/api/messages/email"
+    "/api/webhooks/sms" "/api/webhooks/sms" "/api/messages/sms" "/api/messages/sms" "/api/messages/email" "/api/conversations" "/api/messages/sms"
+  )
+  HEADERS=(
+    "" "" "" "" "" "" "" ""
+    "Idempotency-Key: idem-sms-001" "Idempotency-Key: idem-sms-001"
+    "Idempotency-Key: idem-email-001" "Idempotency-Key: idem-email-001"
+    "Idempotency-Key: idem-wh-sms-001" "Idempotency-Key: idem-wh-sms-001"
+    "" "" "" "Accept: text/plain" ""
+  )
+  BODIES=(
+    '{"from":"+12016661234","to":"+18045551234","type":"sms","body":"Hello! This is a test SMS message.","attachments":null,"timestamp":"2024-11-01T14:00:00Z"}'
+    '{"from":"+12016661234","to":"+18045551234","type":"mms","body":"Hello! This is a test MMS message with attachment.","attachments":["https://example.com/image.jpg"],"timestamp":"2024-11-01T14:00:00Z"}'
+    '{"from":"user@usehatchapp.com","to":"contact@gmail.com","body":"Hello! This is a test email message with <b>HTML</b> formatting.","attachments":["https://example.com/document.pdf"],"timestamp":"2024-11-01T14:00:00Z"}'
+    '{"from":"+18045551234","to":"+12016661234","type":"sms","messaging_provider_id":"message-1","body":"This is an incoming SMS message","attachments":null,"timestamp":"2024-11-01T14:00:00Z"}'
+    '{"from":"+18045551234","to":"+12016661234","type":"mms","messaging_provider_id":"message-2","body":"This is an incoming MMS message","attachments":["https://example.com/received-image.jpg"],"timestamp":"2024-11-01T14:00:00Z"}'
+    '{"from":"contact@gmail.com","to":"user@usehatchapp.com","xillio_id":"message-3","body":"<html><body>This is an incoming email with <b>HTML</b> content</body></html>","attachments":["https://example.com/received-document.pdf"],"timestamp":"2024-11-01T14:00:00Z"}'
+    "" ""
+    '{"from":"+12016661234","to":"+18045551234","type":"sms","body":"Idempotent test SMS.","attachments":null,"timestamp":"2024-11-01T14:05:00Z"}'
+    '{"from":"+12016661234","to":"+18045551234","type":"sms","body":"Idempotent test SMS.","attachments":null,"timestamp":"2024-11-01T14:05:00Z"}'
+    '{"from":"user@usehatchapp.com","to":"contact@gmail.com","body":"Idempotent email message.","attachments":["https://example.com/doc.pdf"],"timestamp":"2024-11-01T14:06:00Z"}'
+    '{"from":"user@usehatchapp.com","to":"contact@gmail.com","body":"Idempotent email message.","attachments":["https://example.com/doc.pdf"],"timestamp":"2024-11-01T14:06:00Z"}'
+    '{"from":"+18045551234","to":"+12016661234","type":"sms","messaging_provider_id":"message-idem-1","body":"Incoming idempotent SMS","attachments":null,"timestamp":"2024-11-01T14:07:00Z"}'
+    '{"from":"+18045551234","to":"+12016661234","type":"sms","messaging_provider_id":"message-idem-1","body":"Incoming idempotent SMS","attachments":null,"timestamp":"2024-11-01T14:07:00Z"}'
+    '{"from":"+12016661234","to":"+18045551234","type":"smsx","body":"Invalid type should fail","attachments":null,"timestamp":"2024-11-01T14:10:00Z"}'
+    '{"from":"+12016661234","to":"+18045551234","type":"mms","body":"MMS requires at least one attachment","attachments":null,"timestamp":"2024-11-01T14:11:00Z"}'
+    '{"from":"user@usehatchapp.com","to":"contact@gmail.com","body":"","attachments":null,"timestamp":"2024-11-01T14:12:00Z"}'
+    ""
+    '{"from":"+12016661234","to":"+18045551234","type":"mms","body":"Empty attachments array should fail","attachments":[],"timestamp":"2024-11-01T14:13:00Z"}'
+  )
+  EXPECTS=(202 202 202 202 202 202 200 200 202 202 202 202 202 202 400 400 400 406 400)
+
+  TOTAL=${#NAMES[@]}
+  for ((i=0; i<TOTAL; i++)); do
+    name="${NAMES[$i]}"; method="${METHODS[$i]}"; path="${PATHS[$i]}"
+    headers="${HEADERS[$i]}"; body="${BODIES[$i]}"; expect="${EXPECTS[$i]}"
+    if run_test "$((i+1))" "$name" "$method" "$path" "$headers" "$body" "$expect"; then
+      PASS_COUNT=$((PASS_COUNT+1))
+    else
+      FAIL_COUNT=$((FAIL_COUNT+1))
+    fi
+  done
+fi
 
 echo "=== Summary ==="
-echo "  Total: $TOTAL  Passed: $PASS_COUNT  Failed: $FAIL_COUNT"
+echo "  Total: ${TOTAL:-$((PASS_COUNT+FAIL_COUNT))}  Passed: $PASS_COUNT  Failed: $FAIL_COUNT"
 
 if [ "$FAIL_COUNT" -gt 0 ]; then
   exit 1
