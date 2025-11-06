@@ -7,7 +7,6 @@ use tracing_subscriber::{fmt, EnvFilter};
 ///   the field entirely or redact it using a helper like `redact_secret`.
 /// - Prefer structured fields over interpolated strings so filters/redactors can work reliably.
 /// - Future: consider a JSON formatter and a layer for automatic redaction of well-known keys.
-
 pub fn init_logging(level: &str) -> Result<(), String> {
     let filter = EnvFilter::try_from_default_env()
         .or_else(|_| EnvFilter::try_new(level))

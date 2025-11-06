@@ -47,6 +47,14 @@ run-server:
 	@echo "Running messaging-server..."
 	@PORT=$${PORT:-8080} cargo run -p messaging-server
 
+.PHONY: lint
+lint:
+	@command -v cargo >/dev/null 2>&1 || { echo "cargo not found; run 'make rust-ensure'" >&2; exit 1; }
+	@echo "Running fmt..."
+	@cargo fmt --all
+	@echo "Running clippy on server crate..."
+	@cargo clippy -p messaging-server -- -W clippy::all || true
+
 .PHONY: migrate-apply migrate-new
 migrate-apply:
 	@echo "Applying migrations..."

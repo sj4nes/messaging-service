@@ -23,5 +23,11 @@ release/
 
 # Node, Python, etc. (future-proof)
 node_modules/
+dist/
+build/
 __pycache__/
 *.pyc
+
+# Virtualenvs
+.venv/
+venv/
