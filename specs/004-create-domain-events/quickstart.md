@@ -22,6 +22,21 @@ Use any JSON Schema validator. Here are two common options:
   - Install: `pip install jsonschema`
   - Validate (one file): `python -c "import json,sys; from jsonschema import validate, Draft7Validator as V; import pathlib; s=json.load(open('contracts/events/envelope.schema.json')); V.check_schema(s); d=json.load(open('contracts/events/examples/customer_created.example.json')); validate(d, s); print('ok')"`
 
+### Run the provided validator script
+
+For convenience, this feature includes a small validator that checks all example payloads against the common envelope schema.
+
+Steps (macOS, zsh):
+
+1. Optional: create a virtual environment and install dependencies
+  - `python3 -m venv .venv`
+  - `source .venv/bin/activate`
+  - `pip install jsonschema`
+2. Run the validator:
+  - `python specs/004-create-domain-events/contracts/events/validate_examples.py`
+3. Expected output:
+  - A ✓ line for each valid example and a final summary; non‑zero exit if any failures
+
 ## Extending the catalog
 
 - Add new events to `contracts/events/catalog.md` and provide an example payload in `contracts/events/examples/`

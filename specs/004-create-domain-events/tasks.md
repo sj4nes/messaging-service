@@ -24,7 +24,7 @@ Notes:
 
 Purpose: Create any missing scaffolding files for contracts docs.
 
-- [ ] T001 Create contracts scope notice in specs/004-create-domain-events/contracts/README.md
+- [X] T001 Create contracts scope notice in specs/004-create-domain-events/contracts/README.md
 
 ---
 
@@ -34,9 +34,9 @@ Purpose: Establish basic validation tooling to keep examples and schema consiste
 
 ⚠️ CRITICAL: Complete before user stories begin.
 
-- [ ] T002 Add simple validator script in specs/004-create-domain-events/contracts/events/validate_examples.py to validate examples against envelope.schema.json
-- [ ] T003 [P] Update specs/004-create-domain-events/quickstart.md with a section showing how to run contracts/events/validate_examples.py
-- [ ] T004 [P] Verify specs/004-create-domain-events/contracts/events/envelope.schema.json conforms to JSON Schema Draft-07 (adjust only if out-of-sync)
+- [X] T002 Add simple validator script in specs/004-create-domain-events/contracts/events/validate_examples.py to validate examples against envelope.schema.json
+- [X] T003 [P] Update specs/004-create-domain-events/quickstart.md with a section showing how to run contracts/events/validate_examples.py
+- [X] T004 [P] Verify specs/004-create-domain-events/contracts/events/envelope.schema.json conforms to JSON Schema Draft-07 (adjust only if out-of-sync)
 
 Checkpoint: Validation scaffolding ready — user stories can proceed in parallel.
 
