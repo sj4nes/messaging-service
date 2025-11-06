@@ -256,4 +256,22 @@ curl -X POST "$BASE_URL/api/messages/email" \
   }' \
   -w "\nStatus: %{http_code}\n\n"
 
+echo "17. GET conversations with unacceptable Accept (expect 406)..."
+curl -X GET "$BASE_URL/api/conversations" \
+  -H "Accept: text/plain" \
+  -w "\nStatus: %{http_code}\n\n"
+
+echo "18. MMS with empty attachments array (expect 400)..."
+curl -X POST "$BASE_URL/api/messages/sms" \
+  -H "$CONTENT_TYPE" \
+  -d '{
+    "from": "+12016661234",
+    "to": "+18045551234",
+    "type": "mms",
+    "body": "Empty attachments array should fail",
+    "attachments": [],
+    "timestamp": "2024-11-01T14:13:00Z"
+  }' \
+  -w "\nStatus: %{http_code}\n\n"
+
 echo "=== Test script completed ===" 
