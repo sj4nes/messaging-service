@@ -23,6 +23,7 @@ tests/
 Bash (POSIX-compatible): Follow standard conventions
 
 ## Recent Changes
+- 002-setup-12fa-server: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
 - 002-setup-12fa-server: Added PostgreSQL via SQLx + sqlx_migrations (admin stub only in this feature)
 
 - 001-jujutsu-scm-support: Added Bash (POSIX-compatible) + Jujutsu CLI (`jj`), Git CLI (`git`)

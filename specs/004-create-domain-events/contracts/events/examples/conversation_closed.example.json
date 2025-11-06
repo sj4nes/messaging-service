@@ -1,0 +1,12 @@
+{
+  "event_name": "ConversationClosed",
+  "event_id": "01HZYX4ZZZ3K4L5M6N7P8Q9R0S",
+  "aggregate_type": "Conversation",
+  "aggregate_id": "conv_777",
+  "occurred_at": "2025-11-05T14:10:00Z",
+  "actor": "system",
+  "version": 1,
+  "conversation_id": "conv_777",
+  "customer_id": "cust_123",
+  "reason": "request completed"
+}
