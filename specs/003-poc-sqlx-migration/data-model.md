@@ -63,3 +63,35 @@ Notes:
 - Use monotonic timestamps in filenames (sqlx_migrate format)
 - Ensure id generation strategy: BIGSERIAL or application-supplied IDs (for dedup tables we expect app-supplied id == hash or a separate ulid; PoC chooses hash-derived id via app)
 - All constraints validated; defer heavy indexes if needed for large backfills (out of scope here)
+
+## Sample Inserts (US2)
+
+Example: create a customer, a contact, a conversation with participants, and an outbound message.
+
+```sql
+-- Customer
+INSERT INTO customers(name) VALUES ('Acme, Inc.') RETURNING id; -- => :customer_id
+
+-- Contact
+INSERT INTO contacts(customer_id, display_name)
+VALUES (:customer_id, 'Jane Doe') RETURNING id; -- => :contact_id
+
+-- Conversation
+INSERT INTO conversations(customer_id, topic)
+VALUES (:customer_id, 'Onboarding') RETURNING id; -- => :conversation_id
+
+-- Participants
+INSERT INTO conversation_participants(conversation_id, contact_id, role)
+VALUES
+  (:conversation_id, :contact_id, 'contact'),
+  (:conversation_id, :contact_id, 'customer')
+ON CONFLICT DO NOTHING;
+
+-- Provider (email example)
+INSERT INTO providers(customer_id, kind, name)
+VALUES (:customer_id, 'email', 'Sendgrid') RETURNING id; -- => :provider_id
+
+-- Message (ordered by (conversation_id, sent_at DESC) via index)
+INSERT INTO messages(conversation_id, provider_id, direction, sent_at)
+VALUES (:conversation_id, :provider_id, 'outbound', now());
+```

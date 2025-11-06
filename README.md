@@ -163,3 +163,18 @@ psql "postgres://messaging_user:messaging_password@localhost:55432/messaging_ser
 ```
 
 Again, you are welcome to make changes here, as long as they're in the docker-compose.yml
+
+### Migrations (SQLx) and Offline Mode
+
+This repo includes a small utility `db-migrate` to manage SQLx migrations:
+
+- Apply pending migrations:
+    - `make migrate-apply` (uses `DATABASE_URL` from `.env` if present)
+- Create a new migration pair:
+    - `make migrate-new NAME=add_feature`
+- Show applied migrations from inside the container:
+    - `make migrate-status`
+- Show status via client (which DB am I pointing at?):
+    - `make migrate-status-client`
+
+CI tip: set `SQLX_OFFLINE=true` to build without a live database connection when using SQLx elsewhere. Local development can remain online.

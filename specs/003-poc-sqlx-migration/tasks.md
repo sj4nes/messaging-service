@@ -14,11 +14,6 @@ This checklist is generated from plan/spec/research/data-model. Tasks are organi
 
 ## Phase 2 — Foundational (shared prerequisites)
 
-- [ ] T008 Create core tables migration in `crates/db-migrate/migrations/0001_create_core_tables.sql`
-- [ ] T009 Create dedup tables migration in `crates/db-migrate/migrations/0002_create_dedup_tables.sql`
-- [ ] T010 Add baseline indexes in `crates/db-migrate/migrations/0003_add_indexes.sql`
-- [ ] T011 Add audit/UTC triggers in `crates/db-migrate/migrations/0004_triggers_audit_utc.sql`
- 
 - [X] T008 Create core tables migration in `crates/db-migrate/migrations/0001_create_core_tables.sql`
 - [X] T009 Create dedup tables migration in `crates/db-migrate/migrations/0002_create_dedup_tables.sql`
 - [X] T010 Add baseline indexes in `crates/db-migrate/migrations/0003_add_indexes.sql`
@@ -49,10 +44,10 @@ Independent Test Criteria:
 - Conversation participants primary key prevents duplicate roles for same contact/conversation.
 - Query by conversation_id returns messages ordered by sent_at desc via index.
 
-- [ ] T018 [US2] Ensure FK constraints and NOT NULLs in core schema in `crates/db-migrate/migrations/0001_create_core_tables.sql`
-- [ ] T019 [US2] Add participant linking via `conversation_participants` with PK in `crates/db-migrate/migrations/0001_create_core_tables.sql`
-- [ ] T020 [US2] Add `messages(conversation_id, sent_at DESC)` index in `crates/db-migrate/migrations/0003_add_indexes.sql`
-- [ ] T021 [US2] Add sample insert SQL snippet to docs in `specs/003-poc-sqlx-migration/data-model.md`
+- [X] T018 [US2] Ensure FK constraints and NOT NULLs in core schema in `crates/db-migrate/migrations/0001_create_core_tables.sql`
+- [X] T019 [US2] Add participant linking via `conversation_participants` with PK in `crates/db-migrate/migrations/0001_create_core_tables.sql`
+- [X] T020 [US2] Add `messages(conversation_id, sent_at DESC)` index in `crates/db-migrate/migrations/0003_add_indexes.sql`
+- [X] T021 [US2] Add sample insert SQL snippet to docs in `specs/003-poc-sqlx-migration/data-model.md`
 
 ## Phase 5 — [US3] Analyst can query conversation overview view (P2)
 
@@ -74,9 +69,9 @@ Independent Test Criteria:
 - Inserting same normalized item twice violates UNIQUE(hash) or gracefully upserts via application.
 - Normalization triggers (where present) produce stable normalized forms (emails lowercased; phones digit/E.164 best-effort).
 
-- [ ] T025 [US4] Define UNIQUE(hash) and required columns for dedup tables in `crates/db-migrate/migrations/0002_create_dedup_tables.sql`
-- [ ] T026 [US4] Add normalization triggers stubs (email/phone/body) in `crates/db-migrate/migrations/0004_triggers_audit_utc.sql`
-- [ ] T027 [US4] Document normalization contract (app computes hash; triggers may normalize) in `specs/003-poc-sqlx-migration/research.md`
+- [X] T025 [US4] Define UNIQUE(hash) and required columns for dedup tables in `crates/db-migrate/migrations/0002_create_dedup_tables.sql`
+- [X] T026 [US4] Add normalization triggers stubs (email/phone/body) in `crates/db-migrate/migrations/0004_triggers_audit_utc.sql`
+- [X] T027 [US4] Document normalization contract (app computes hash; triggers may normalize) in `specs/003-poc-sqlx-migration/research.md`
 
 ## Phase 7 — [US5] Backend service queue PoC (P2)
 
@@ -86,15 +81,15 @@ Independent Test Criteria:
 - Insert into `inbound_events` succeeds with defaults for received_at/attempts/status.
 - Dequeue using `FOR UPDATE SKIP LOCKED` returns rows and prevents double-processing across sessions.
 
-- [ ] T028 [US5] Create `inbound_events` table with indexes in `crates/db-migrate/migrations/0006_queue_inbound_events.sql`
-- [ ] T029 [US5] Document dequeue pattern (FOR UPDATE SKIP LOCKED) in `specs/003-poc-sqlx-migration/data-model.md`
+- [X] T028 [US5] Create `inbound_events` table with indexes in `crates/db-migrate/migrations/0006_queue_inbound_events.sql`
+- [X] T029 [US5] Document dequeue pattern (FOR UPDATE SKIP LOCKED) in `specs/003-poc-sqlx-migration/data-model.md`
 
 ## Final Phase — Polish & Cross-Cutting
 
-- [ ] T030 Add SQLX_OFFLINE CI hint and env docs in `README.md`
+- [X] T030 Add SQLX_OFFLINE CI hint and env docs in `README.md`
 - [ ] T031 Add `.jjignore`/`.gitignore` updates for migration artifacts if needed in `/.jjignore`
-- [ ] T032 Add `DATABASE_URL` example to `.env.example` in `/.env.example`
-- [ ] T033 Add CHANGELOG entry for schema init in `CHANGELOG.md`
+- [X] T032 Add `DATABASE_URL` example to `.env.example` in `/.env.example`
+- [X] T033 Add CHANGELOG entry for schema init in `CHANGELOG.md`
 
 ---
 
