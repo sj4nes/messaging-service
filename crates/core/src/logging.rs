@@ -2,7 +2,7 @@ use tracing_subscriber::{fmt, EnvFilter};
 
 pub fn init_logging(level: &str) -> Result<(), String> {
     let filter = EnvFilter::try_from_default_env()
-        .or_else(|_| EnvFilter::try_new(level.to_string()))
+        .or_else(|_| EnvFilter::try_new(level))
         .map_err(|e| format!("invalid log level or filter: {e}"))?;
 
     // try_init returns Err if a global subscriber is already set; treat as Ok for idempotence
