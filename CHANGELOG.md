@@ -6,6 +6,19 @@ All notable changes to this project will be documented in this file.
 
 - TBD
 
+## [0.2.0] - 2025-11-05
+
+### Added
+- Feature 004: Domain Events Catalog (transport-agnostic)
+  - Canonical event envelope (JSON Schema Draft-07) with documented invariants and checklist
+  - Event catalog covering Customers, Contacts, Providers, Channels, Conversations (purposes, required fields, invariants)
+  - 21 validating example payloads under `specs/004-create-domain-events/contracts/events/examples/`
+  - Validator script to check examples (`validate_examples.py`) and Make target `validate-events`
+  - DX tasks: `dx-setup`, `py-venv`, `py-install-jsonschema`, `validate-events`, `rust-ensure`
+
+### Changed
+- Prerequisite script enhanced to infer active feature from JJ (bookmarks/log paths)
+
 ## [0.1.0] - 2025-11-06
 
 ### Added

@@ -8,12 +8,12 @@ Create a clear, transport-agnostic domain event catalog for messaging. Define a 
 
 ## Technical Context
 
-- Language/Version: Technology-agnostic for artifacts (Markdown + JSON Schema); repository primarily Rust, but not required in this feature
-- Primary Dependencies: None required; optional validators (AJV, python-jsonschema) for consumers
-- Storage: N/A (documentation/spec artifacts only)
+**Language/Version**: Rust (repo), Markdown + JSON Schema (this feature)
+**Primary Dependencies**: python-jsonschema (local validator), optional AJV for consumers
+**Storage**: N/A
 - Testing: Validate example payloads against JSON Schemas; lint Markdown
 - Target Platform: Dev docs and schema consumers (any language)
-- Project Type: Spec + contracts (no service runtime)
+**Project Type**: Spec + contracts (no service runtime)
 - Performance Goals: N/A (non-runtime)
 - Constraints:
   - All timestamps are UTC in ISO 8601 format
@@ -71,7 +71,7 @@ Prerequisite: research.md complete
    - State transitions for Conversation (open/closed/reopened/archived)
 
 2. contracts/events
-   - envelope.schema.json (JSON Schema Draft 2020-12)
+   - envelope.schema.json (JSON Schema Draft-07)
    - catalog.md listing event names, purposes, and required fields
    - examples/*.example.json validated against envelope.schema.json + per-event required fields
    - contracts/README.md explaining HTTP APIs are out of scope for this feature
