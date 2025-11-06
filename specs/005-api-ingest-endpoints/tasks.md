@@ -33,7 +33,7 @@ Independent Test: Use bin/test.sh POSTs; expect 202 and event id in response; ve
 - [ ] T016 [P] [US1] Define Email request schema validation in crates/server/src/types.rs
 - [X] T017 [US1] Implement POST /api/messages/sms handler in crates/server/src/api/messages.rs
 - [X] T018 [US1] Implement POST /api/messages/email handler in crates/server/src/api/messages.rs
-- [ ] T019 [US1] Integrate idempotency behavior in message handlers in crates/server/src/api/messages.rs
+- [X] T019 [US1] Integrate idempotency behavior in message handlers in crates/server/src/api/messages.rs
 - [X] T020 [US1] Apply per-IP and per-sender rate limits to POST message endpoints in crates/server/src/middleware/rate_limit.rs
 - [X] T021 [US1] Enqueue inbound_events records from message handlers in crates/server/src/queue/inbound_events.rs
 - [X] T022 [US1] Update OpenAPI for message POSTs in specs/005-api-ingest-endpoints/contracts/openapi.yaml

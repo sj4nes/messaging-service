@@ -1,4 +1,8 @@
-use axum::{extract::State, http::StatusCode, Json};
+use axum::{
+    extract::State,
+    http::{HeaderMap, StatusCode},
+    Json,
+};
 use serde_json::json;
 
 use crate::queue::inbound_events::InboundEvent;
@@ -6,8 +10,14 @@ use crate::types::{WebhookEmailRequest, WebhookSmsRequest};
 
 pub(crate) async fn post_sms(
     State(state): State<crate::AppState>,
+    headers: HeaderMap,
     Json(body): Json<WebhookSmsRequest>,
 ) -> (StatusCode, Json<serde_json::Value>) {
+    if let Some(key) = headers.get("idempotency-key").and_then(|v| v.to_str().ok()) {
+        if !state.idempotency.seen_or_insert(key) {
+            return (StatusCode::ACCEPTED, Json(json!({ "status": "accepted" })));
+        }
+    }
     // Optional per-sender limit for webhooks as well
     if !state.rate.allow_sender(&body.from) {
         return (
@@ -39,8 +49,14 @@ pub(crate) async fn post_sms(
 
 pub(crate) async fn post_email(
     State(state): State<crate::AppState>,
+    headers: HeaderMap,
     Json(body): Json<WebhookEmailRequest>,
 ) -> (StatusCode, Json<serde_json::Value>) {
+    if let Some(key) = headers.get("idempotency-key").and_then(|v| v.to_str().ok()) {
+        if !state.idempotency.seen_or_insert(key) {
+            return (StatusCode::ACCEPTED, Json(json!({ "status": "accepted" })));
+        }
+    }
     if let Some(ref atts) = body.attachments {
         if atts.len() > state.api.max_attachments {
             return (

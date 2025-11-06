@@ -27,11 +27,15 @@ pub mod middleware {
 pub mod queue {
     pub mod inbound_events;
 }
+pub mod state {
+    pub mod idempotency;
+}
 
 use crate::config::ApiConfig;
 use crate::middleware::circuit_breaker::{BreakerState, CircuitBreaker};
 use crate::middleware::rate_limit::RateLimiter;
 use crate::queue::inbound_events::InboundQueue;
+use crate::state::idempotency::IdempotencyStore;
 
 pub mod api {
     pub mod conversations;
@@ -50,6 +54,7 @@ pub(crate) struct AppState {
     rate: RateLimiter,
     breaker: CircuitBreaker,
     queue: InboundQueue,
+    idempotency: IdempotencyStore,
 }
 
 fn build_router(health_path: &str, state: AppState) -> Router {
@@ -126,6 +131,7 @@ pub async fn run_server(
         ),
         breaker: CircuitBreaker::new(api_cfg.breaker_error_threshold, api_cfg.breaker_open_secs),
         queue,
+        idempotency: IdempotencyStore::new(2 * 60 * 60), // 2 hours
         api: api_cfg,
     };
     let router = build_router(&config.health_path, state);
@@ -173,6 +179,7 @@ where
         ),
         breaker: CircuitBreaker::new(api_cfg.breaker_error_threshold, api_cfg.breaker_open_secs),
         queue,
+        idempotency: IdempotencyStore::new(2 * 60 * 60),
         api: api_cfg,
     };
     let router = build_router(&config.health_path, state);

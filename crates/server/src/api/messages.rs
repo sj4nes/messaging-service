@@ -1,4 +1,8 @@
-use axum::{extract::State, http::StatusCode, Json};
+use axum::{
+    extract::State,
+    http::{HeaderMap, StatusCode},
+    Json,
+};
 use serde_json::json;
 
 use crate::queue::inbound_events::InboundEvent;
@@ -6,8 +10,15 @@ use crate::types::{EmailRequest, SmsRequest};
 
 pub(crate) async fn post_sms(
     State(state): State<crate::AppState>,
+    headers: HeaderMap,
     Json(body): Json<SmsRequest>,
 ) -> (StatusCode, Json<serde_json::Value>) {
+    // Idempotency: if key exists and seen already, return 202 without re-enqueueing
+    if let Some(key) = headers.get("idempotency-key").and_then(|v| v.to_str().ok()) {
+        if !state.idempotency.seen_or_insert(key) {
+            return (StatusCode::ACCEPTED, Json(json!({ "status": "accepted" })));
+        }
+    }
     // Per-sender rate limiting
     if !state.rate.allow_sender(&body.from) {
         return (
@@ -39,8 +50,14 @@ pub(crate) async fn post_sms(
 
 pub(crate) async fn post_email(
     State(state): State<crate::AppState>,
+    headers: HeaderMap,
     Json(body): Json<EmailRequest>,
 ) -> (StatusCode, Json<serde_json::Value>) {
+    if let Some(key) = headers.get("idempotency-key").and_then(|v| v.to_str().ok()) {
+        if !state.idempotency.seen_or_insert(key) {
+            return (StatusCode::ACCEPTED, Json(json!({ "status": "accepted" })));
+        }
+    }
     if !state.rate.allow_sender(&body.from) {
         return (
             StatusCode::TOO_MANY_REQUESTS,
