@@ -23,8 +23,8 @@ pub struct SmsRequest {
 pub struct EmailRequest {
     pub from: String,
     pub to: String,
-    pub body: String,                      // may contain HTML
-    pub attachments: Option<Vec<String>>,  // URLs
+    pub body: String,                     // may contain HTML
+    pub attachments: Option<Vec<String>>, // URLs
     pub timestamp: String,
 }
 

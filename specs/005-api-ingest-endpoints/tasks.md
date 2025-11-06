@@ -16,13 +16,13 @@ Plan: specs/005-api-ingest-endpoints/plan.md
 
 ## Phase 2 — Foundational (blocking for all stories)
 
-- [ ] T008 Implement JSON content-type enforcement middleware in crates/server/src/middleware/content_type.rs
-- [ ] T009 Implement Accept/content negotiation helper in crates/server/src/middleware/accept.rs
-- [ ] T010 Implement request size limits (body size) in crates/server/src/middleware/limits.rs
-- [ ] T011 Implement idempotency-key extractor/checker in crates/server/src/middleware/idempotency.rs
-- [ ] T012 Implement per-IP and per-sender rate limiter core in crates/server/src/middleware/rate_limit.rs
-- [ ] T013 Implement circuit breaker core with states in crates/server/src/middleware/circuit_breaker.rs
-- [ ] T014 Create OpenAPI contract skeleton in specs/005-api-ingest-endpoints/contracts/openapi.yaml
+- [X] T008 Implement JSON content-type enforcement middleware in crates/server/src/middleware/content_type.rs
+- [X] T009 Implement Accept/content negotiation helper in crates/server/src/middleware/accept.rs
+- [X] T010 Implement request size limits (body size) in crates/server/src/middleware/limits.rs
+- [X] T011 Implement idempotency-key extractor/checker in crates/server/src/middleware/idempotency.rs
+- [X] T012 Implement per-IP and per-sender rate limiter core in crates/server/src/middleware/rate_limit.rs
+- [X] T013 Implement circuit breaker core with states in crates/server/src/middleware/circuit_breaker.rs
+- [X] T014 Create OpenAPI contract skeleton in specs/005-api-ingest-endpoints/contracts/openapi.yaml
 
 ## Phase 3 — User Story 1 (P1): Ingest messages via POST
 
@@ -31,20 +31,20 @@ Independent Test: Use bin/test.sh POSTs; expect 202 and event id in response; ve
 
 - [ ] T015 [P] [US1] Define SMS/MMS request schema validation in crates/server/src/types.rs
 - [ ] T016 [P] [US1] Define Email request schema validation in crates/server/src/types.rs
-- [ ] T017 [US1] Implement POST /api/messages/sms handler in crates/server/src/api/messages.rs
-- [ ] T018 [US1] Implement POST /api/messages/email handler in crates/server/src/api/messages.rs
+- [X] T017 [US1] Implement POST /api/messages/sms handler in crates/server/src/api/messages.rs
+- [X] T018 [US1] Implement POST /api/messages/email handler in crates/server/src/api/messages.rs
 - [ ] T019 [US1] Integrate idempotency behavior in message handlers in crates/server/src/api/messages.rs
-- [ ] T020 [US1] Apply per-IP and per-sender rate limits to POST message endpoints in crates/server/src/middleware/rate_limit.rs
-- [ ] T021 [US1] Enqueue inbound_events records from message handlers in crates/server/src/queue/inbound_events.rs
-- [ ] T022 [US1] Update OpenAPI for message POSTs in specs/005-api-ingest-endpoints/contracts/openapi.yaml
+- [X] T020 [US1] Apply per-IP and per-sender rate limits to POST message endpoints in crates/server/src/middleware/rate_limit.rs
+- [X] T021 [US1] Enqueue inbound_events records from message handlers in crates/server/src/queue/inbound_events.rs
+- [X] T022 [US1] Update OpenAPI for message POSTs in specs/005-api-ingest-endpoints/contracts/openapi.yaml
 
 ## Phase 4 — User Story 2 (P1): Ingest provider webhooks with safeguards
 
 Goal: Webhook POSTs with per-IP/sender throttling and circuit breakers; enqueue valid events.
 Independent Test: Use bin/test.sh webhooks; observe 429 under bursts and 503 during open breaker.
 
-- [ ] T023 [US2] Implement POST /api/webhooks/sms handler in crates/server/src/api/webhooks.rs
-- [ ] T024 [US2] Implement POST /api/webhooks/email handler in crates/server/src/api/webhooks.rs
+- [X] T023 [US2] Implement POST /api/webhooks/sms handler in crates/server/src/api/webhooks.rs
+- [X] T024 [US2] Implement POST /api/webhooks/email handler in crates/server/src/api/webhooks.rs
 - [ ] T025 [US2] Apply per-IP and per-sender rate limits to webhook endpoints in crates/server/src/middleware/rate_limit.rs
 - [ ] T026 [US2] Integrate circuit breaker checks for webhook routes in crates/server/src/middleware/circuit_breaker.rs
 - [ ] T027 [US2] Enqueue inbound_events for webhook handlers in crates/server/src/queue/inbound_events.rs
