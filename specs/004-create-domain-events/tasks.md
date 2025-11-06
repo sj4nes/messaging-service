@@ -68,9 +68,9 @@ Independent Test: Any example validates against the envelope schema; the checkli
 
 ### Implementation for User Story 2
 
-- [ ] T008 [US2] Finalize envelope fields in specs/004-create-domain-events/contracts/events/envelope.schema.json (event_name, event_id, aggregate_type, aggregate_id, occurred_at, actor, version, idempotency_key?)
-- [ ] T009 [P] [US2] Create human checklist in specs/004-create-domain-events/contracts/events/envelope-checklist.md mapping FR-002 → observable fields
-- [ ] T010 [P] [US2] Demonstrate idempotency by adding idempotency_key to one existing example in specs/004-create-domain-events/contracts/events/examples/channel_mapped.example.json
+- [X] T008 [US2] Finalize envelope fields in specs/004-create-domain-events/contracts/events/envelope.schema.json (event_name, event_id, aggregate_type, aggregate_id, occurred_at, actor, version, idempotency_key?)
+- [X] T009 [P] [US2] Create human checklist in specs/004-create-domain-events/contracts/events/envelope-checklist.md mapping FR-002 → observable fields
+- [X] T010 [P] [US2] Demonstrate idempotency by adding idempotency_key to one existing example in specs/004-create-domain-events/contracts/events/examples/channel_mapped.example.json
 
 Checkpoint: Envelope invariants are explicit and enforceable via schema + checklist.
 
