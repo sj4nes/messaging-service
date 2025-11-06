@@ -28,13 +28,23 @@ get_current_branch() {
         return
     fi
 
+    # If JJ is present, try to infer the current feature from JJ first
+    if has_jj; then
+        local jj_feature
+        jj_feature=$(get_feature_from_jj 2>/dev/null || true)
+        if [[ -n "$jj_feature" ]]; then
+            echo "$jj_feature"
+            return
+        fi
+    fi
+
     # Then check git if available
     if git rev-parse --abbrev-ref HEAD >/dev/null 2>&1; then
         git rev-parse --abbrev-ref HEAD
         return
     fi
 
-    # For non-git repos, try to find the latest feature directory
+    # For non-git repos (or no clear VCS signal), fall back to the latest spec dir
     local repo_root
     repo_root=$(get_repo_root)
     local specs_dir="$repo_root/specs"
@@ -65,6 +75,46 @@ get_current_branch() {
     fi
 
     echo "main"  # Final fallback
+}
+
+# Try to infer the current feature name (e.g., 004-create-domain-events) from JJ
+# Heuristics (in order):
+#  1) Bookmark attached to the working-copy revision (@) that matches ^NNN-.*
+#  2) Most recent path under specs/NNN-*/ touched in the last ~50 changes
+get_feature_from_jj() {
+    # Require JJ repository
+    has_jj || return 1
+
+    # 1) Bookmark on @
+    if jj log -r @ -T '{bookmarks}\n' >/dev/null 2>&1; then
+        # Output is like: "[004-create-domain-events, something-else]" or "[]"
+        local bookmarks_raw bm
+        bookmarks_raw=$(jj log -r @ -T '{bookmarks}\n' 2>/dev/null | tr -d '[]')
+        # Split on commas, trim spaces, pick the first matching ^NNN- pattern
+        while IFS=',' read -r bm; do
+            bm=$(echo "$bm" | sed 's/^ *//;s/ *$//')
+            if [[ "$bm" =~ ^[0-9]{3}- ]]; then
+                echo "$bm"
+                return 0
+            fi
+        done <<<"$bookmarks_raw"
+    fi
+
+    # 2) Recently touched specs/ paths
+    # Look back through ancestors of @ (limited) and list changed paths; pick first specs/NNN-*
+    if jj log -r '::@' -n 50 --name-only --no-graph >/dev/null 2>&1; then
+        local candidate
+        candidate=$(jj log -r '::@' -n 50 --name-only --no-graph 2>/dev/null \
+            | grep -E '^specs/[0-9]{3}-[^/]+/' \
+            | head -n1 \
+            | sed -E 's#^specs/([0-9]{3}-[^/]+)/.*#\1#')
+        if [[ -n "$candidate" ]]; then
+            echo "$candidate"
+            return 0
+        fi
+    fi
+
+    return 1
 }
 
 # Check if we have git available
