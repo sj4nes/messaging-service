@@ -28,6 +28,7 @@ help:
 	@echo "  migrate-status-client - Show status via db-migrate (uses DATABASE_URL)"
 	@echo "  migrate-reset-history - Truncate _sqlx_migrations (dev only)"
 	@echo "  dx-setup - Bootstrap DX tools (Python venv + jsonschema, ensure Rust toolchain)"
+	@echo "  update-agent-context - Update AI agent context files (e.g., Copilot instructions)"
 	@echo "  validate-events - Validate event examples against the envelope schema (uses .venv)"
 	@echo "  py-venv - Create Python virtual environment at .venv (and upgrade pip)"
 	@echo "  rust-ensure - Install Rust via rustup if cargo is not present"
@@ -178,3 +179,8 @@ rust-ensure:
 	else \
 		$(MAKE) rust-install; \
 	fi
+
+.PHONY: update-agent-context
+update-agent-context:
+	@echo "Updating agent context files..."
+	@.specify/scripts/bash/update-agent-context.sh

@@ -24,6 +24,7 @@ tests/
 Bash (POSIX-compatible): Follow standard conventions
 
 ## Recent Changes
+- 005-api-ingest-endpoints: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
 - 004-create-domain-events: Added Rust (repo), Markdown + JSON Schema (this feature) + python-jsonschema (local validator), optional AJV for consumers
 - 002-setup-12fa-server: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
 

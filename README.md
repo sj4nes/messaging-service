@@ -137,6 +137,7 @@ troubleshooting.
 - Use `docker-compose up -d` to start the PostgreSQL database
 - Use `make run` to start the development server
 - Use `make test` to run tests
+- Use `make update-agent-context` to refresh AI agent context files (e.g., Copilot instructions)
 - Use `docker-compose down` to stop the database
 
 ### Contracts

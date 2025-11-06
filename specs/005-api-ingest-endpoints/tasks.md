@@ -77,7 +77,7 @@ Independent Test: GET messages by id; verify 200 and paging; 404 on unknown id.
 - [X] T039 Expose minimal metrics (counts, rates, throttles, breaker state) in crates/server/src/observability/metrics.rs
 - [X] T040 Add configuration for limits and breaker windows in config files (e.g., crates/server/config/default.toml)
 - [X] T041 Add Makefile targets for running server plus watch/test in Makefile
-- [ ] T042 Wire task to update agent context after design in .specify/scripts/bash/update-agent-context.sh
+- [X] T042 Wire task to update agent context after design in .specify/scripts/bash/update-agent-context.sh
 
 ## Dependencies
 
