@@ -54,24 +54,22 @@ You **MUST** consider the user input before proceeding (if not empty).
    - **IF EXISTS**: Read quickstart.md for integration scenarios
 
 4. **Project Setup Verification**:
-   - **REQUIRED**: Create/verify ignore files based on actual project setup:
+   - **REQUIRED**: Create/verify ignore files based on actual project setup (JJ-first):
 
-   **Detection & Creation Logic**:
-   - Check if the following command succeeds to determine if the repository is a git repo (create/verify .gitignore if so):
+   **Detection & Creation Logic (JJ-first)**:
+   - Prefer Jujutsu (jj). Detect a jj repo by checking for `.jj/` in the repo root. If present, create/verify `.jjignore`.
+   - If a jj repo is NOT detected but a Git repo exists, you MAY also create/verify `.gitignore` for developer convenience. Do not run Git commands unnecessarily.
+   - Avoid Git-specific commands by default. If absolutely needed as a fallback, ensure they’re harmless (read-only) and optional.
 
-     ```sh
-     git rev-parse --git-dir 2>/dev/null
-     ```
+   - Check if Dockerfile* exists or Docker in plan.md → create/verify `.dockerignore`
+   - Check if `.eslintrc*` or `eslint.config.*` exists → create/verify `.eslintignore`
+   - Check if `.prettierrc*` exists → create/verify `.prettierignore`
+   - Check if `.npmrc` or `package.json` exists → create/verify `.npmignore` (if publishing)
+   - Check if terraform files (`*.tf`) exist → create/verify `.terraformignore`
+   - Check if `.helmignore` needed (helm charts present) → create/verify `.helmignore`
 
-   - Check if Dockerfile* exists or Docker in plan.md → create/verify .dockerignore
-   - Check if .eslintrc*or eslint.config.* exists → create/verify .eslintignore
-   - Check if .prettierrc* exists → create/verify .prettierignore
-   - Check if .npmrc or package.json exists → create/verify .npmignore (if publishing)
-   - Check if terraform files (*.tf) exist → create/verify .terraformignore
-   - Check if .helmignore needed (helm charts present) → create/verify .helmignore
-
-   **If ignore file already exists**: Verify it contains essential patterns, append missing critical patterns only
-   **If ignore file missing**: Create with full pattern set for detected technology
+   **If ignore file already exists**: Verify it contains essential patterns; append only missing critical patterns
+   **If ignore file is missing**: Create with full pattern set for detected technology
 
    **Common Patterns by Technology** (from plan.md tech stack):
    - **Node.js/JavaScript/TypeScript**: `node_modules/`, `dist/`, `build/`, `*.log`, `.env*`
@@ -82,6 +80,10 @@ You **MUST** consider the user input before proceeding (if not empty).
    - **Ruby**: `.bundle/`, `log/`, `tmp/`, `*.gem`, `vendor/bundle/`
    - **PHP**: `vendor/`, `*.log`, `*.cache`, `*.env`
    - **Rust**: `target/`, `debug/`, `release/`, `*.rs.bk`, `*.rlib`, `*.prof*`, `.idea/`, `*.log`, `.env*`
+
+   **VCS-Specific Ignore Files**:
+   - **Jujutsu (preferred)**: `.jjignore` with the same patterns you would put in `.gitignore` for this project
+   - **Git (fallback)**: `.gitignore` (only if a Git repo is present and jj is not)
    - **Kotlin**: `build/`, `out/`, `.gradle/`, `.idea/`, `*.class`, `*.jar`, `*.iml`, `*.log`, `.env*`
    - **C++**: `build/`, `bin/`, `obj/`, `out/`, `*.o`, `*.so`, `*.a`, `*.exe`, `*.dll`, `.idea/`, `*.log`, `.env*`
    - **C**: `build/`, `bin/`, `obj/`, `out/`, `*.o`, `*.a`, `*.so`, `*.exe`, `Makefile`, `config.log`, `.idea/`, `*.log`, `.env*`
