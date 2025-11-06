@@ -1,6 +1,7 @@
 use axum::{routing::get, Json, Router};
 use messaging_core::Config;
 use serde::Serialize;
+use std::future::Future;
 use std::{net::SocketAddr, sync::Arc};
 use tokio::net::TcpListener;
 
@@ -39,6 +40,40 @@ pub async fn run_server(
     let handle = tokio::spawn(async move {
         if let Err(e) = server.await {
             eprintln!("server error: {e}");
+        }
+    });
+    Ok((handle, local_addr))
+}
+
+pub async fn run_server_with_shutdown<F>(
+    config: Arc<Config>,
+    shutdown: F,
+) -> Result<(tokio::task::JoinHandle<()>, SocketAddr), String>
+where
+    F: Future<Output = ()> + Send + 'static,
+{
+    let router = build_router(&config.health_path);
+
+    let bind_addr: SocketAddr = ([0, 0, 0, 0], config.port).into();
+    let listener = TcpListener::bind(bind_addr)
+        .await
+        .map_err(|e| format!("failed to bind: {e}"))?;
+    let local_addr = listener
+        .local_addr()
+        .map_err(|e| format!("failed to read local addr: {e}"))?;
+
+    tracing::info!(target: "server", event = "startup", %local_addr, health_path = %config.health_path, "listening");
+
+    let server = axum::serve(listener, router.into_make_service()).with_graceful_shutdown(shutdown);
+
+    let handle = tokio::spawn(async move {
+        match server.await {
+            Ok(()) => {
+                tracing::info!(target: "server", event = "shutdown", "server shutdown complete");
+            }
+            Err(e) => {
+                eprintln!("server error: {e}");
+            }
         }
     });
     Ok((handle, local_addr))

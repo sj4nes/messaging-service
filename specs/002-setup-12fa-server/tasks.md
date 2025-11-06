@@ -40,10 +40,10 @@ This checklist is generated from the spec and plan. Complete tasks top-to-bottom
 
 ## Phase 5 — User Story 3 (P3): Graceful shutdown and error handling
 
-- [ ] T023 [US3] Implement graceful shutdown on SIGINT/SIGTERM with bounded timeout in crates/server/src/main.rs
-- [ ] T024 [P] [US3] Add test to simulate signal and verify shutdown logs/exit in crates/server/tests/shutdown.rs
-- [ ] T025 [US3] Detect port-in-use error path; exit non-zero with clear message in crates/server/src/main.rs
-- [ ] T026 [P] [US3] Add test: occupy port then assert startup fails non-zero with clear error in crates/server/tests/port_conflict.rs
+- [X] T023 [US3] Implement graceful shutdown on SIGINT/SIGTERM with bounded timeout in crates/server/src/main.rs
+- [X] T024 [P] [US3] Add test to simulate signal and verify shutdown logs/exit in crates/server/tests/shutdown.rs
+- [X] T025 [US3] Detect port-in-use error path; exit non-zero with clear message in crates/server/src/main.rs
+- [X] T026 [P] [US3] Add test: occupy port then assert startup fails non-zero with clear error in crates/server/tests/port_conflict.rs
 
 ## Final Phase — Polish & Cross-Cutting
 

@@ -1,0 +1,27 @@
+# Ignore patterns for Jujutsu (jj)
+
+# Universal
+.DS_Store
+Thumbs.db
+*.tmp
+*.swp
+*.log
+.vscode/
+.idea/
+
+# Environment files
+.env
+.env.*
+
+# Rust / Cargo
+target/
+debug/
+release/
+*.rs.bk
+*.rlib
+*.prof*
+
+# Node, Python, etc. (future-proof)
+node_modules/
+__pycache__/
+*.pyc

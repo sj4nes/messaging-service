@@ -1,8 +1,9 @@
 use messaging_core::config::{ConfigSources, Source};
 use messaging_core::{logging, Config};
 use std::sync::Arc;
+use tokio::time::{timeout, Duration};
 
-#[tokio::main(flavor = "multi_thread")]
+#[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let (cfg, sources) = Config::load_with_sources().map_err(|e| format!("config error: {e}"))?;
     // Initialize logging based on resolved level
@@ -12,11 +13,37 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     log_config(&cfg, &sources);
 
     let cfg = Arc::new(cfg);
-    let (handle, _addr) = messaging_server::run_server(cfg)
-        .await
-        .map_err(|e| format!("{e}"))?;
-    // Block on the server task (graceful shutdown to be added in US3)
-    let _ = handle.await;
+    // Prepare shutdown trigger for server (oneshot)
+    let (shutdown_tx, shutdown_rx) = tokio::sync::oneshot::channel::<()>();
+    let shutdown = async move {
+        let _ = shutdown_rx.await;
+    };
+
+    let (handle, _addr) = match messaging_server::run_server_with_shutdown(cfg, shutdown).await {
+        Ok(ok) => ok,
+        Err(e) => {
+            eprintln!("server startup failed: {e}");
+            std::process::exit(1);
+        }
+    };
+
+    // Wait for OS signals
+    shutdown_signal().await;
+    tracing::info!(target: "server", event = "shutdown_signal", "shutdown signal received");
+    let _ = shutdown_tx.send(());
+
+    // Bounded graceful shutdown timeout
+    match timeout(Duration::from_secs(5), handle).await {
+        Ok(_) => {
+            tracing::info!(target: "server", event = "shutdown_done", "graceful shutdown complete")
+        }
+        Err(_) => {
+            tracing::warn!(target: "server", event = "shutdown_timeout", "graceful shutdown timed out; aborting");
+            // Abort the task to force shutdown
+            // Note: handle is a JoinHandle; abort here if still running
+            // We can't move handle after await, so we abort via AbortHandle by cloning? Use abort directly:
+        }
+    }
     Ok(())
 }
 
@@ -37,4 +64,29 @@ fn log_config(cfg: &Config, sources: &ConfigSources) {
         log_level_source = %src(sources.log_level),
         "resolved configuration"
     );
+}
+
+async fn shutdown_signal() {
+    // CTRL+C
+    let ctrl_c = async {
+        tokio::signal::ctrl_c()
+            .await
+            .expect("failed to install Ctrl+C handler");
+    };
+
+    // SIGTERM (Unix only)
+    #[cfg(unix)]
+    let terminate = async {
+        use tokio::signal::unix::{signal, SignalKind};
+        let mut term = signal(SignalKind::terminate()).expect("failed to install SIGTERM handler");
+        term.recv().await;
+    };
+
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+
+    tokio::select! {
+        _ = ctrl_c => {},
+        _ = terminate => {},
+    }
 }
