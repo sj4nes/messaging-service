@@ -12,6 +12,7 @@ help:
 	@echo "  setup    - Set up the project environment and start database"
 	@echo "  run      - Run the application"
 	@echo "  run-server - Run the Rust server binary (messaging-server)"
+	@echo "  dev      - Run server with auto-reload if cargo-watch is available"
 	@echo "  test     - Run tests"
 	@echo "  clean    - Clean up temporary files and stop containers"
 	@echo "  db-up    - Start the PostgreSQL database"
@@ -46,6 +47,17 @@ run:
 run-server:
 	@echo "Running messaging-server..."
 	@PORT=$${PORT:-8080} cargo run -p messaging-server
+
+.PHONY: dev
+dev:
+	@echo "Starting messaging-server in watch mode (if cargo-watch is installed)..."
+	@if command -v cargo-watch >/dev/null 2>&1; then \
+		PORT=$${PORT:-8080} cargo watch -x 'run -p messaging-server'; \
+	else \
+		echo "cargo-watch not found. Install with: cargo install cargo-watch"; \
+		echo "Falling back to normal run (no auto-reload)..."; \
+		PORT=$${PORT:-8080} cargo run -p messaging-server; \
+	fi
 
 .PHONY: lint
 lint:

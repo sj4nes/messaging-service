@@ -72,11 +72,11 @@ Independent Test: GET messages by id; verify 200 and paging; 404 on unknown id.
 
 ## Final Phase — Polish & Cross-Cutting
 
-- [ ] T037 Add consistent error responses (code, message, details) in crates/server/src/errors.rs
+- [X] T037 Add consistent error responses (code, message, details) in crates/server/src/errors.rs
 - [ ] T038 Add structured logging with correlation IDs and redaction in crates/server/src/observability/logging.rs
 - [ ] T039 Expose minimal metrics (counts, rates, throttles, breaker state) in crates/server/src/observability/metrics.rs
 - [ ] T040 Add configuration for limits and breaker windows in config files (e.g., crates/server/config/default.toml)
-- [ ] T041 Add Makefile targets for running server plus watch/test in Makefile
+- [X] T041 Add Makefile targets for running server plus watch/test in Makefile
 - [ ] T042 Wire task to update agent context after design in .specify/scripts/bash/update-agent-context.sh
 
 ## Dependencies
