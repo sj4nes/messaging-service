@@ -8,6 +8,7 @@ help:
 	@echo "Available commands:"
 	@echo "  setup    - Set up the project environment and start database"
 	@echo "  run      - Run the application"
+	@echo "  run-server - Run the Rust server binary (messaging-server)"
 	@echo "  test     - Run tests"
 	@echo "  clean    - Clean up temporary files and stop containers"
 	@echo "  db-up    - Start the PostgreSQL database"
@@ -28,6 +29,10 @@ setup: build
 run:
 	@echo "Running the application..."
 	@./bin/start.sh
+
+run-server:
+	@echo "Running messaging-server..."
+	@PORT=$${PORT:-8080} cargo run -p messaging-server
 
 test:
 	@echo "Running tests..."

@@ -4,13 +4,13 @@ This checklist is generated from the spec and plan. Complete tasks top-to-bottom
 
 ## Phase 1 — Setup (project initialization)
 
-- [ ] T001 Create Cargo workspace root Cargo.toml with [workspace] members at repository root
-- [ ] T002 Create crates/core/Cargo.toml and crates/core/src/lib.rs (library crate scaffold)
-- [ ] T003 Create crates/server/Cargo.toml and crates/server/src/main.rs (binary crate scaffold)
-- [ ] T004 Create crates/admin/Cargo.toml and crates/admin/src/main.rs (binary crate scaffold)
-- [ ] T005 [P] Add .env.example at repository root documenting PORT, HEALTH_PATH, LOG_LEVEL
-- [ ] T006 [P] Update Makefile with run targets (server) and lint-shell consolidation
-- [ ] T007 [P] Add contracts reference in README.md and link to specs/002-setup-12fa-server/contracts/openapi.yaml
+- [X] T001 Create Cargo workspace root Cargo.toml with [workspace] members at repository root
+- [X] T002 Create crates/core/Cargo.toml and crates/core/src/lib.rs (library crate scaffold)
+- [X] T003 Create crates/server/Cargo.toml and crates/server/src/main.rs (binary crate scaffold)
+- [X] T004 Create crates/admin/Cargo.toml and crates/admin/src/main.rs (binary crate scaffold)
+- [X] T005 [P] Add .env.example at repository root documenting PORT, HEALTH_PATH, LOG_LEVEL
+- [X] T006 [P] Update Makefile with run targets (server) and lint-shell consolidation
+- [X] T007 [P] Add contracts reference in README.md and link to specs/002-setup-12fa-server/contracts/openapi.yaml
 
 ## Phase 2 — Foundational (blocking prerequisites)
 

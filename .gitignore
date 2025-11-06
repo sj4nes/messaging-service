@@ -9,3 +9,11 @@ Thumbs.db
 .idea/
 # Environment files
 .env*
+
+# Rust / Cargo
+target/
+debug/
+release/
+*.rs.bk
+*.rlib
+*.prof*
