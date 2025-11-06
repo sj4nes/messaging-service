@@ -1,4 +1,6 @@
 use serde::{Deserialize, Serialize};
+use std::fs;
+use std::path::Path;
 
 /// API-specific configuration overlays (rates, sizes, breaker thresholds)
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -27,5 +29,62 @@ impl Default for ApiConfig {
             breaker_error_threshold: 20,
             breaker_open_secs: 30,
         }
+    }
+}
+
+impl ApiConfig {
+    /// Load configuration from default.toml file and environment overrides (API_* vars).
+    pub fn load() -> Self {
+        // Allow specifying a custom config file via env
+        if let Ok(path) = std::env::var("API_CONFIG_FILE") {
+            let file_cfg = Self::from_file(path);
+            return Self::apply_env_overrides(file_cfg);
+        }
+        let file_cfg = Self::from_file("crates/server/config/default.toml");
+        Self::apply_env_overrides(file_cfg)
+    }
+
+    fn from_file<P: AsRef<Path>>(path: P) -> Self {
+        let p = path.as_ref();
+        match fs::read_to_string(p) {
+            Ok(contents) => toml::from_str::<ApiConfig>(&contents).unwrap_or_else(|e| {
+                tracing::warn!(target="server", path=%p.display(), error=%e, "Failed to parse default.toml; using built-in defaults");
+                ApiConfig::default()
+            }),
+            Err(_) => {
+                tracing::debug!(target="server", path=%p.display(), "default.toml not found; using built-in defaults");
+                ApiConfig::default()
+            }
+        }
+    }
+
+    fn apply_env_overrides(mut cfg: Self) -> Self {
+        // Helper macro to parse unsigned integers
+        macro_rules! override_u {
+            ($field:ident, $env:literal, $ty:ty) => {
+                if let Ok(val) = std::env::var($env) {
+                    if let Ok(parsed) = val.parse::<$ty>() {
+                        cfg.$field = parsed as _;
+                    } else {
+                        tracing::warn!(target="server", key=$env, value=%val, "Invalid numeric env override");
+                    }
+                }
+            };
+        }
+        override_u!(max_body_bytes, "API_MAX_BODY_BYTES", usize);
+        override_u!(max_attachments, "API_MAX_ATTACHMENTS", u32);
+        override_u!(
+            rate_limit_per_ip_per_min,
+            "API_RATE_LIMIT_PER_IP_PER_MIN",
+            u32
+        );
+        override_u!(
+            rate_limit_per_sender_per_min,
+            "API_RATE_LIMIT_PER_SENDER_PER_MIN",
+            u32
+        );
+        override_u!(breaker_error_threshold, "API_BREAKER_ERROR_THRESHOLD", u32);
+        override_u!(breaker_open_secs, "API_BREAKER_OPEN_SECS", u64);
+        cfg
     }
 }

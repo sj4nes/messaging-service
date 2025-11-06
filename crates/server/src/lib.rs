@@ -14,6 +14,7 @@ use tokio::net::TcpListener;
 // Expose internal modules for middleware and types so they can be wired in later phases
 pub mod config;
 pub mod errors;
+pub mod metrics;
 pub mod types;
 pub mod middleware {
     pub mod accept;
@@ -61,6 +62,7 @@ fn build_router(health_path: &str, state: AppState) -> Router {
     let path = health_path.to_string();
     Router::new()
         .route(&path, get(health_handler))
+        .route("/metrics", get(metrics_handler))
         // API routes expected by bin/test.sh (no version prefix)
         .route(
             "/api/messages/sms",
@@ -112,6 +114,10 @@ async fn health_handler() -> Json<Health> {
     Json(Health { status: "ok" })
 }
 
+async fn metrics_handler() -> Json<crate::metrics::MetricsSnapshot> {
+    Json(crate::metrics::snapshot())
+}
+
 pub async fn run_server(
     config: Arc<Config>,
 ) -> Result<(tokio::task::JoinHandle<()>, SocketAddr), String> {
@@ -123,7 +129,7 @@ pub async fn run_server(
             // TODO: persist/dispatch
         }
     });
-    let api_cfg = ApiConfig::default();
+    let api_cfg = ApiConfig::load();
     let state = AppState {
         rate: RateLimiter::new(
             api_cfg.rate_limit_per_ip_per_min,
@@ -171,7 +177,7 @@ where
             // TODO: persist/dispatch
         }
     });
-    let api_cfg = ApiConfig::default();
+    let api_cfg = ApiConfig::load();
     let state = AppState {
         rate: RateLimiter::new(
             api_cfg.rate_limit_per_ip_per_min,
@@ -243,6 +249,7 @@ async fn rate_limit_ip_layer(
     if matches!(req.method().as_str(), "POST" | "PUT" | "PATCH" | "GET") {
         let ip = client_ip_from_headers(&req);
         if !state.rate.allow_ip(&ip) {
+            crate::metrics::record_rate_limited();
             let (status, body) = crate::errors::too_many_requests("Too many requests from IP");
             let mut resp = (status, body).into_response();
             resp.headers_mut().insert(
@@ -261,6 +268,7 @@ async fn circuit_breaker_layer(
     next: Next,
 ) -> Response {
     if state.breaker.before_request() == BreakerState::Open {
+        crate::metrics::record_breaker_open();
         let (status, body) = crate::errors::service_unavailable("Temporarily unavailable");
         let mut resp = (status, body).into_response();
         let secs = state.breaker.recovery_timeout.as_secs().to_string();

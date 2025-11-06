@@ -178,3 +178,55 @@ This repo includes a small utility `db-migrate` to manage SQLx migrations:
     - `make migrate-status-client`
 
 CI tip: set `SQLX_OFFLINE=true` to build without a live database connection when using SQLx elsewhere. Local development can remain online.
+
+## Observability
+
+Request logging emits: method, path, status, duration_us, client_ip (from `X-Forwarded-For` / `X-Real-IP`), correlation_id (`X-Request-Id` propagated or generated), header_count, and names of sensitive headers (values redacted).
+
+Minimal in-process metrics at `GET /metrics` return JSON counters:
+
+```json
+{
+    "ts_unix_ms": 0,
+    "rate_limited": 0,
+    "breaker_open": 0
+}
+```
+
+## Tests
+
+Run HTTP tests:
+
+```bash
+bin/test.sh
+```
+
+Harness loads cases from `tests/http/tests.json` (validated by `jq`) or falls back to arrays if `jq` is missing.
+
+## Configuration
+
+Core config (port, health path, log level) via env/.env (`crates/core/src/config.rs`). API tunables (body size, rate limits, breaker thresholds) defaulted in `crates/server/src/config.rs`; future work will allow overriding via file/env.
+ 
+### API configuration (T040)
+
+The server loads API-specific limits from `crates/server/config/default.toml` and applies environment overrides. You can point to a different file with `API_CONFIG_FILE`.
+
+Environment overrides (all numbers):
+
+- `API_MAX_BODY_BYTES`
+- `API_MAX_ATTACHMENTS`
+- `API_RATE_LIMIT_PER_IP_PER_MIN`
+- `API_RATE_LIMIT_PER_SENDER_PER_MIN`
+- `API_BREAKER_ERROR_THRESHOLD`
+- `API_BREAKER_OPEN_SECS`
+
+Default file example:
+
+```toml
+max_body_bytes = 262144
+max_attachments = 8
+rate_limit_per_ip_per_min = 120
+rate_limit_per_sender_per_min = 60
+breaker_error_threshold = 20
+breaker_open_secs = 30
+```

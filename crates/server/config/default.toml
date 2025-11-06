@@ -1,0 +1,10 @@
+# Default API configuration (T040)
+# Values can be overridden by environment variables prefixed with API_
+# e.g. API_MAX_BODY_BYTES=524288
+
+max_body_bytes = 262144            # 256 KiB
+max_attachments = 8
+rate_limit_per_ip_per_min = 120
+rate_limit_per_sender_per_min = 60
+breaker_error_threshold = 20
+breaker_open_secs = 30
