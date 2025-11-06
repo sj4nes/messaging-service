@@ -1,5 +1,6 @@
-//! Core shared library: configuration, logging, and test helpers will live here.
+//! Core shared library: configuration, logging, and test helpers live here.
 
-// Placeholders for upcoming modules in Phase 2
-// pub mod config;
-// pub mod logging;
+pub mod config;
+pub mod logging;
+
+pub use config::Config;

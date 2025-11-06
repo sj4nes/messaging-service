@@ -5,3 +5,11 @@ edition = "2021"
 
 [lib]
 path = "src/lib.rs"
+
+[dependencies]
+dotenvy = "0.15.7"
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.20", features = ["fmt", "env-filter"] }
+
+[dev-dependencies]
+rstest = "0.26.1"

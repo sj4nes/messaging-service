@@ -14,11 +14,12 @@ This checklist is generated from the spec and plan. Complete tasks top-to-bottom
 
 ## Phase 2 — Foundational (blocking prerequisites)
 
-- [ ] T008 Implement configuration module in crates/core/src/config.rs (env + dotenvy precedence, defaults)
-- [ ] T009 Implement logging init in crates/core/src/logging.rs using tracing + tracing-subscriber
-- [ ] T010 [P] Expose core prelude in crates/core/src/lib.rs (pub use config, logging)
-- [ ] T011 [P] Add unit tests for config defaults/validation in crates/core/src/config.rs (rstest)
-- [ ] T012 [P] Add unit tests for logging init level handling in crates/core/src/logging.rs (rstest)
+- [X] T008 Implement configuration module in crates/core/src/config.rs (env + dotenvy precedence, defaults)
+- [X] T009 Implement logging init in crates/core/src/logging.rs using tracing + tracing-subscriber
+- [X] T010 [P] Expose core prelude in crates/core/src/lib.rs (pub use config, logging)
+- [X] T011 [P] Add unit tests for config defaults/validation in crates/core/src/config.rs (rstest)
+- [X] T012 [P] Add unit tests for logging init level handling in crates/core/src/logging.rs (rstest)
+
 
 ## Phase 3 — User Story 1 (P1): Start service and verify health
 
