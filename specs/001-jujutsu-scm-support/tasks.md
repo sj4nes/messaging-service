@@ -22,10 +22,10 @@ description: "Task list for Jujutsu SCM support"
 
 **Purpose**: Initialize shared helpers and developer ergonomics
 
-- [ ] T001 Create VCS helper section in .specify/scripts/bash/common.sh (header comments + TODO markers)
-- [ ] T002 [P] Add helper function stubs in .specify/scripts/bash/common.sh: has_jj, current_vcs, create_feature_marker, list_feature_markers
-- [ ] T003 Document JJ-first policy in specs/001-jujutsu-scm-support/quickstart.md (link from README.md)
-- [ ] T004 [P] Add Makefile target `lint-shell` to run shellcheck on .specify/scripts/bash/*.sh (optional local lint; CI integration deferred)
+- [x] T001 Create VCS helper section in .specify/scripts/bash/common.sh (header comments + TODO markers)
+- [x] T002 [P] Add helper function stubs in .specify/scripts/bash/common.sh: has_jj, current_vcs, create_feature_marker, list_feature_markers
+- [x] T003 Document JJ-first policy in specs/001-jujutsu-scm-support/quickstart.md (link from README.md)
+- [x] T004 [P] Add Makefile target `lint-shell` to run shellcheck on .specify/scripts/bash/*.sh (optional local lint; CI integration deferred)
 
 ---
 
@@ -33,15 +33,15 @@ description: "Task list for Jujutsu SCM support"
 
 **Purpose**: Core abstractions that MUST be complete before ANY user story can be implemented
 
-- [ ] T005 Implement has_jj() in .specify/scripts/bash/common.sh to detect $REPO_ROOT/.jj
-- [ ] T006 [P] Implement current_vcs() in .specify/scripts/bash/common.sh to return `jj` if has_jj else `git`
-- [ ] T007 [P] Implement list_feature_markers() in .specify/scripts/bash/common.sh
+- [x] T005 Implement has_jj() in .specify/scripts/bash/common.sh to detect $REPO_ROOT/.jj
+- [x] T006 [P] Implement current_vcs() in .specify/scripts/bash/common.sh to return `jj` if has_jj else `git`
+- [x] T007 [P] Implement list_feature_markers() in .specify/scripts/bash/common.sh
       - JJ: parse `jj bookmark list` to collect names matching ^[0-9]{3}-<short-name>$
       - Git: reuse existing branch discovery
-- [ ] T008 Implement create_feature_marker() in .specify/scripts/bash/common.sh
+- [x] T008 Implement create_feature_marker() in .specify/scripts/bash/common.sh
       - JJ: `jj bookmark create "${name}" -r @`
       - Git: `git checkout -b "${name}"`
-- [ ] T009 Relax branch validation in .specify/scripts/bash/common.sh:check_feature_branch()
+- [x] T009 Relax branch validation in .specify/scripts/bash/common.sh:check_feature_branch()
       - If JJ detected (has_jj true), skip Git branch name enforcement even if .git exists
 
 **Checkpoint**: Foundation ready – user story implementation can now begin in parallel
@@ -56,11 +56,11 @@ description: "Task list for Jujutsu SCM support"
 
 ### Implementation for User Story 1
 
-- [ ] T010 [US1] Update .specify/scripts/bash/create-new-feature.sh to use current_vcs() and list_feature_markers()
-- [ ] T011 [P] [US1] In JJ mode, compute next number from union of JJ bookmarks and specs/ directories (exact short-name match)
-- [ ] T012 [US1] In JJ mode, create JJ bookmark via create_feature_marker() and skip all Git commands
-- [ ] T013 [US1] Ensure JSON output remains: BRANCH_NAME, SPEC_FILE, FEATURE_NUM; treat bookmark name as branch name in outputs
-- [ ] T014 [P] [US1] Update user-facing messages to reference "bookmark" instead of "branch" when in JJ mode
+- [x] T010 [US1] Update .specify/scripts/bash/create-new-feature.sh to use current_vcs() and list_feature_markers()
+- [x] T011 [P] [US1] In JJ mode, compute next number from union of JJ bookmarks and specs/ directories (exact short-name match)
+- [x] T012 [US1] In JJ mode, create JJ bookmark via create_feature_marker() and skip all Git commands
+- [x] T013 [US1] Ensure JSON output remains: BRANCH_NAME, SPEC_FILE, FEATURE_NUM; treat bookmark name as branch name in outputs
+- [x] T014 [P] [US1] Update user-facing messages to reference "bookmark" instead of "branch" when in JJ mode
 
 **Checkpoint**: User Story 1 independently delivers JJ-first feature creation
 
@@ -74,10 +74,10 @@ description: "Task list for Jujutsu SCM support"
 
 ### Implementation for User Story 2
 
-- [ ] T015 [US2] Extend create-new-feature.sh to guard against overwriting existing bookmark/dir; always select max(N)+1
-- [ ] T016 [P] [US2] Add strict regex validation for names: ^[0-9]{3}-[a-z0-9]+(-[a-z0-9]+)*$
-- [ ] T017 [US2] Align spec dir creation to avoid collisions (mkdir -p and fail if path exists); present clear message with next suggestion
-- [ ] T018 [P] [US2] Add informative logging on numbering sources (bookmarks vs specs) to aid debugging
+- [x] T015 [US2] Extend create-new-feature.sh to guard against overwriting existing bookmark/dir; always select max(N)+1
+- [x] T016 [P] [US2] Add strict regex validation for names: ^[0-9]{3}-[a-z0-9]+(-[a-z0-9]+)*$
+- [x] T017 [US2] Align spec dir creation to avoid collisions (mkdir -p and fail if path exists); present clear message with next suggestion
+- [x] T018 [P] [US2] Add informative logging on numbering sources (bookmarks vs specs) to aid debugging
 
 **Checkpoint**: User Story 2 independently validates numbering across repeated short-names
 
@@ -91,9 +91,9 @@ description: "Task list for Jujutsu SCM support"
 
 ### Implementation for User Story 3
 
-- [ ] T019 [US3] Verify Git path in create-new-feature.sh remains unchanged and covered by current_vcs()
-- [ ] T020 [P] [US3] Ensure setup-plan.sh + common.sh branch checks allow SPECIFY_FEATURE and Git-only workflows
-- [ ] T021 [US3] Confirm update-agent-context.sh and check-prerequisites.sh resolve feature from SPECIFY_FEATURE or specs dir without JJ requirements
+- [x] T019 [US3] Verify Git path in create-new-feature.sh remains unchanged and covered by current_vcs()
+- [x] T020 [P] [US3] Ensure setup-plan.sh + common.sh branch checks allow SPECIFY_FEATURE and Git-only workflows
+- [x] T021 [US3] Confirm update-agent-context.sh and check-prerequisites.sh resolve feature from SPECIFY_FEATURE or specs dir without JJ requirements
 
 **Checkpoint**: User Story 3 confirms no regressions in Git-only workflows
 

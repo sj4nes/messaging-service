@@ -71,7 +71,7 @@ fi
 find_repo_root() {
     local dir="$1"
     while [ "$dir" != "/" ]; do
-        if [ -d "$dir/.git" ] || [ -d "$dir/.specify" ]; then
+        if [ -d "$dir/.git" ] || [ -d "$dir/.specify" ] || [ -d "$dir/.jj" ]; then
             echo "$dir"
             return 0
         fi
@@ -111,22 +111,29 @@ check_existing_branches() {
     echo $((max_num + 1))
 }
 
-# Resolve repository root. Prefer git information when available, but fall back
-# to searching for repository markers so the workflow still functions in repositories that
-# were initialised with --no-git.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-if git rev-parse --show-toplevel >/dev/null 2>&1; then
+# Source common helpers
+if [ -f "$SCRIPT_DIR/common.sh" ]; then
+    # shellcheck source=/dev/null
+    . "$SCRIPT_DIR/common.sh"
+fi
+
+# Resolve repository root using helper (prefers git if present, else script path)
+if command -v git >/dev/null 2>&1 && git rev-parse --show-toplevel >/dev/null 2>&1; then
     REPO_ROOT=$(git rev-parse --show-toplevel)
     HAS_GIT=true
 else
     REPO_ROOT="$(find_repo_root "$SCRIPT_DIR")"
     if [ -z "$REPO_ROOT" ]; then
-        echo "Error: Could not determine repository root. Please run this script from within the repository." >&2
-        exit 1
+            echo "Error: Could not determine repository root. Please run this script from within the repository." >&2
+            exit 1
     fi
     HAS_GIT=false
 fi
+
+HAS_JJ=false
+if [ -d "$REPO_ROOT/.jj" ]; then HAS_JJ=true; fi
 
 cd "$REPO_ROOT"
 
@@ -189,25 +196,36 @@ else
     BRANCH_SUFFIX=$(generate_branch_name "$FEATURE_DESCRIPTION")
 fi
 
+get_next_number_for_short_name() {
+    local short_name="$1"
+    local max_num=0
+
+    # JJ bookmarks
+    if [ "$HAS_JJ" = true ]; then
+        if jj bookmark list -T '{name}\n' >/dev/null 2>&1; then
+            jj bookmark list -T '{name}\n' 2>/dev/null | grep -E "^[0-9]+-${short_name}$" | sed 's/-.*//' | sort -n | tail -1 | { read -r n || true; echo "${n:-0}"; }
+        else
+            jj bookmark list 2>/dev/null | awk '{print $1}' | grep -E "^[0-9]+-${short_name}$" | sed 's/-.*//' | sort -n | tail -1 | { read -r n || true; echo "${n:-0}"; }
+        fi | { read -r n || true; [ -n "$n" ] && max_num=$n; }
+    fi
+
+    # Git branches (remote + local)
+    if [ "$HAS_GIT" = true ]; then
+        git ls-remote --heads origin 2>/dev/null | grep -E "refs/heads/[0-9]+-${short_name}$" | sed 's#.*/##' | sed 's/-.*//' | sort -n | tail -1 | { read -r n || true; [ -n "$n" ] && [ "$n" -gt "$max_num" ] && max_num=$n; }
+        git branch 2>/dev/null | sed 's/^[* ]*//' | grep -E "^[0-9]+-${short_name}$" | sed 's/-.*//' | sort -n | tail -1 | { read -r n || true; [ -n "$n" ] && [ "$n" -gt "$max_num" ] && max_num=$n; }
+    fi
+
+    # specs directories
+    if [ -d "$SPECS_DIR" ]; then
+        find "$SPECS_DIR" -maxdepth 1 -type d -name "[0-9][0-9][0-9]-${short_name}" -exec basename {} \; | sed 's/-.*//' | sort -n | tail -1 | { read -r n || true; [ -n "$n" ] && [ "$n" -gt "$max_num" ] && max_num=$n; }
+    fi
+
+    echo $((max_num + 1))
+}
+
 # Determine branch number
 if [ -z "$BRANCH_NUMBER" ]; then
-    if [ "$HAS_GIT" = true ]; then
-        # Check existing branches on remotes
-        BRANCH_NUMBER=$(check_existing_branches "$BRANCH_SUFFIX")
-    else
-        # Fall back to local directory check
-        HIGHEST=0
-        if [ -d "$SPECS_DIR" ]; then
-            for dir in "$SPECS_DIR"/*; do
-                [ -d "$dir" ] || continue
-                dirname=$(basename "$dir")
-                number=$(echo "$dirname" | grep -o '^[0-9]\+' || echo "0")
-                number=$((10#$number))
-                if [ "$number" -gt "$HIGHEST" ]; then HIGHEST=$number; fi
-            done
-        fi
-        BRANCH_NUMBER=$((HIGHEST + 1))
-    fi
+    BRANCH_NUMBER=$(get_next_number_for_short_name "$BRANCH_SUFFIX")
 fi
 
 FEATURE_NUM=$(printf "%03d" "$BRANCH_NUMBER")
@@ -234,10 +252,30 @@ if [ ${#BRANCH_NAME} -gt $MAX_BRANCH_LENGTH ]; then
     >&2 echo "[specify] Truncated to: $BRANCH_NAME (${#BRANCH_NAME} bytes)"
 fi
 
-if [ "$HAS_GIT" = true ]; then
+# Validate final name format strictly (NNN-short-name)
+if ! echo "$BRANCH_NAME" | grep -Eq '^[0-9]{3}-[a-z0-9]+(-[a-z0-9]+)*$'; then
+    >&2 echo "[specify] ERROR: Generated feature name '$BRANCH_NAME' is invalid. Expected 'NNN-short-name' with lowercase alphanumerics and hyphens."
+    exit 1
+fi
+
+# Debug/log numbering sources (stderr) when not JSON
+if ! $JSON_MODE; then
+    >&2 echo "[specify] Using VCS: $([ "$HAS_JJ" = true ] && echo JJ || echo ${HAS_GIT:+Git})"
+    >&2 echo "[specify] Selected feature number: $FEATURE_NUM for short-name: $BRANCH_SUFFIX"
+fi
+
+# Create feature marker (JJ bookmark or Git branch)
+if [ "$HAS_JJ" = true ]; then
+    if ! jj bookmark list -T '{name}\n' 2>/dev/null | grep -q "^${BRANCH_NAME}$"; then
+        jj bookmark create "$BRANCH_NAME" -r @
+        echo "[specify] Created JJ bookmark: $BRANCH_NAME at @" >&2
+    else
+        echo "[specify] Info: JJ bookmark already exists: $BRANCH_NAME" >&2
+    fi
+elif [ "$HAS_GIT" = true ]; then
     git checkout -b "$BRANCH_NAME"
 else
-    >&2 echo "[specify] Warning: Git repository not detected; skipped branch creation for $BRANCH_NAME"
+    >&2 echo "[specify] Warning: No VCS detected; skipped marker creation for $BRANCH_NAME"
 fi
 
 FEATURE_DIR="$SPECS_DIR/$BRANCH_NAME"

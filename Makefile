@@ -15,6 +15,7 @@ help:
 	@echo "  db-logs  - Show database logs"
 	@echo "  db-shell - Connect to the database shell"
 	@echo "  help     - Show this help message"
+	@echo "  lint-shell - Lint bash scripts under .specify/scripts/bash with shellcheck"
 
 setup: build
 	@echo "Setting up the project..."
@@ -57,3 +58,8 @@ db-logs:
 db-shell:
 	@echo "Connecting to database shell..."
 	@docker-compose exec postgres psql -U messaging_user -d messaging_service
+
+.PHONY: lint-shell
+lint-shell:
+	@command -v shellcheck >/dev/null 2>&1 || { echo "shellcheck not found. Install via 'brew install shellcheck' or your package manager." >&2; exit 1; }
+	@shellcheck .specify/scripts/bash/*.sh

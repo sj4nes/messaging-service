@@ -122,6 +122,13 @@ This project structure is laid out for you already. You are welcome to move or c
 4. Run `make run` to start the application
 5. Run `make test` to run tests
 
+### Jujutsu (JJ) Support
+
+This repo supports Jujutsu (JJ) as a first-class VCS. If a `.jj/` directory is present,
+spec-kit scripts prefer JJ bookmarks over Git branches. See
+`specs/001-jujutsu-scm-support/quickstart.md` for details, numbering rules, and
+troubleshooting.
+
 ## Development
 
 - Use `docker-compose up -d` to start the PostgreSQL database

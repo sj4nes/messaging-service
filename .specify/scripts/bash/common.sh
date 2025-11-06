@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
 # Common functions and variables for all scripts
+#
+# VCS Helpers (JJ-first):
+# - has_git(): Detects git repo
+# - has_jj(): Detects jujutsu repo
+# - current_vcs(): Returns 'jj' if .jj/ exists, else 'git'
+# - list_feature_markers <short_name>: Lists markers named NNN-<short_name> (bookmarks in JJ, branches in Git)
+# - create_feature_marker <full_name>: Creates bookmark (JJ) at @ or branch (Git)
 
 # Get repository root, with fallback for non-git repositories
 get_repo_root() {
@@ -62,9 +69,69 @@ has_git() {
     git rev-parse --show-toplevel >/dev/null 2>&1
 }
 
+# Check if we have jujutsu available (by repo marker)
+has_jj() {
+    local repo_root=$(get_repo_root)
+    [[ -d "$repo_root/.jj" ]]
+}
+
+# Determine preferred VCS (JJ takes precedence if present)
+current_vcs() {
+    if has_jj; then
+        echo jj
+    else
+        echo git
+    fi
+}
+
+# List feature markers matching NNN-<short_name>
+# Outputs one name per line
+list_feature_markers() {
+    local short_name="$1"
+    local vcs=$(current_vcs)
+    local repo_root=$(get_repo_root)
+
+    if [[ -z "$short_name" ]]; then
+        return 0
+    fi
+
+    if [[ "$vcs" == "jj" ]]; then
+        # Prefer templated output; fallback to plain list
+        if jj bookmark list -T '{name}\n' >/dev/null 2>&1; then
+            jj bookmark list -T '{name}\n' 2>/dev/null | grep -E "^[0-9]+-${short_name}$" || true
+        else
+            jj bookmark list 2>/dev/null | awk '{print $1}' | grep -E "^[0-9]+-${short_name}$" || true
+        fi
+    else
+        # Git: combine remote and local branches
+        git ls-remote --heads origin 2>/dev/null | grep -E "refs/heads/[0-9]+-${short_name}$" | sed 's#.*/##' || true
+        git branch --list 2>/dev/null | sed 's/^[* ]*//' | grep -E "^[0-9]+-${short_name}$" || true
+    fi
+}
+
+# Create a feature marker (bookmark in JJ, branch in Git)
+create_feature_marker() {
+    local name="$1"
+    local vcs=$(current_vcs)
+    if [[ -z "$name" ]]; then
+        echo "[specify] ERROR: create_feature_marker requires a name" >&2
+        return 1
+    fi
+    if [[ "$vcs" == "jj" ]]; then
+        jj bookmark create "$name" -r @
+    else
+        git checkout -b "$name"
+    fi
+}
+
 check_feature_branch() {
     local branch="$1"
     local has_git_repo="$2"
+    # If JJ is present, treat bookmark as the branch and skip Git naming enforcement
+    if has_jj; then
+        echo "[specify] Info: Jujutsu repository detected; skipping Git branch validation" >&2
+        return 0
+    fi
 
     # For non-git repos, we can't enforce branch naming but still provide output
     if [[ "$has_git_repo" != "true" ]]; then

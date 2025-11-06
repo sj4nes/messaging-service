@@ -1,1 +1,11 @@
 .env
+# Universal ignores
+.DS_Store
+Thumbs.db
+*.tmp
+*.swp
+*.log
+.vscode/
+.idea/
+# Environment files
+.env*
