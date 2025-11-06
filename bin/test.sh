@@ -114,6 +114,45 @@ PASS_COUNT=0
 FAIL_COUNT=0
 
 if [ "$USE_JSON_TESTS" = true ]; then
+  # Validate tests file schema before running
+  validate_tests_schema() {
+    local errs
+    errs=$(jq -r '
+      def is_int: (type=="number" and .==floor);
+      def err($i;$f;$m): "Test[\($i)]: invalid \($f): \($m)";
+      if type!="array" then "Top-level JSON must be an array" else empty end,
+      to_entries[] as $e |
+      # name
+      ( $e.value.name | type ) as $t_name |
+      if $t_name != "string" then err($e.key;"name";"expected string") else empty end,
+      # method
+      ( $e.value.method // "" ) as $m |
+      if ($m|type)!="string" or (["GET","POST","PUT","PATCH","DELETE"] | index($m)) == null
+      then err($e.key;"method";"must be one of GET,POST,PUT,PATCH,DELETE") else empty end,
+      # path
+      ( $e.value.path // "" ) as $p |
+      if ($p|type)!="string" or ( $p | startswith("/") | not )
+      then err($e.key;"path";"must be a string starting with '/'") else empty end,
+      # headers
+      ( $e.value.headers // [] ) as $h |
+      if ($h|type)!="array" or ( [ $h[]? | type == "string" ] | all(.==true) | not )
+      then err($e.key;"headers";"must be an array of strings") else empty end,
+      # body
+      ( $e.value.body ) as $b |
+      if ($b!=null and ($b|type)!="object") then err($e.key;"body";"must be object or null") else empty end,
+      # expect
+      ( $e.value.expect ) as $x |
+      if ($x|type)!="number" or ($x|floor)!=$x or ($x<100 or $x>599)
+      then err($e.key;"expect";"must be integer HTTP code 100-599") else empty end
+    ' "$TESTS_FILE")
+    if [ -n "$errs" ]; then
+      echo "Test schema validation failed for $TESTS_FILE:" >&2
+      echo "$errs" >&2
+      exit 2
+    fi
+  }
+
+  validate_tests_schema
   TOTAL=$(jq 'length' "$TESTS_FILE")
   INDEX=1
   while IFS= read -r test; do
