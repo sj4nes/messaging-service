@@ -3,5 +3,5 @@ resolver = "2"
 members = [
     "crates/core",
     "crates/server",
-    "crates/admin",
+    "crates/db-migrate",
 ]

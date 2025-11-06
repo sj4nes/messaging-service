@@ -50,7 +50,7 @@ Notes:
   - participant_count = count(distinct contact_id) from conversation_participants
 
 - conversation_messages(conversation_id, message_id, direction, provider_id, sent_at, received_at, body_text, attachments_count)
-  - body_text = coalesce(email_bodies.normalized or xms_bodies.normalized via application join)
+  - body_text = NULL in DB view (polymorphic body_id); applications can join to email_bodies/xms_bodies and coalesce normalized text
   - attachments_count derived from message_attachments
 
 ## Queue (PoC)

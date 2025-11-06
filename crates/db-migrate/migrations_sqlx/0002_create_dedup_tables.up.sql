@@ -1,0 +1,34 @@
+-- Dedup tables (UP)
+CREATE TABLE IF NOT EXISTS email_bodies (
+    id BIGINT PRIMARY KEY,
+    raw TEXT NOT NULL,
+    hash BIGINT UNIQUE NOT NULL,
+    normalized TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS xms_bodies (
+    id BIGINT PRIMARY KEY,
+    raw TEXT NOT NULL,
+    hash BIGINT UNIQUE NOT NULL,
+    normalized TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS phone_numbers (
+    id BIGINT PRIMARY KEY,
+    raw TEXT NOT NULL,
+    hash BIGINT UNIQUE NOT NULL,
+    e164 TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS email_addresses (
+    id BIGINT PRIMARY KEY,
+    raw TEXT NOT NULL,
+    hash BIGINT UNIQUE NOT NULL,
+    lowered TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS attachment_urls (
+    id BIGINT PRIMARY KEY,
+    raw TEXT NOT NULL,
+    hash BIGINT UNIQUE NOT NULL
+);

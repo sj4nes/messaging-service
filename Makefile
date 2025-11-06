@@ -1,8 +1,10 @@
-.PHONY: setup run test clean help db-up db-down db-logs db-shell build
+.PHONY: setup run test clean help db-up db-down db-logs db-shell build db-reset migrate-status migrate-reset-history
 
-build:
-	@echo "Building the project..."
-	@cargo build
+# Load local env vars from .env if present (export to all recipes)
+ifneq (,$(wildcard .env))
+include .env
+export
+endif
 
 help:
 	@echo "Available commands:"
@@ -15,8 +17,14 @@ help:
 	@echo "  db-down  - Stop the PostgreSQL database"
 	@echo "  db-logs  - Show database logs"
 	@echo "  db-shell - Connect to the database shell"
+	@echo "  db-reset - Stop containers and remove the database volume (re-runs init.sql on next db-up)"
 	@echo "  help     - Show this help message"
 	@echo "  lint-shell - Lint bash scripts under .specify/scripts/bash with shellcheck"
+	@echo "  migrate-apply - Apply SQLx migrations using db-migrate"
+	@echo "  migrate-new   - Create a new timestamped migration file"
+	@echo "  migrate-status - Show applied migrations in _sqlx_migrations"
+	@echo "  migrate-status-client - Show status via db-migrate (uses DATABASE_URL)"
+	@echo "  migrate-reset-history - Truncate _sqlx_migrations (dev only)"
 
 setup: build
 	@echo "Setting up the project..."
@@ -33,6 +41,33 @@ run:
 run-server:
 	@echo "Running messaging-server..."
 	@PORT=$${PORT:-8080} cargo run -p messaging-server
+
+.PHONY: migrate-apply migrate-new
+migrate-apply:
+	@echo "Applying migrations..."
+	@[ -n "$$DATABASE_URL" ] || { echo "DATABASE_URL not set (hint: copy .env.example to .env or set it inline)" >&2; exit 1; }
+	@cargo run -p db-migrate -- apply
+
+# Usage: make migrate-new NAME=add_customers_table
+migrate-new:
+	@name=$${NAME:-new_migration}; echo "Creating migration '$$name'..."; \
+	cargo run -p db-migrate -- new "$$name"
+
+.PHONY: migrate-status migrate-reset-history
+migrate-status:
+	@echo "_sqlx_migrations contents:" \
+	&& docker-compose exec -T postgres psql -U messaging_user -d messaging_service -c "SELECT version, description, success, installed_on FROM _sqlx_migrations ORDER BY version;" || true
+
+.PHONY: migrate-status-client
+migrate-status-client:
+	@echo "db-migrate status (DATABASE_URL):" \
+	&& [ -n "$$DATABASE_URL" ] || { echo "DATABASE_URL not set (hint: copy .env.example to .env or set it inline)" >&2; exit 1; } \
+	&& cargo run -p db-migrate -- status
+
+migrate-reset-history:
+	@echo "WARNING: Truncating _sqlx_migrations (dev only). This will cause all migrations to re-apply." \
+	&& docker-compose exec -T postgres psql -U messaging_user -d messaging_service -c "TRUNCATE TABLE _sqlx_migrations;" \
+	&& echo "History cleared. Re-run 'make migrate-apply'."
 
 test:
 	@echo "Running tests..."
@@ -55,6 +90,11 @@ db-up:
 db-down:
 	@echo "Stopping PostgreSQL database..."
 	@docker-compose down
+
+db-reset:
+	@echo "Stopping containers and removing database volume (all data will be lost)..."
+	@docker-compose down -v
+	@echo "Next 'make db-up' will reinitialize using init.sql (user & database only). Apply schema via 'make migrate-apply'."
 
 db-logs:
 	@echo "Showing database logs..."

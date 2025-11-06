@@ -14,14 +14,27 @@ This feature introduces SQLx migrations and a `db-migrate` utility (renamed from
 
 ## Apply migrations
 
-- Run the migration utility to apply all migrations to the target database.
+- Ensure DATABASE_URL is set, then apply migrations via the utility:
+
+```sh
+# apply all pending migrations (compose maps host 55432 -> container 5432)
+DATABASE_URL=postgres://messaging_user:messaging_password@localhost:55432/messaging_service \
+  cargo run -p db-migrate -- apply
+```
+
 - Expected behavior:
   - On success: exit 0, prints applied migrations
   - On error: non-zero exit, clear diagnostics
 
 ## Create a new migration
 
-- Use the utility to create a new timestamped migration pair (up/down) in `crates/db-migrate/migrations/`.
+- Use the utility to create a new timestamped migration file with `-- migrate:up` and `-- migrate:down` sections:
+
+```sh
+# create a new migration file like 20251105123456_add_customers.sql
+cargo run -p db-migrate -- new add_customers
+```
+
 - Write SQL for schema changes; prefer additive changes in PoC.
 
 ## Notes

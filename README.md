@@ -150,11 +150,16 @@ The application uses PostgreSQL as its database. The docker-compose.yml file set
 - Database: `messaging_service`
 - User: `messaging_user`
 - Password: `messaging_password`
-- Port: `5432` (exposed to host)
+- Port: `55432` (host) → `5432` (container)
 
 To connect to the database directly:
 ```bash
 docker-compose exec postgres psql -U messaging_user -d messaging_service
+```
+
+From the host (bypassing the container shell), use the mapped host port:
+```bash
+psql "postgres://messaging_user:messaging_password@localhost:55432/messaging_service" -c 'select 1'
 ```
 
 Again, you are welcome to make changes here, as long as they're in the docker-compose.yml

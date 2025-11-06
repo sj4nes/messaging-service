@@ -4,13 +4,13 @@ This checklist is generated from plan/spec/research/data-model. Tasks are organi
 
 ## Phase 1 — Setup
 
-- [ ] T001 Update workspace members to include db-migrate in `Cargo.toml`
-- [ ] T002 Move crate folder `crates/admin` → `crates/db-migrate` and update package name in `crates/db-migrate/Cargo.toml`
-- [ ] T003 Add SQLx and migrations deps in `crates/db-migrate/Cargo.toml` (features: postgres, runtime-tokio, macros)
-- [ ] T004 Create migrations directory `crates/db-migrate/migrations/` (empty placeholder committed)
-- [ ] T005 Implement migration runner entrypoint in `crates/db-migrate/src/main.rs` (apply/create subcommands)
-- [ ] T006 Add Makefile targets in `Makefile` for `migrate-apply` and `migrate-new`
-- [ ] T007 Update quickstart with exact commands in `specs/003-poc-sqlx-migration/quickstart.md`
+- [X] T001 Update workspace members to include db-migrate in `Cargo.toml`
+- [X] T002 Move crate folder `crates/admin` → `crates/db-migrate` and update package name in `crates/db-migrate/Cargo.toml`
+- [X] T003 Add SQLx and migrations deps in `crates/db-migrate/Cargo.toml` (features: postgres, runtime-tokio, macros)
+- [X] T004 Create migrations directory `crates/db-migrate/migrations/` (empty placeholder committed)
+- [X] T005 Implement migration runner entrypoint in `crates/db-migrate/src/main.rs` (apply/create subcommands)
+- [X] T006 Add Makefile targets in `Makefile` for `migrate-apply` and `migrate-new`
+- [X] T007 Update quickstart with exact commands in `specs/003-poc-sqlx-migration/quickstart.md`
 
 ## Phase 2 — Foundational (shared prerequisites)
 
@@ -18,6 +18,11 @@ This checklist is generated from plan/spec/research/data-model. Tasks are organi
 - [ ] T009 Create dedup tables migration in `crates/db-migrate/migrations/0002_create_dedup_tables.sql`
 - [ ] T010 Add baseline indexes in `crates/db-migrate/migrations/0003_add_indexes.sql`
 - [ ] T011 Add audit/UTC triggers in `crates/db-migrate/migrations/0004_triggers_audit_utc.sql`
+ 
+- [X] T008 Create core tables migration in `crates/db-migrate/migrations/0001_create_core_tables.sql`
+- [X] T009 Create dedup tables migration in `crates/db-migrate/migrations/0002_create_dedup_tables.sql`
+- [X] T010 Add baseline indexes in `crates/db-migrate/migrations/0003_add_indexes.sql`
+- [X] T011 Add audit/UTC triggers in `crates/db-migrate/migrations/0004_triggers_audit_utc.sql`
 
 ## Phase 3 — [US1] Operator can run migrations (P1)
 
@@ -28,12 +33,12 @@ Independent Test Criteria:
 - Invalid DATABASE_URL or SQL error exits non-zero with clear message.
 - `new <name>` creates timestamped up/down files in migrations directory.
 
-- [ ] T012 [US1] Wire `sqlx::migrate!` to load `crates/db-migrate/migrations` in `crates/db-migrate/src/main.rs`
-- [ ] T013 [US1] Implement `apply` subcommand with DATABASE_URL in `crates/db-migrate/src/main.rs`
-- [ ] T014 [US1] Implement `new <name>` subcommand to scaffold migration files in `crates/db-migrate/src/main.rs`
-- [ ] T015 [US1] Add friendly error messages and non-zero exit on failure in `crates/db-migrate/src/main.rs`
-- [ ] T016 [US1] Add Make targets `migrate-apply` and `migrate-new` in `Makefile`
-- [ ] T017 [US1] Document migration usage flow in `specs/003-poc-sqlx-migration/quickstart.md`
+- [X] T012 [US1] Wire `sqlx::migrate!` to load `crates/db-migrate/migrations` in `crates/db-migrate/src/main.rs`
+- [X] T013 [US1] Implement `apply` subcommand with DATABASE_URL in `crates/db-migrate/src/main.rs`
+- [X] T014 [US1] Implement `new <name>` subcommand to scaffold migration files in `crates/db-migrate/src/main.rs`
+- [X] T015 [US1] Add friendly error messages and non-zero exit on failure in `crates/db-migrate/src/main.rs`
+- [X] T016 [US1] Add Make targets `migrate-apply` and `migrate-new` in `Makefile`
+- [X] T017 [US1] Document migration usage flow in `specs/003-poc-sqlx-migration/quickstart.md`
 
 ## Phase 4 — [US2] Developer can insert messages grouped into conversations (P1)
 
@@ -57,9 +62,9 @@ Independent Test Criteria:
 - `conversation_overview` returns conversation_id, customer_id, last_message_at, message_count, participant_count.
 - `conversation_messages` returns expected columns and joins body text via application query pattern.
 
-- [ ] T022 [US3] Create `conversation_overview` view in `crates/db-migrate/migrations/0005_views.sql`
-- [ ] T023 [US3] Create `conversation_messages` view in `crates/db-migrate/migrations/0005_views.sql`
-- [ ] T024 [US3] Describe expected columns and filters in `specs/003-poc-sqlx-migration/data-model.md`
+- [X] T022 [US3] Create `conversation_overview` view in `crates/db-migrate/migrations/0005_views.sql`
+- [X] T023 [US3] Create `conversation_messages` view in `crates/db-migrate/migrations/0005_views.sql`
+- [X] T024 [US3] Describe expected columns and filters in `specs/003-poc-sqlx-migration/data-model.md`
 
 ## Phase 6 — [US4] Integrator relies on dedup tables (P1)
 
