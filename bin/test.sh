@@ -217,4 +217,43 @@ curl -X POST "$BASE_URL/api/webhooks/email" \
   }' \
   -w "\nStatus: %{http_code}\n\n"
 
+# Test 14-16: Validation failures (expect 400)
+echo "14. Invalid SMS type (expect 400)..."
+curl -X POST "$BASE_URL/api/messages/sms" \
+  -H "$CONTENT_TYPE" \
+  -d '{
+    "from": "+12016661234",
+    "to": "+18045551234",
+    "type": "smsx",
+    "body": "Invalid type should fail",
+    "attachments": null,
+    "timestamp": "2024-11-01T14:10:00Z"
+  }' \
+  -w "\nStatus: %{http_code}\n\n"
+
+echo "15. MMS without attachments (expect 400)..."
+curl -X POST "$BASE_URL/api/messages/sms" \
+  -H "$CONTENT_TYPE" \
+  -d '{
+    "from": "+12016661234",
+    "to": "+18045551234",
+    "type": "mms",
+    "body": "MMS requires at least one attachment",
+    "attachments": null,
+    "timestamp": "2024-11-01T14:11:00Z"
+  }' \
+  -w "\nStatus: %{http_code}\n\n"
+
+echo "16. Email with empty body (expect 400)..."
+curl -X POST "$BASE_URL/api/messages/email" \
+  -H "$CONTENT_TYPE" \
+  -d '{
+    "from": "user@usehatchapp.com",
+    "to": "contact@gmail.com",
+    "body": "",
+    "attachments": null,
+    "timestamp": "2024-11-01T14:12:00Z"
+  }' \
+  -w "\nStatus: %{http_code}\n\n"
+
 echo "=== Test script completed ===" 
