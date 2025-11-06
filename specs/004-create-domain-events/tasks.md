@@ -84,29 +84,29 @@ Independent Test: For each lifecycle event in the spec, the catalog lists requir
 
 ### Implementation for User Story 3
 
-- [ ] T011 [US3] Expand specs/004-create-domain-events/contracts/events/catalog.md with detailed required fields and invariants for all events (Customer*, Contact*, Provider*, Channel*, Conversation*)
-- [ ] T012 [P] [US3] Add missing Customer examples:
+- [X] T011 [US3] Expand specs/004-create-domain-events/contracts/events/catalog.md with detailed required fields and invariants for all events (Customer*, Contact*, Provider*, Channel*, Conversation*)
+- [X] T012 [P] [US3] Add missing Customer examples:
   - specs/004-create-domain-events/contracts/events/examples/customer_updated.example.json
   - specs/004-create-domain-events/contracts/events/examples/customer_enabled.example.json
   - specs/004-create-domain-events/contracts/events/examples/customer_disabled.example.json
-- [ ] T013 [P] [US3] Add remaining Contact examples:
+- [X] T013 [P] [US3] Add remaining Contact examples:
   - specs/004-create-domain-events/contracts/events/examples/contact_updated.example.json
   - specs/004-create-domain-events/contracts/events/examples/contact_deleted.example.json
-- [ ] T014 [P] [US3] Add remaining Provider examples:
+- [X] T014 [P] [US3] Add remaining Provider examples:
   - specs/004-create-domain-events/contracts/events/examples/provider_updated.example.json
   - specs/004-create-domain-events/contracts/events/examples/provider_enabled.example.json
   - specs/004-create-domain-events/contracts/events/examples/provider_disabled.example.json
-- [ ] T015 [P] [US3] Add remaining Channel examples:
+- [X] T015 [P] [US3] Add remaining Channel examples:
   - specs/004-create-domain-events/contracts/events/examples/channel_updated.example.json
   - specs/004-create-domain-events/contracts/events/examples/channel_unmapped.example.json
-- [ ] T016 [P] [US3] Add remaining Conversation examples:
+- [X] T016 [P] [US3] Add remaining Conversation examples:
   - specs/004-create-domain-events/contracts/events/examples/conversation_created.example.json
   - specs/004-create-domain-events/contracts/events/examples/conversation_updated.example.json
   - specs/004-create-domain-events/contracts/events/examples/conversation_reopened.example.json
   - specs/004-create-domain-events/contracts/events/examples/conversation_participant_added.example.json
   - specs/004-create-domain-events/contracts/events/examples/conversation_participant_removed.example.json
   - specs/004-create-domain-events/contracts/events/examples/conversation_archived.example.json
-- [ ] T017 [US3] Cross-validate specs/004-create-domain-events/data-model.md, contracts/events/catalog.md, and all examples for field parity and semantics; update data-model.md if mismatches exist
+- [X] T017 [US3] Cross-validate specs/004-create-domain-events/data-model.md, contracts/events/catalog.md, and all examples for field parity and semantics; update data-model.md if mismatches exist
 
 Checkpoint: Full coverage complete — every lifecycle event has fields defined and a validating example.
 

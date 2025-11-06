@@ -1,0 +1,12 @@
+{
+  "event_name": "ContactUpdated",
+  "event_id": "01J0000F6G7H8J9K0L1M2N3P4Q",
+  "aggregate_type": "Contact",
+  "aggregate_id": "cont_555",
+  "occurred_at": "2025-11-05T14:18:00Z",
+  "actor": "admin:user_42",
+  "version": 1,
+  "contact_id": "cont_555",
+  "customer_id": "cust_123",
+  "changed_fields": ["display_name"]
+}

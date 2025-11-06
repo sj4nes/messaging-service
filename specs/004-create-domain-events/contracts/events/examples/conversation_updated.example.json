@@ -1,0 +1,12 @@
+{
+  "event_name": "ConversationUpdated",
+  "event_id": "01J0000P4Q5R6S7T8U9V0W1X2Y",
+  "aggregate_type": "Conversation",
+  "aggregate_id": "conv_777",
+  "occurred_at": "2025-11-05T14:26:00Z",
+  "actor": "admin:user_42",
+  "version": 1,
+  "conversation_id": "conv_777",
+  "customer_id": "cust_123",
+  "changed_fields": ["topic"]
+}

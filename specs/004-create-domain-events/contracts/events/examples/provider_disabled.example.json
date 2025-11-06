@@ -1,0 +1,12 @@
+{
+  "event_name": "ProviderDisabled",
+  "event_id": "01J0000K0L1M2N3P4Q5R6S7T8U",
+  "aggregate_type": "Provider",
+  "aggregate_id": "prov_twilio_01",
+  "occurred_at": "2025-11-05T14:22:00Z",
+  "actor": "system",
+  "version": 1,
+  "provider_id": "prov_twilio_01",
+  "customer_id": "cust_123",
+  "reason": "maintenance"
+}

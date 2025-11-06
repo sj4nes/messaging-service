@@ -1,0 +1,11 @@
+{
+  "event_name": "CustomerUpdated",
+  "event_id": "01J0000C3D4E5F6G7H8J9K0L1M",
+  "aggregate_type": "Customer",
+  "aggregate_id": "cust_123",
+  "occurred_at": "2025-11-05T14:15:00Z",
+  "actor": "admin:user_42",
+  "version": 1,
+  "customer_id": "cust_123",
+  "changed_fields": ["name"]
+}

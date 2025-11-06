@@ -1,0 +1,12 @@
+{
+  "event_name": "ChannelUnmapped",
+  "event_id": "01J0000M2N3P4Q5R6S7T8U9V0W",
+  "aggregate_type": "Channel",
+  "aggregate_id": "chan_001",
+  "occurred_at": "2025-11-05T14:24:00Z",
+  "actor": "system",
+  "version": 1,
+  "channel_id": "chan_001",
+  "customer_id": "cust_123",
+  "reason": "provider contract ended"
+}
