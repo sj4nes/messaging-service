@@ -1,0 +1,286 @@
+openapi: 3.0.3
+info:
+  title: Unified Messaging - Contracts (Feature 006)
+  version: 0.1.0
+paths:
+  /api/messages/sms:
+    post:
+      summary: Send SMS or MMS via unified API
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SmsRequest'
+      responses:
+        '202':
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Accepted'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '415': { $ref: '#/components/responses/UnsupportedMediaType' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+  /api/messages/email:
+    post:
+      summary: Send Email via unified API
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmailRequest'
+      responses:
+        '202':
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Accepted'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '415': { $ref: '#/components/responses/UnsupportedMediaType' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+  /api/conversations:
+    get:
+      summary: List conversations (stretch)
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 1 }
+        - in: query
+          name: pageSize
+          schema: { type: integer, minimum: 0 }
+      responses:
+        '200':
+          description: ListResponse of ConversationDto with PageMeta
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListConversationsResponse'
+        '406': { $ref: '#/components/responses/NotAcceptable' }
+  /api/conversations/{id}/messages:
+    get:
+      summary: List messages for a conversation (stretch)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 1 }
+        - in: query
+          name: pageSize
+          schema: { type: integer, minimum: 0 }
+      responses:
+        '200':
+          description: ListResponse of MessageDto with PageMeta
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListMessagesResponse'
+        '406': { $ref: '#/components/responses/NotAcceptable' }
+    /api/provider/mock/inbound:
+      post:
+        summary: Inject inbound message from mock provider
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderInboundRequest'
+        responses:
+          '202':
+            description: Accepted
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Accepted'
+          '400': { $ref: '#/components/responses/BadRequest' }
+          '415': { $ref: '#/components/responses/UnsupportedMediaType' }
+    /api/provider/mock/config:
+      get:
+        summary: Get provider mock failure configuration
+        responses:
+          '200':
+            description: Current mock configuration
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ProviderMockConfig'
+      put:
+        summary: Update provider mock failure configuration (in-memory)
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderMockConfig'
+        responses:
+          '200':
+            description: Updated configuration
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ProviderMockConfig'
+components:
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    UnsupportedMediaType:
+      description: Unsupported media type
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    TooManyRequests:
+      description: Too many requests
+      headers:
+        Retry-After:
+          schema: { type: string }
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotAcceptable:
+      description: Not acceptable
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+  schemas:
+    Accepted:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [accepted]
+      required: [status]
+    ErrorResponse:
+      type: object
+      properties:
+        code: { type: string }
+        message: { type: string }
+      required: [code, message]
+      ProviderMockConfig:
+        type: object
+        properties:
+          timeout_pct: { type: integer, minimum: 0, maximum: 100, default: 0 }
+          error_pct: { type: integer, minimum: 0, maximum: 100, default: 0 }
+          ratelimit_pct: { type: integer, minimum: 0, maximum: 100, default: 0 }
+          seed:
+            type: integer
+            description: Deterministic RNG seed; when set, sequences of outcomes are reproducible
+        required: [timeout_pct, error_pct, ratelimit_pct]
+    SmsRequest:
+      type: object
+      properties:
+        from: { type: string }
+        to: { type: string }
+        type: { type: string, enum: [sms, mms] }
+        body: { type: string }
+        attachments:
+          type: array
+          items: { type: string }
+          nullable: true
+        timestamp: { type: string, format: date-time }
+      required: [from, to, type, body, timestamp]
+    EmailRequest:
+      type: object
+      properties:
+        from: { type: string }
+        to: { type: string }
+        body: { type: string }
+        attachments:
+          type: array
+          items: { type: string }
+          nullable: true
+        timestamp: { type: string, format: date-time }
+      required: [from, to, body, timestamp]
+      ProviderInboundRequest:
+        description: Union for inbound messages from providers
+        oneOf:
+          - $ref: '#/components/schemas/SmsInbound'
+          - $ref: '#/components/schemas/EmailInbound'
+      SmsInbound:
+        type: object
+        properties:
+          channel: { type: string, enum: [sms, mms] }
+          from: { type: string }
+          to: { type: string }
+          type: { type: string, enum: [sms, mms] }
+          body: { type: string }
+          attachments:
+            type: array
+            items: { type: string }
+            nullable: true
+          timestamp: { type: string, format: date-time }
+        required: [channel, from, to, type, body, timestamp]
+      EmailInbound:
+        type: object
+        properties:
+          channel: { type: string, enum: [email] }
+          from: { type: string }
+          to: { type: string }
+          body: { type: string }
+          attachments:
+            type: array
+            items: { type: string }
+            nullable: true
+          timestamp: { type: string, format: date-time }
+        required: [channel, from, to, body, timestamp]
+    ListConversationsResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConversationDto'
+        meta:
+          $ref: '#/components/schemas/PageMeta'
+      required: [items, meta]
+    ListMessagesResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/MessageDto'
+        meta:
+          $ref: '#/components/schemas/PageMeta'
+      required: [items, meta]
+    ConversationDto:
+      type: object
+      properties:
+        id: { type: string }
+        key: { type: string }
+        message_count: { type: integer }
+        last_activity_at: { type: string, format: date-time }
+      required: [id, key, message_count, last_activity_at]
+    MessageDto:
+      type: object
+      properties:
+        id: { type: string }
+        direction: { type: string, enum: [outbound, inbound] }
+        channel: { type: string, enum: [sms, mms, email] }
+        from: { type: string }
+        to: { type: string }
+        body: { type: string }
+        attachments:
+          type: array
+          items: { type: string }
+          nullable: true
+        timestamp: { type: string, format: date-time }
+      required: [id, direction, channel, from, to, body, timestamp]
+    PageMeta:
+      type: object
+      properties:
+        page: { type: integer }
+        page_size: { type: integer }
+        total: { type: integer }
+      required: [page, page_size, total]
