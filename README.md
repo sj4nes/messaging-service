@@ -120,7 +120,9 @@ This project structure is laid out for you already. You are welcome to move or c
 2. Run `make setup` to initialize the project
 3. Run `docker-compose up -d` to start the PostgreSQL database, or modify it to choose a database of your choice
 4. Run `make run` to start the application
-    - Or run the Rust server directly: `make run-server`
+        - Or run the Rust server directly: `make run-server`
+        - Health check:
+            - `curl -sS http://localhost:8080/healthz | jq`
 5. Run `make test` to run tests
 
 ### Jujutsu (JJ) Support

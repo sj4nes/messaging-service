@@ -47,10 +47,10 @@ This checklist is generated from the spec and plan. Complete tasks top-to-bottom
 
 ## Final Phase — Polish & Cross-Cutting
 
-- [ ] T027 Sync health path in contracts/openapi.yaml to match HEALTH_PATH default in specs/002-setup-12fa-server/contracts/openapi.yaml
-- [ ] T028 Add sample .env with commented defaults at repository root
-- [ ] T029 Ensure sensitive values (future) are redacted in logs; add note in crates/core/src/logging.rs
-- [ ] T030 Update README.md Quickstart and Troubleshooting for JJ bookmarks and cargo workspace layout
+- [X] T027 Sync health path in contracts/openapi.yaml to match HEALTH_PATH default in specs/002-setup-12fa-server/contracts/openapi.yaml
+- [X] T028 Add sample .env with commented defaults at repository root
+- [X] T029 Ensure sensitive values (future) are redacted in logs; add note in crates/core/src/logging.rs
+- [X] T030 Update README.md Quickstart and Troubleshooting for JJ bookmarks and cargo workspace layout
 
 ## Dependencies and Story Order
 
