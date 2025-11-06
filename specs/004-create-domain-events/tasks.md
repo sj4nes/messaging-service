@@ -50,9 +50,9 @@ Independent Test: Catalog is reviewable; each aggregate has event entries and at
 
 ### Implementation for User Story 1
 
-- [ ] T005 [US1] Complete event catalog structure and entries in specs/004-create-domain-events/contracts/events/catalog.md for Customers, Contacts, Providers, Channels, Conversations (names, purposes, required fields)
-- [ ] T006 [P] [US1] Align specs/004-create-domain-events/data-model.md event families and required fields with contracts/events/catalog.md
-- [ ] T007 [P] [US1] Add exemplar examples for missing aggregates:
+- [X] T005 [US1] Complete event catalog structure and entries in specs/004-create-domain-events/contracts/events/catalog.md for Customers, Contacts, Providers, Channels, Conversations (names, purposes, required fields)
+- [X] T006 [P] [US1] Align specs/004-create-domain-events/data-model.md event families and required fields with contracts/events/catalog.md
+- [X] T007 [P] [US1] Add exemplar examples for missing aggregates:
   - specs/004-create-domain-events/contracts/events/examples/provider_configured.example.json
   - specs/004-create-domain-events/contracts/events/examples/contact_created.example.json
 

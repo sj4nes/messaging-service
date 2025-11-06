@@ -1,0 +1,12 @@
+{
+  "event_name": "ProviderConfigured",
+  "event_id": "01J0000A1B2C3D4E5F6G7H8J9K",
+  "aggregate_type": "Provider",
+  "aggregate_id": "prov_twilio_01",
+  "occurred_at": "2025-11-05T14:07:00Z",
+  "actor": "system",
+  "version": 1,
+  "provider_id": "prov_twilio_01",
+  "customer_id": "cust_123",
+  "kind": "sms"
+}

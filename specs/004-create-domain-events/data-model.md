@@ -62,3 +62,7 @@ Optional: idempotency_key
 - version MUST be >= 1 (int)
 - idempotency_key, if present, MUST be stable for a logical event
 - Privacy: avoid PII in values; prefer stable identifiers
+
+## Notes & Catalog Alignment
+
+- The detailed purposes, invariants, and example references for each event are maintained in `contracts/events/catalog.md`. This document lists the entities and required field sets; consult the catalog for semantics and example payload filenames.

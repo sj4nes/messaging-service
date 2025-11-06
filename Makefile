@@ -1,4 +1,5 @@
-.PHONY: setup run test clean help db-up db-down db-logs db-shell build db-reset migrate-status migrate-reset-history
+.PHONY: setup run test clean help db-up db-down db-logs db-shell build db-reset migrate-status migrate-reset-history \
+	dx-setup py-venv py-install-jsonschema validate-events rust-check rust-install rust-ensure rust-version
 
 # Load local env vars from .env if present (export to all recipes)
 ifneq (,$(wildcard .env))
@@ -25,6 +26,10 @@ help:
 	@echo "  migrate-status - Show applied migrations in _sqlx_migrations"
 	@echo "  migrate-status-client - Show status via db-migrate (uses DATABASE_URL)"
 	@echo "  migrate-reset-history - Truncate _sqlx_migrations (dev only)"
+	@echo "  dx-setup - Bootstrap DX tools (Python venv + jsonschema, ensure Rust toolchain)"
+	@echo "  validate-events - Validate event examples against the envelope schema (uses .venv)"
+	@echo "  py-venv - Create Python virtual environment at .venv (and upgrade pip)"
+	@echo "  rust-ensure - Install Rust via rustup if cargo is not present"
 
 setup: build
 	@echo "Setting up the project..."
@@ -108,3 +113,48 @@ db-shell:
 lint-shell:
 	@command -v shellcheck >/dev/null 2>&1 || { echo "shellcheck not found. Install via 'brew install shellcheck' or your package manager." >&2; exit 1; }
 	@shellcheck .specify/scripts/bash/*.sh
+
+# -----------------------------
+# Developer Experience (DX)
+# -----------------------------
+
+dx-setup: py-install-jsonschema rust-ensure
+	@echo "DX setup complete. To run validation: make validate-events"
+
+.PHONY: py-venv
+py-venv:
+	@command -v python3 >/dev/null 2>&1 || { echo "python3 not found on PATH" >&2; exit 1; }
+	@[ -d .venv ] || { echo "Creating Python venv at .venv"; python3 -m venv .venv; }
+	@.venv/bin/python -m pip install --upgrade pip >/dev/null
+	@echo "Python venv ready: .venv"
+
+.PHONY: py-install-jsonschema
+py-install-jsonschema: py-venv
+	@echo "Installing/refreshing jsonschema in .venv..."
+	@.venv/bin/pip install -q --upgrade jsonschema
+	@echo "jsonschema ready."
+
+.PHONY: validate-events
+validate-events: py-install-jsonschema
+	@echo "Validating event examples against envelope schema..."
+	@.venv/bin/python specs/004-create-domain-events/contracts/events/validate_examples.py
+
+.PHONY: rust-check
+rust-check:
+	@command -v cargo >/dev/null 2>&1 && echo "cargo present: $$(cargo --version)" || { echo "cargo not found" >&2; exit 1; }
+
+.PHONY: rust-install
+rust-install:
+	@echo "Installing Rust toolchain via rustup (non-interactive)..."
+	@curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+	@# Attempt to load cargo into current shell for subsequent commands
+	@{ [ -f $$HOME/.cargo/env ] && . $$HOME/.cargo/env; } >/dev/null 2>&1 || true
+	@{ command -v cargo >/dev/null 2>&1 && echo "cargo installed: $$(cargo --version)"; } || echo "Rust installed. Restart your shell to use cargo."
+
+.PHONY: rust-ensure
+rust-ensure:
+	@if command -v cargo >/dev/null 2>&1; then \
+		echo "cargo present: $$(cargo --version)"; \
+	else \
+		$(MAKE) rust-install; \
+	fi
