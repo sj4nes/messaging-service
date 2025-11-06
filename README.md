@@ -8,7 +8,13 @@ At Hatch, we work with several message providers to offer a unified way for our 
 
 ### General Guidelines
 
-- You must use one of the following programming languages: **Python**, **Golang**, or **Elixir**.
+- You must use one of the following programming languages:
+  - **Python**
+  - **Golang**
+  - **Elixir**
+  - **Java**
+  - **Typescript/Javascript**
+  - **C/C++**
 - You may use whatever libraries or frameworks you'd like within your chosen language. We strongly encourage you to use whatever you're most familiar with so that you can showcase your skills and know-how.
 - You are welcome to use AI, Google, StackOverflow, etc as resources while you're developing. We just ask that you understand the code very well, because we will continue developing on it during your onsite interview.
 - For ease of assessment, we strongly encourage you to use the `start.sh` script provided in the `bin/` directory, and implement it to run your service. We will run this script to start your project during our assessment.
