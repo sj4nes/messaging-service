@@ -1,75 +1,104 @@
-# Implementation Plan: Setup 12‑Factor Server Bootstrap
+# Implementation Plan: [FEATURE]
 
-**Branch**: `002-setup-12fa-server` | **Date**: 2025-11-05 | **Spec**: specs/002-setup-12fa-server/spec.md  
-**Input**: Feature specification from `/specs/002-setup-12fa-server/spec.md`
+**Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
+**Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
 
-**Note**: This plan is generated per the project constitution and planning prompt and will drive Phase 0/1 artifacts.
+**Note**: This template is filled in by the `/speckit.plan` command. See project documentation for the execution workflow.
 
 ## Summary
 
-Bootstrap a minimal service aligned to 12‑Factor principles: load configuration from environment with optional .env, start an HTTP health endpoint on a configurable port/path, and emit structured logging for startup, requests, and shutdown. The codebase will be organized as a Cargo workspace with a shared library for configuration, logging, and test helpers; a server binary for the HTTP service; and an admin binary stub for database migrations.
+[Extract from feature spec: primary requirement + technical approach from research]
 
 ## Technical Context
 
-**Language/Version**: Rust (NEEDS CLARIFICATION: toolchain version, e.g., 1.75+)  
-**Primary Dependencies**: dotenvy (env loading), log + tracing + tracing-subscriber (logging); (NEEDS CLARIFICATION: HTTP runtime — Axum/Tokio for future APIs vs minimal hyper for health only; choose Axum to align with standardization)  
-**Storage**: PostgreSQL via SQLx + sqlx_migrations (admin stub only in this feature)  
-**Testing**: cargo test; rstest; insta for snapshots; proptest for property tests; bats for shell scripts  
-**Target Platform**: Linux/macOS servers, containerized runtime  
-**Project Type**: Cargo workspace: shared library crate + server bin crate + admin bin crate (migration stub)  
-**Performance Goals**: Health endpoint p95 ≤ 50 ms on localhost; startup to first healthy ≤ 2 s  
-**Constraints**: No secrets in logs; redact sensitive values; graceful shutdown ≤ 2 s; 12‑Factor config precedence (env > .env > defaults)  
-**Scale/Scope**: Single process, single endpoint (health) in this feature; prepares for future Axum/Tokio REST APIs
+<!--
+  ACTION REQUIRED: Replace the content in this section with the technical details
+  for the project. The structure here is presented in advisory capacity to guide
+  the iteration process.
+-->
 
-Open Questions (to resolve in Phase 0 research):
-- Exact Rust toolchain version and MSRV policy (proposed: stable latest, MSRV = last stable‑2).
-- Crate selection confirmation: Axum/Tokio vs minimal hyper for health only (proposed: Axum/Tokio for consistency with technical guide for REST APIs).
-- Health payload shape (proposed: `{ "status": "ok" }`).
-- Config keys and defaults (proposed: PORT=8080, HEALTH_PATH=/healthz, LOG_LEVEL=info).
+**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]  
+**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]  
+**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]  
+**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]  
+**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
+**Project Type**: [single/web/mobile - determines source structure]  
+**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]  
+**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]  
+**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
 
 ## Constitution Check
 
-Gate assessment based on constitution:
-- Security-First: No secrets persisted or logged; config loader will redact sensitive keys (PASS with implementation notes).
-- Test-First and Quality Gates: TDD with rstest/insta; unit + integration tests for health and config; linters in CI (PASS).
-- Observability: Structured logs; metrics/traces earmarked for later; logs adequate for this feature (PASS for scope).
-- Versioning/Change Control: Feature via JJ bookmark; plan/spec/tasks tracked; SemVer for crates (PASS).
-- Simplicity: Minimal endpoints and crates to meet requirements; no premature optimization (PASS).
+*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-Re-check after Phase 1 to ensure contracts and quickstart reflect these gates.
+[Gates determined based on constitution file]
 
 ## Project Structure
 
 ### Documentation (this feature)
 
 ```text
-specs/002-setup-12fa-server/
-├── plan.md
-├── research.md
-├── data-model.md
-├── quickstart.md
-└── contracts/
+specs/[###-feature]/
+├── plan.md              # This file (/speckit.plan command output)
+├── research.md          # Phase 0 output (/speckit.plan command)
+├── data-model.md        # Phase 1 output (/speckit.plan command)
+├── quickstart.md        # Phase 1 output (/speckit.plan command)
+├── contracts/           # Phase 1 output (/speckit.plan command)
+└── tasks.md             # Phase 2 output (/speckit.tasks command - NOT created by /speckit.plan)
 ```
 
 ### Source Code (repository root)
+<!--
+  ACTION REQUIRED: Replace the placeholder tree below with the concrete layout
+  for this feature. Delete unused options and expand the chosen structure with
+  real paths (e.g., apps/admin, packages/something). The delivered plan must
+  not include Option labels.
+-->
 
 ```text
-# Cargo workspace (to be scaffolded in implementation phase)
-Cargo.toml                  # [workspace]
-crates/
-├── core/                   # Library crate: config, logging, test helpers
-│   ├── Cargo.toml
-│   └── src/
-├── server/                 # Binary crate: HTTP server (health endpoint)
-│   ├── Cargo.toml
-│   └── src/
-└── admin/                  # Binary crate: admin tasks (migrations stub)
-    ├── Cargo.toml
-    └── src/
+# [REMOVE IF UNUSED] Option 1: Single project (DEFAULT)
+src/
+├── models/
+├── services/
+├── cli/
+└── lib/
+
+tests/
+├── contract/
+├── integration/
+└── unit/
+
+# [REMOVE IF UNUSED] Option 2: Web application (when "frontend" + "backend" detected)
+backend/
+├── src/
+│   ├── models/
+│   ├── services/
+│   └── api/
+└── tests/
+
+frontend/
+├── src/
+│   ├── components/
+│   ├── pages/
+│   └── services/
+└── tests/
+
+# [REMOVE IF UNUSED] Option 3: Mobile + API (when "iOS/Android" detected)
+api/
+└── [same as backend above]
+
+ios/ or android/
+└── [platform-specific structure: feature modules, UI flows, platform tests]
 ```
 
-**Structure Decision**: Adopt a Cargo workspace with three crates (core lib, server bin, admin bin). This enforces single responsibility, enables reuse of configuration/logging, and provides a home for test utilities.
+**Structure Decision**: [Document the selected structure and reference the real
+directories captured above]
 
 ## Complexity Tracking
 
-No violations anticipated. If additional crates are requested, they will require approval per technical guide (“Do not introduce new crates without approval”).
+> **Fill ONLY if Constitution Check has violations that must be justified**
+
+| Violation | Why Needed | Simpler Alternative Rejected Because |
+|-----------|------------|-------------------------------------|
+| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
+| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |
