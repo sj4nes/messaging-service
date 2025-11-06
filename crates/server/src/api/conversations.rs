@@ -1,32 +1,51 @@
 use axum::{
-    extract::{Path, State},
+    extract::{Path, Query, State},
     http::StatusCode,
     Json,
 };
-use serde_json::json;
+use serde::Deserialize;
+
+use crate::types::{ConversationDto, ListResponse, MessageDto, PageMeta};
+
+#[derive(Debug, Deserialize)]
+pub struct PagingQuery {
+    #[serde(default)]
+    pub page: Option<u32>,
+    #[serde(rename = "pageSize", default)]
+    pub page_size: Option<u32>,
+}
 
 pub(crate) async fn list_conversations(
     State(_state): State<crate::AppState>,
-) -> (StatusCode, Json<serde_json::Value>) {
-    // Stubbed list with paging metadata
-    let payload = json!({
-        "items": [],
-        "page": 1,
-        "pageSize": 0,
-        "total": 0
-    });
-    (StatusCode::OK, Json(payload))
+    Query(paging): Query<PagingQuery>,
+) -> (StatusCode, Json<ListResponse<ConversationDto>>) {
+    let page = paging.page.unwrap_or(1);
+    let page_size = paging.page_size.unwrap_or(0);
+    let resp = ListResponse {
+        items: vec![],
+        meta: PageMeta {
+            page,
+            page_size,
+            total: 0,
+        },
+    };
+    (StatusCode::OK, Json(resp))
 }
 
 pub(crate) async fn list_messages(
     State(_state): State<crate::AppState>,
     Path(_id): Path<String>,
-) -> (StatusCode, Json<serde_json::Value>) {
-    let payload = json!({
-        "items": [],
-        "page": 1,
-        "pageSize": 0,
-        "total": 0
-    });
-    (StatusCode::OK, Json(payload))
+    Query(paging): Query<PagingQuery>,
+) -> (StatusCode, Json<ListResponse<MessageDto>>) {
+    let page = paging.page.unwrap_or(1);
+    let page_size = paging.page_size.unwrap_or(0);
+    let resp = ListResponse {
+        items: vec![],
+        meta: PageMeta {
+            page,
+            page_size,
+            total: 0,
+        },
+    };
+    (StatusCode::OK, Json(resp))
 }

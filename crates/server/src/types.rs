@@ -103,3 +103,33 @@ pub struct WebhookEmailRequest {
     pub attachments: Option<Vec<String>>,
     pub timestamp: String,
 }
+
+// --------- Paging DTOs (US3/US4) ---------
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PageMeta {
+    pub page: u32,
+    pub page_size: u32,
+    pub total: u64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ListResponse<T> {
+    pub items: Vec<T>,
+    pub meta: PageMeta,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConversationDto {
+    pub id: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MessageDto {
+    pub id: String,
+    pub from: String,
+    pub to: String,
+    pub r#type: String,
+    pub snippet: String,
+    pub timestamp: String,
+}

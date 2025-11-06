@@ -55,20 +55,20 @@ Independent Test: Use bin/test.sh webhooks; observe 429 under bursts and 503 dur
 Goal: GET /api/conversations with content negotiation and pagination.
 Independent Test: GET with Accept header; verify JSON response and paging metadata.
 
-- [ ] T029 [P] [US3] Define list/paging DTOs for conversations in crates/server/src/types.rs
-- [ ] T030 [US3] Implement GET /api/conversations handler in crates/server/src/api/conversations.rs
-- [ ] T031 [US3] Implement content negotiation for GET conversations in crates/server/src/middleware/accept.rs
-- [ ] T032 [US3] Update OpenAPI for conversations GET in specs/005-api-ingest-endpoints/contracts/openapi.yaml
+- [X] T029 [P] [US3] Define list/paging DTOs for conversations in crates/server/src/types.rs
+- [X] T030 [US3] Implement GET /api/conversations handler in crates/server/src/api/conversations.rs
+- [X] T031 [US3] Implement content negotiation for GET conversations in crates/server/src/middleware/accept.rs
+- [X] T032 [US3] Update OpenAPI for conversations GET in specs/005-api-ingest-endpoints/contracts/openapi.yaml
 
 ## Phase 6 — User Story 4 (P2): Retrieve messages for a conversation
 
 Goal: GET /api/conversations/{id}/messages with content negotiation and pagination.
 Independent Test: GET messages by id; verify 200 and paging; 404 on unknown id.
 
-- [ ] T033 [P] [US4] Define list/paging DTOs for messages in crates/server/src/types.rs
-- [ ] T034 [US4] Implement GET /api/conversations/{id}/messages handler in crates/server/src/api/conversations.rs
-- [ ] T035 [US4] Implement content negotiation for messages in crates/server/src/middleware/accept.rs
-- [ ] T036 [US4] Update OpenAPI for conversation messages GET in specs/005-api-ingest-endpoints/contracts/openapi.yaml
+- [X] T033 [P] [US4] Define list/paging DTOs for messages in crates/server/src/types.rs
+- [X] T034 [US4] Implement GET /api/conversations/{id}/messages handler in crates/server/src/api/conversations.rs
+- [X] T035 [US4] Implement content negotiation for messages in crates/server/src/middleware/accept.rs
+- [X] T036 [US4] Update OpenAPI for conversation messages GET in specs/005-api-ingest-endpoints/contracts/openapi.yaml
 
 ## Final Phase — Polish & Cross-Cutting
 
