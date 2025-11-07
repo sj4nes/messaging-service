@@ -33,9 +33,7 @@ pub(crate) async fn list_conversations(
         } else {
             ((page.max(1) - 1) * page_size) as i64
         };
-        match crate::store_db::conversations::list_conversations(&pool, limit, offset)
-            .await
-        {
+        match crate::store_db::conversations::list_conversations(&pool, limit, offset).await {
             Ok(rows) => {
                 let dtos: Vec<ConversationDto> = rows
                     .into_iter()
