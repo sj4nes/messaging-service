@@ -6,6 +6,7 @@ use tracing::info;
 use crate::errors;
 use crate::queue::inbound_events::InboundEvent;
 use crate::store::messages as message_store;
+use crate::store_db::inbound_events::insert_inbound_event;
 use crate::types::{ProviderInboundRequest, Validate};
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -82,16 +83,35 @@ pub(crate) async fn post_inbound(
     // Log mock inbound receipt
     info!(target = "server", event = "mock_inbound", mock = true, channel = %ch, from = %from, to = %to, "received mock inbound event");
 
-    let event = InboundEvent {
-        event_name: event_name.to_string(),
-        payload: serde_json::to_value(&body).unwrap_or_else(|_| json!({})),
-        occurred_at,
-        idempotency_key: None,
-        source: "provider.mock".to_string(),
-    };
-    // Persist inbound to in-memory store (US2)
-    let _stored_id = message_store::insert_inbound(&body);
-    let _ = state.queue.enqueue(event).await;
+    // If DB is configured, insert inbound_event for worker consumption; otherwise preserve in-memory flow
+    if let Some(pool) = state.db() {
+        let payload = serde_json::to_value(&body).unwrap_or_else(|_| json!({}));
+        let provider_message_id: Option<String> = match &body {
+            crate::types::ProviderInboundRequest::Sms(_)
+            | crate::types::ProviderInboundRequest::Mms(_) => None,
+            crate::types::ProviderInboundRequest::Email(_e) => None,
+        };
+        let _ = insert_inbound_event(
+            &pool,
+            ch,
+            &from,
+            &to,
+            provider_message_id.as_deref(),
+            payload,
+        )
+        .await;
+    } else {
+        let event = InboundEvent {
+            event_name: event_name.to_string(),
+            payload: serde_json::to_value(&body).unwrap_or_else(|_| json!({})),
+            occurred_at,
+            idempotency_key: None,
+            source: "provider.mock".to_string(),
+        };
+        // Persist inbound to in-memory store (legacy mock flow)
+        let _stored_id = message_store::insert_inbound(&body);
+        let _ = state.queue.enqueue(event).await;
+    }
 
     (StatusCode::ACCEPTED, Json(json!({ "status": "accepted" }))).into_response()
 }
