@@ -104,7 +104,8 @@
     "path": "/api/conversations",
     "headers": [],
     "body": null,
-    "expect": 200
+    "expect": 200,
+    "assert": ".items | length > 0"
   },
   {
     "name": "List messages for conversation",

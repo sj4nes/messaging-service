@@ -85,9 +85,9 @@ pub async fn mark_error(
     code: &str,
     message: &str,
     max_retries: i32,
-    backoff_ms: i64,
-) -> Result<()> {
-    // Increment attempts; set available_at for retry; if exceeds max, mark dead
+    backoff_base_ms: i64,
+) -> Result<bool> {
+    // Increment attempts; compute exponential backoff; set available_at for retry; if exceeds max, mark dead
     let rec = sqlx::query!(r#"SELECT attempts FROM inbound_events WHERE id=$1"#, id)
         .fetch_one(pool)
         .await?;
@@ -102,7 +102,20 @@ pub async fn mark_error(
         )
         .execute(pool)
         .await?;
+        return Ok(true);
     } else {
+        // backoff = base_ms * 2^((attempts-1)) with a simple cap at 60s for now
+        let pow = (attempts - 1).max(0) as u32;
+        // Compute 2^pow as i64 with simple loop to avoid shifting on i64
+        let mut factor: i64 = 1;
+        for _ in 0..pow {
+            factor = factor.saturating_mul(2);
+        }
+        let mut delay_ms: i64 = backoff_base_ms.saturating_mul(factor);
+        if delay_ms > 60_000 {
+            delay_ms = 60_000;
+        }
+        let delay_secs: i32 = ((delay_ms as f64) / 1000.0).round() as i32;
         sqlx::query!(
             r#"UPDATE inbound_events SET status='pending', error_code=$2, error_message=$3, attempts=$4,
                     available_at = (now() + make_interval(secs := $5::INT)), updated_at=now() WHERE id=$1"#,
@@ -110,12 +123,12 @@ pub async fn mark_error(
             code,
             message,
             attempts,
-            ((backoff_ms as f64) / 1000.0).round() as i32
+            delay_secs
         )
         .execute(pool)
         .await?;
+        return Ok(false);
     }
-    Ok(())
 }
 
 /// Reap stale processing claims after timeout_secs

@@ -31,7 +31,7 @@ Plan: plan.md | Spec: spec.md | Research: research.md | Data Model: data-model.m
 
 - [x] T020 [US2] Add worker module crates/server/src/worker/inbound.rs to claim with SELECT … FOR UPDATE SKIP LOCKED and set status=processing, processor_id
 - [x] T021 [US2] Implement processing path: create Message rows and mark inbound_events processed in crates/server/src/worker/inbound.rs
-- [ ] T022 [P] [US2] Implement retry policy with exponential backoff (attempt_count, next_attempt_at) and mark dead_letter after max_retries in crates/server/src/worker/inbound.rs
+- [x] T022 [P] [US2] Implement retry policy with exponential backoff (attempt_count, next_attempt_at) and mark dead_letter after max_retries in crates/server/src/worker/inbound.rs
 - [x] T023 [US2] Add metrics increments and timings in worker using crates/server/src/metrics.rs
 - [x] T024 [US2] Wire worker startup in crates/server/src/lib.rs (spawn background task; read config knobs)
 
@@ -45,7 +45,7 @@ Plan: plan.md | Spec: spec.md | Research: research.md | Data Model: data-model.m
 
 - [x] T028 Document DB quickstart and verify steps in specs/007-wire-postgresql-store/quickstart.md (psql queries, config)
 - [x] T029 Update README anchors to reference this feature’s quickstart (optional) at README.md
-- [ ] T030 [P] Update tests to assert conversations non-empty after activity: tests/http/tests.json (add "assert": ".items | length > 0" to the List conversations case)
+- [x] T030 [P] Update tests to assert conversations non-empty after activity: tests/http/tests.json (add "assert": ".items | length > 0" to the List conversations case)
 - [ ] T031 Ensure SQLX_OFFLINE compatibility for CI builds (sqlx-data.json refresh if needed)
 - [x] T032 Add basic health/metrics note for worker throughput in README.md
 
