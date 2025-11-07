@@ -8,3 +8,10 @@ rate_limit_per_ip_per_min = 120
 rate_limit_per_sender_per_min = 60
 breaker_error_threshold = 20
 breaker_open_secs = 30
+
+# Mock provider behavior (percentages 0-100)
+provider_timeout_pct = 0
+provider_error_pct = 0
+provider_ratelimit_pct = 0
+# Optional deterministic RNG seed (unset = random)
+# provider_seed = 123456789

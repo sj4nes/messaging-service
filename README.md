@@ -236,6 +236,10 @@ Environment overrides (all numbers):
 - `API_RATE_LIMIT_PER_SENDER_PER_MIN`
 - `API_BREAKER_ERROR_THRESHOLD`
 - `API_BREAKER_OPEN_SECS`
+- `API_PROVIDER_TIMEOUT_PCT`
+- `API_PROVIDER_ERROR_PCT`
+- `API_PROVIDER_RATELIMIT_PCT`
+- `API_PROVIDER_SEED` (optional)
 
 Default file example:
 
@@ -246,4 +250,8 @@ rate_limit_per_ip_per_min = 120
 rate_limit_per_sender_per_min = 60
 breaker_error_threshold = 20
 breaker_open_secs = 30
+provider_timeout_pct = 0
+provider_error_pct = 0
+provider_ratelimit_pct = 0
+# provider_seed = 123456789
 ```
