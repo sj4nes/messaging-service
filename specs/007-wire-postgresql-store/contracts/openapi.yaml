@@ -1,0 +1,10 @@
+openapi: 3.0.3
+info:
+  title: Messaging Service - Wire PostgreSQL Store (Internal)
+  version: 0.1.0
+  description: |
+    This feature introduces durable storage and a background worker for inbound_events.
+    No new public HTTP endpoints are added; existing endpoints continue to operate
+    with identical request/response contracts.
+paths: {}
+components: {}
