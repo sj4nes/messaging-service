@@ -1,7 +1,9 @@
 use anyhow::Result;
 use chrono::{DateTime, Utc};
+use once_cell::sync::OnceCell;
 use sqlx::{PgPool, Row};
 use tracing::{instrument, warn};
+use twox_hash::xxh3::hash64;
 
 use super::normalize::conversation_key;
 
@@ -60,47 +62,8 @@ pub async fn insert_from_inbound(
     let message_id = rec.id;
     // Persist attachments (URLs) if any
     for url in attachments {
-        match sqlx::query(
-            r#"INSERT INTO attachment_urls (url) VALUES ($1)
-                ON CONFLICT (url) DO NOTHING RETURNING id"#,
-        )
-        .bind(url)
-        .fetch_optional(pool)
-        .await
-        {
-            Ok(opt) => {
-                // If we didn't insert due to conflict, fetch existing id
-                let attachment_id: i64 = if let Some(a) = opt {
-                    a.get("id")
-                } else {
-                    match sqlx::query(r#"SELECT id FROM attachment_urls WHERE url = $1 LIMIT 1"#)
-                        .bind(url)
-                        .fetch_one(pool)
-                        .await
-                    {
-                        Ok(row) => row.get("id"),
-                        Err(e) => {
-                            warn!(target="server", event="attach_lookup_fail", error=?e, message_id, url=%url, "failed to lookup existing attachment after conflict; continuing");
-                            continue;
-                        }
-                    }
-                };
-                if let Err(e) = sqlx::query(
-                    r#"INSERT INTO message_attachment_urls (message_id, attachment_url_id) VALUES ($1, $2)"#,
-                )
-                .bind(message_id)
-                .bind(attachment_id)
-                .execute(pool)
-                .await
-                {
-                    warn!(target="server", event="attach_link_fail", error=?e, message_id, url=%url, "failed to link attachment; continuing");
-                }
-            }
-            Err(e) => {
-                // Likely migration 0008 not yet applied; log and continue without attachments
-                warn!(target="server", event="attach_insert_fail", error=?e, message_id, url=%url, "failed to persist attachment; continuing");
-                continue;
-            }
+        if let Err(e) = persist_attachment(pool, message_id, url).await {
+            warn!(target="server", event="attach_persist_fail", error=?e, message_id, url=%url, "failed to persist/link attachment; continuing");
         }
     }
     Ok(message_id)
@@ -124,4 +87,135 @@ async fn ensure_conversation(pool: &PgPool, key: &str) -> Result<i64> {
     .fetch_one(pool)
     .await?;
     Ok(rec.id)
+}
+
+// Runtime detection for attachment_urls schema variants
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+enum AttachmentSchema {
+    UrlOnly,    // columns: id, url
+    RawHash,    // columns: id, raw, hash
+    RawHashUrl, // columns: id, raw, hash, url
+}
+
+static ATT_SCHEMA: OnceCell<AttachmentSchema> = OnceCell::new();
+
+async fn detect_attachment_schema(pool: &PgPool) -> AttachmentSchema {
+    if let Some(v) = ATT_SCHEMA.get() {
+        return *v;
+    }
+    // Inspect information_schema.columns for attachment_urls
+    let rows = match sqlx::query(
+        r#"SELECT column_name FROM information_schema.columns WHERE table_name='attachment_urls'"#,
+    )
+    .fetch_all(pool)
+    .await
+    {
+        Ok(r) => r,
+        Err(_) => {
+            let _ = ATT_SCHEMA.set(AttachmentSchema::UrlOnly);
+            return AttachmentSchema::UrlOnly;
+        }
+    };
+    let mut has_url = false;
+    let mut has_raw = false;
+    let mut has_hash = false;
+    for r in rows {
+        let c: String = r.get("column_name");
+        match c.as_str() {
+            "url" => has_url = true,
+            "raw" => has_raw = true,
+            "hash" => has_hash = true,
+            _ => {}
+        }
+    }
+    let detected = if has_raw && has_hash && has_url {
+        AttachmentSchema::RawHashUrl
+    } else if has_raw && has_hash {
+        AttachmentSchema::RawHash
+    } else {
+        AttachmentSchema::UrlOnly
+    };
+    let _ = ATT_SCHEMA.set(detected);
+    detected
+}
+
+async fn persist_attachment(pool: &PgPool, message_id: i64, url: &str) -> Result<()> {
+    let schema = detect_attachment_schema(pool).await;
+    let att_id: Option<i64> = match schema {
+        AttachmentSchema::UrlOnly => {
+            // Upsert by url
+            if let Some(row) = sqlx::query(
+                r#"INSERT INTO attachment_urls (url) VALUES ($1)
+                    ON CONFLICT (url) DO NOTHING RETURNING id"#,
+            )
+            .bind(url)
+            .fetch_optional(pool)
+            .await?
+            {
+                Some(row.get("id"))
+            } else {
+                // lookup existing
+                match sqlx::query(r#"SELECT id FROM attachment_urls WHERE url = $1 LIMIT 1"#)
+                    .bind(url)
+                    .fetch_one(pool)
+                    .await
+                {
+                    Ok(r) => Some(r.get("id")),
+                    Err(_) => None,
+                }
+            }
+        }
+        AttachmentSchema::RawHash | AttachmentSchema::RawHashUrl => {
+            let hash = hash64(url.as_bytes()) as i64;
+            // If RawHashUrl, also populate url if column exists
+            let insert_sql = match schema {
+                AttachmentSchema::RawHashUrl => {
+                    r#"INSERT INTO attachment_urls (raw, hash, url) VALUES ($1, $2, $1)
+                    ON CONFLICT (url) DO NOTHING RETURNING id"#
+                }
+                _ => {
+                    r#"INSERT INTO attachment_urls (raw, hash) VALUES ($1, $2)
+                    ON CONFLICT (hash) DO NOTHING RETURNING id"#
+                }
+            };
+            if let Some(row) = sqlx::query(insert_sql)
+                .bind(url)
+                .bind(hash)
+                .fetch_optional(pool)
+                .await?
+            {
+                Some(row.get("id"))
+            } else {
+                let lookup_sql = match schema {
+                    AttachmentSchema::RawHashUrl => {
+                        r#"SELECT id FROM attachment_urls WHERE url = $1 LIMIT 1"#
+                    }
+                    _ => r#"SELECT id FROM attachment_urls WHERE hash = $1 LIMIT 1"#,
+                };
+                match sqlx::query(lookup_sql)
+                    .bind(match schema {
+                        AttachmentSchema::RawHashUrl => url.to_string(),
+                        _ => hash.to_string(),
+                    })
+                    .fetch_one(pool)
+                    .await
+                {
+                    Ok(r) => Some(r.get("id")),
+                    Err(_) => None,
+                }
+            }
+        }
+    };
+
+    if let Some(id) = att_id {
+        sqlx::query(
+            r#"INSERT INTO message_attachment_urls (message_id, attachment_url_id) VALUES ($1, $2)
+                ON CONFLICT DO NOTHING"#,
+        )
+        .bind(message_id)
+        .bind(id)
+        .execute(pool)
+        .await?;
+    }
+    Ok(())
 }
