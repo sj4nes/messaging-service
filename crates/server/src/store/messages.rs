@@ -29,6 +29,8 @@ pub struct StoredMessage {
     pub body: String,
     pub attachments: Option<Vec<String>>,
     pub timestamp: String,
+    // Feature 008: provider identity for outbound messages (None for inbound)
+    pub provider_name: Option<String>,
 }
 
 fn store() -> &'static RwLock<Vec<StoredMessage>> {
@@ -100,6 +102,7 @@ pub fn insert_inbound(req: &ProviderInboundRequest) -> String {
         body,
         attachments,
         timestamp,
+        provider_name: None,
     };
     let lock = store();
     let mut w = lock.write().unwrap();
@@ -159,6 +162,7 @@ fn insert_outbound(
         body: body.to_string(),
         attachments: attachments.clone(),
         timestamp: timestamp.to_string(),
+        provider_name: None, // populated later when provider mapping applied (Phase US1)
     };
     let lock = store();
     let mut w = lock.write().unwrap();
@@ -172,4 +176,18 @@ fn insert_outbound(
 #[allow(dead_code)]
 pub fn all() -> Vec<StoredMessage> {
     store().read().unwrap().clone()
+}
+
+/// Update provider_name for an existing outbound message by id.
+pub fn set_outbound_provider(id: &str, provider_name: &str) -> bool {
+    let lock = store();
+    let mut w = lock.write().unwrap();
+    if let Some(msg) = w
+        .iter_mut()
+        .find(|m| m.id == id && matches!(m.direction, Direction::Outbound))
+    {
+        msg.provider_name = Some(provider_name.to_string());
+        return true;
+    }
+    false
 }

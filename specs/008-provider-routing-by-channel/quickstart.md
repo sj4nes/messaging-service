@@ -21,9 +21,20 @@ Fallback globals:
 ## Run Tests
 
 Use existing `bin/test.sh` plus new seeded tests (to be added) to verify:
-1. SMS and Email route to distinct providers.
-2. Breaker isolation: induce failures for sms-mms only.
-3. Deterministic outcomes under fixed seeds.
+1. SMS and Email route to distinct providers (check metrics counters `provider_sms_mms_attempts` vs `provider_email_attempts`).
+2. Breaker isolation: induce failures for sms-mms only (later phase).
+3. Deterministic outcomes under fixed seeds (later phase).
+
+### Provider Routing Verification (US1)
+
+After starting the server:
+1. POST an SMS to `/api/messages/sms` and an Email to `/api/messages/email`.
+2. Wait ~200ms for the worker to process events.
+3. GET `/metrics` and confirm:
+	- `provider_sms_mms_attempts >= 1`
+	- `provider_email_attempts >= 1`
+4. Optionally inspect logs for `dispatch_attempt` and `dispatch_outcome` events showing `provider="sms-mms"` and `provider="email"`.
+5. Confirm stored messages (`provider_name`) set by dumping the in-memory store via a temporary debug helper (to be added if needed) or extending conversations endpoint in future.
 
 ## Observability
 - Logs include provider_name and outcome per dispatch.

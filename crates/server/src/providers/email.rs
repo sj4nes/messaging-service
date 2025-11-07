@@ -1,20 +1,34 @@
-//! Mock Email provider implementation scaffold (Feature 008 - Phase 1)
-//!
-//! This module will implement the EmailMockProvider in Phase 3 (US1).
+//! Mock Email provider implementation (Feature 008 - US1)
 
-#[allow(dead_code)]
+use crate::config::ApiConfig;
+use crate::providers::common::pick_outcome_for_provider;
+use crate::providers::mock::Outcome;
+use crate::providers::registry::{DispatchResult, OutboundMessage, Provider};
+
 #[derive(Debug, Clone)]
 pub struct EmailMockProvider;
 
 impl Default for EmailMockProvider {
     fn default() -> Self {
-        Self::new()
+        Self
     }
 }
 
 impl EmailMockProvider {
-    #[allow(dead_code)]
     pub fn new() -> Self {
         Self
+    }
+}
+
+impl Provider for EmailMockProvider {
+    fn name(&self) -> &str {
+        "email"
+    }
+    fn dispatch(&self, _msg: &OutboundMessage, cfg: &ApiConfig) -> DispatchResult {
+        let outcome: Outcome = pick_outcome_for_provider(self.name(), cfg);
+        DispatchResult {
+            provider_name: self.name().to_string(),
+            outcome,
+        }
     }
 }

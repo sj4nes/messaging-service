@@ -8,6 +8,15 @@ static DISPATCH_ATTEMPTS: AtomicU64 = AtomicU64::new(0);
 static DISPATCH_SUCCESS: AtomicU64 = AtomicU64::new(0);
 static DISPATCH_RATE_LIMITED: AtomicU64 = AtomicU64::new(0);
 static DISPATCH_ERROR: AtomicU64 = AtomicU64::new(0);
+// Per-provider counters (Feature 008 US1)
+static SMS_MMS_ATTEMPTS: AtomicU64 = AtomicU64::new(0);
+static SMS_MMS_SUCCESS: AtomicU64 = AtomicU64::new(0);
+static SMS_MMS_RATE_LIMITED: AtomicU64 = AtomicU64::new(0);
+static SMS_MMS_ERROR: AtomicU64 = AtomicU64::new(0);
+static EMAIL_ATTEMPTS: AtomicU64 = AtomicU64::new(0);
+static EMAIL_SUCCESS: AtomicU64 = AtomicU64::new(0);
+static EMAIL_RATE_LIMITED: AtomicU64 = AtomicU64::new(0);
+static EMAIL_ERROR: AtomicU64 = AtomicU64::new(0);
 static BREAKER_TRANSITIONS: AtomicU64 = AtomicU64::new(0);
 static WORKER_CLAIMED: AtomicU64 = AtomicU64::new(0);
 static WORKER_PROCESSED: AtomicU64 = AtomicU64::new(0);
@@ -30,6 +39,14 @@ pub struct MetricsSnapshot {
     dispatch_success: u64,
     dispatch_rate_limited: u64,
     dispatch_error: u64,
+    provider_sms_mms_attempts: u64,
+    provider_sms_mms_success: u64,
+    provider_sms_mms_rate_limited: u64,
+    provider_sms_mms_error: u64,
+    provider_email_attempts: u64,
+    provider_email_success: u64,
+    provider_email_rate_limited: u64,
+    provider_email_error: u64,
     breaker_transitions: u64,
     worker_claimed: u64,
     worker_processed: u64,
@@ -67,6 +84,54 @@ pub fn record_dispatch_error() {
     DISPATCH_ERROR.fetch_add(1, Ordering::Relaxed);
 }
 
+pub fn record_provider_attempt(label: &str) {
+    match label {
+        PROVIDER_LABEL_SMS_MMS => {
+            SMS_MMS_ATTEMPTS.fetch_add(1, Ordering::Relaxed);
+        }
+        PROVIDER_LABEL_EMAIL => {
+            EMAIL_ATTEMPTS.fetch_add(1, Ordering::Relaxed);
+        }
+        _ => {}
+    }
+}
+
+pub fn record_provider_success(label: &str) {
+    match label {
+        PROVIDER_LABEL_SMS_MMS => {
+            SMS_MMS_SUCCESS.fetch_add(1, Ordering::Relaxed);
+        }
+        PROVIDER_LABEL_EMAIL => {
+            EMAIL_SUCCESS.fetch_add(1, Ordering::Relaxed);
+        }
+        _ => {}
+    }
+}
+
+pub fn record_provider_rate_limited(label: &str) {
+    match label {
+        PROVIDER_LABEL_SMS_MMS => {
+            SMS_MMS_RATE_LIMITED.fetch_add(1, Ordering::Relaxed);
+        }
+        PROVIDER_LABEL_EMAIL => {
+            EMAIL_RATE_LIMITED.fetch_add(1, Ordering::Relaxed);
+        }
+        _ => {}
+    }
+}
+
+pub fn record_provider_error(label: &str) {
+    match label {
+        PROVIDER_LABEL_SMS_MMS => {
+            SMS_MMS_ERROR.fetch_add(1, Ordering::Relaxed);
+        }
+        PROVIDER_LABEL_EMAIL => {
+            EMAIL_ERROR.fetch_add(1, Ordering::Relaxed);
+        }
+        _ => {}
+    }
+}
+
 pub fn snapshot() -> MetricsSnapshot {
     let now = SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -80,6 +145,14 @@ pub fn snapshot() -> MetricsSnapshot {
         dispatch_success: DISPATCH_SUCCESS.load(Ordering::Relaxed),
         dispatch_rate_limited: DISPATCH_RATE_LIMITED.load(Ordering::Relaxed),
         dispatch_error: DISPATCH_ERROR.load(Ordering::Relaxed),
+        provider_sms_mms_attempts: SMS_MMS_ATTEMPTS.load(Ordering::Relaxed),
+        provider_sms_mms_success: SMS_MMS_SUCCESS.load(Ordering::Relaxed),
+        provider_sms_mms_rate_limited: SMS_MMS_RATE_LIMITED.load(Ordering::Relaxed),
+        provider_sms_mms_error: SMS_MMS_ERROR.load(Ordering::Relaxed),
+        provider_email_attempts: EMAIL_ATTEMPTS.load(Ordering::Relaxed),
+        provider_email_success: EMAIL_SUCCESS.load(Ordering::Relaxed),
+        provider_email_rate_limited: EMAIL_RATE_LIMITED.load(Ordering::Relaxed),
+        provider_email_error: EMAIL_ERROR.load(Ordering::Relaxed),
         breaker_transitions: BREAKER_TRANSITIONS.load(Ordering::Relaxed),
         worker_claimed: WORKER_CLAIMED.load(Ordering::Relaxed),
         worker_processed: WORKER_PROCESSED.load(Ordering::Relaxed),

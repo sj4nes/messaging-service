@@ -58,6 +58,17 @@
 - [ ] T020 [P] [US1] Unit test: registry mapping & routing in `crates/server/tests/provider_registry.rs`
 - [ ] T021 [P] [US1] Integration test: SMS vs Email dispatch logs/metrics in `crates/server/tests/dispatch_routing.rs`
 - [ ] T022 [US1] Update quickstart with provider routing verification steps in `specs/008-provider-routing-by-channel/quickstart.md`
+ - [X] T012 [P] [US1] Implement `SmsMmsMockProvider` in `crates/server/src/providers/sms_mms.rs`
+ - [X] T013 [P] [US1] Implement `EmailMockProvider` in `crates/server/src/providers/email.rs`
+ - [X] T014 [US1] Wire registry initialization in `crates/server/src/lib.rs` (AppState creation) mapping channels → providers
+ - [X] T015 [US1] Refactor `queue/outbound.rs` to parse channel from event payload and select provider
+ - [X] T016 [US1] Tag outbound message insert with `provider_name` in `crates/server/src/store/messages.rs`
+ - [X] T017 [US1] Add structured log fields (provider_name, outcome) in `queue/outbound.rs`
+ - [X] T018 [P] [US1] Add per-provider metrics counters (attempts, success, rate_limited, error) in `crates/server/src/metrics.rs`
+ - [X] T019 [US1] Implement missing-provider 500 error path (log once) in `queue/outbound.rs`
+ - [X] T020 [P] [US1] Unit test: registry mapping & routing in `crates/server/tests/provider_registry.rs`
+ - [X] T021 [P] [US1] Integration test: SMS vs Email dispatch logs/metrics in `crates/server/tests/dispatch_routing.rs`
+ - [X] T022 [US1] Update quickstart with provider routing verification steps in `specs/008-provider-routing-by-channel/quickstart.md`
 
 **Checkpoint**: MVP routing delivered and independently testable.
 

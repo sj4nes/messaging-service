@@ -40,9 +40,10 @@ pub mod state {
 pub mod providers {
     pub mod mock;
     // Feature 008 provider modules scaffolds
+    pub mod common;
     pub mod email;
     pub mod registry;
-    pub mod sms_mms;
+    pub mod sms_mms; // shared helpers (Feature 008)
 }
 pub mod store {
     pub mod conversations;
@@ -186,6 +187,21 @@ pub async fn run_server(
         },
         Err(_) => None,
     };
+    // Build provider registry and implementations (US1 wiring)
+    let provider_registry = {
+        use crate::providers::registry::{ChannelKind, Provider, ProviderRegistry};
+        use std::sync::Arc;
+        let mut reg = ProviderRegistry::new();
+        let sms =
+            Arc::new(crate::providers::sms_mms::SmsMmsMockProvider::new()) as Arc<dyn Provider>;
+        let email =
+            Arc::new(crate::providers::email::EmailMockProvider::new()) as Arc<dyn Provider>;
+        reg.insert(ChannelKind::Sms, sms.clone());
+        reg.insert(ChannelKind::Mms, sms);
+        reg.insert(ChannelKind::Email, email);
+        reg
+    };
+
     let state = AppState {
         rate: RateLimiter::new(
             api_cfg.rate_limit_per_ip_per_min,
@@ -196,7 +212,7 @@ pub async fn run_server(
         idempotency: IdempotencyStore::new(2 * 60 * 60), // 2 hours
         api: api_cfg,
         db: db_pool.clone(),
-        provider_registry: crate::providers::registry::ProviderRegistry::new(),
+        provider_registry,
         provider_breakers: {
             use crate::middleware::circuit_breaker::CircuitBreaker;
             let mut map = std::collections::HashMap::new();
@@ -296,6 +312,21 @@ where
         },
         Err(_) => None,
     };
+    // Build provider registry for graceful-shutdown path
+    let provider_registry = {
+        use crate::providers::registry::{ChannelKind, Provider, ProviderRegistry};
+        use std::sync::Arc;
+        let mut reg = ProviderRegistry::new();
+        let sms =
+            Arc::new(crate::providers::sms_mms::SmsMmsMockProvider::new()) as Arc<dyn Provider>;
+        let email =
+            Arc::new(crate::providers::email::EmailMockProvider::new()) as Arc<dyn Provider>;
+        reg.insert(ChannelKind::Sms, sms.clone());
+        reg.insert(ChannelKind::Mms, sms);
+        reg.insert(ChannelKind::Email, email);
+        reg
+    };
+
     let state = AppState {
         rate: RateLimiter::new(
             api_cfg.rate_limit_per_ip_per_min,
@@ -306,7 +337,7 @@ where
         idempotency: IdempotencyStore::new(2 * 60 * 60),
         api: api_cfg,
         db: db_pool.clone(),
-        provider_registry: crate::providers::registry::ProviderRegistry::new(),
+        provider_registry,
         provider_breakers: {
             use crate::middleware::circuit_breaker::CircuitBreaker;
             let mut map = std::collections::HashMap::new();

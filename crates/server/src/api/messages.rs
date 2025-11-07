@@ -36,31 +36,35 @@ pub(crate) async fn post_sms(
         }
     }
 
+    // Persist outbound into in-memory store for conversations
+    let msg_id = if body.r#type.eq_ignore_ascii_case("mms") {
+        message_store::insert_outbound_mms(
+            &body.from,
+            &body.to,
+            &body.body,
+            &body.attachments,
+            &body.timestamp,
+        )
+    } else {
+        message_store::insert_outbound_sms(
+            &body.from,
+            &body.to,
+            &body.body,
+            &body.attachments,
+            &body.timestamp,
+        )
+    };
+    let mut payload = serde_json::to_value(&body).unwrap_or_else(|_| json!({}));
+    if let Some(obj) = payload.as_object_mut() {
+        obj.insert("message_id".to_string(), json!(msg_id));
+    }
     let event = InboundEvent {
         event_name: "api.messages.sms".to_string(),
-        payload: serde_json::to_value(&body).unwrap_or_else(|_| json!({})),
+        payload,
         occurred_at: body.timestamp.clone(),
         idempotency_key: None,
         source: "api".to_string(),
     };
-    // Persist outbound into in-memory store for conversations
-    if body.r#type.eq_ignore_ascii_case("mms") {
-        let _ = message_store::insert_outbound_mms(
-            &body.from,
-            &body.to,
-            &body.body,
-            &body.attachments,
-            &body.timestamp,
-        );
-    } else {
-        let _ = message_store::insert_outbound_sms(
-            &body.from,
-            &body.to,
-            &body.body,
-            &body.attachments,
-            &body.timestamp,
-        );
-    }
     let _ = state.queue.enqueue(event).await;
 
     (StatusCode::ACCEPTED, Json(json!({ "status": "accepted" }))).into_response()
@@ -87,21 +91,25 @@ pub(crate) async fn post_email(
             return errors::bad_request("too many attachments").into_response();
         }
     }
-    let event = InboundEvent {
-        event_name: "api.messages.email".to_string(),
-        payload: serde_json::to_value(&body).unwrap_or_else(|_| json!({})),
-        occurred_at: body.timestamp.clone(),
-        idempotency_key: None,
-        source: "api".to_string(),
-    };
     // Persist outbound email
-    let _ = message_store::insert_outbound_email(
+    let msg_id = message_store::insert_outbound_email(
         &body.from,
         &body.to,
         &body.body,
         &body.attachments,
         &body.timestamp,
     );
+    let mut payload = serde_json::to_value(&body).unwrap_or_else(|_| json!({}));
+    if let Some(obj) = payload.as_object_mut() {
+        obj.insert("message_id".to_string(), json!(msg_id));
+    }
+    let event = InboundEvent {
+        event_name: "api.messages.email".to_string(),
+        payload,
+        occurred_at: body.timestamp.clone(),
+        idempotency_key: None,
+        source: "api".to_string(),
+    };
     let _ = state.queue.enqueue(event).await;
 
     (StatusCode::ACCEPTED, Json(json!({ "status": "accepted" }))).into_response()
