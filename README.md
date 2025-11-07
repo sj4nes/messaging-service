@@ -132,8 +132,24 @@ This project structure is laid out for you already. You are welcome to move or c
 
 ### PostgreSQL-backed worker (Feature 007)
 
-- Migrations for `inbound_events` extended with processing metadata: `crates/db-migrate/migrations_sqlx/0007_alter_inbound_events_unified.up.sql`
-- Server now includes scaffolding modules for DB-backed stores and an inbound worker loop; wiring a PgPool and swapping handlers to persist events are upcoming steps.
+- When `DATABASE_URL` is set the server uses Postgres-backed persistence and background processing:
+    - Inbound webhooks and provider mock inbound insert rows into `inbound_events` (migrations 0006, 0007)
+    - Background inbound worker claims events (FOR UPDATE SKIP LOCKED), persists conversations/messages, and marks processed
+    - Message bodies are stored in `message_bodies`; attachment URLs in `attachment_urls` and linked via `message_attachment_urls` (migration 0008)
+    - Conversations and messages list endpoints read from DB when available and return accurate `meta.total`
+    - Fallback to in-memory queue/store when `DATABASE_URL` is unset
+
+Apply migrations:
+
+```bash
+make migrate-apply
+```
+
+Or directly:
+
+```bash
+cargo run -p db-migrate -- up
+```
 
 Default worker config (override via env `API_*`): see `crates/server/config/default.toml` for:
 - `worker_batch_size`

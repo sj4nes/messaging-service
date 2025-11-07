@@ -1,6 +1,6 @@
 use anyhow::Result;
 use chrono::{DateTime, Utc};
-use sqlx::PgPool;
+use sqlx::{PgPool, Row};
 use tracing::instrument;
 
 use super::normalize::conversation_key;
@@ -23,17 +23,43 @@ pub async fn insert_from_inbound(
     let convo_id = ensure_conversation(pool, &conv_key).await?;
     // Parse timestamp
     let ts: DateTime<Utc> = timestamp.parse().unwrap_or_else(|_| Utc::now());
-    // Insert message
+    // Insert body row if present
+    let body_id: Option<i64> = if body.is_empty() {
+        None
+    } else {
+        let b = sqlx::query(r#"INSERT INTO message_bodies (body) VALUES ($1) RETURNING id"#)
+            .bind(body)
+            .fetch_one(pool)
+            .await?;
+        Some(b.get::<i64, _>("id"))
+    };
+    // Insert message referencing body
     let rec = sqlx::query!(
-        r#"INSERT INTO messages (conversation_id, provider_id, direction, sent_at, received_at)
-           VALUES ($1, 1, 'inbound', $2, $2) RETURNING id"#,
+        r#"INSERT INTO messages (conversation_id, provider_id, direction, sent_at, received_at, body_id)
+           VALUES ($1, 1, 'inbound', $2, $2, $3) RETURNING id"#,
         convo_id,
-        ts
+        ts,
+        body_id
     )
     .fetch_one(pool)
     .await?;
-    // TODO: persist body + attachments in separate tables once schema extended
-    Ok(rec.id)
+    let message_id = rec.id;
+    // Persist attachments (URLs) if any
+    for url in attachments {
+        let a = sqlx::query(r#"INSERT INTO attachment_urls (url) VALUES ($1) RETURNING id"#)
+            .bind(url)
+            .fetch_one(pool)
+            .await?;
+        let attachment_id: i64 = a.get("id");
+        let _ = sqlx::query(
+            r#"INSERT INTO message_attachment_urls (message_id, attachment_url_id) VALUES ($1, $2)"#,
+        )
+        .bind(message_id)
+        .bind(attachment_id)
+        .execute(pool)
+        .await?;
+    }
+    Ok(message_id)
 }
 
 async fn ensure_conversation(pool: &PgPool, key: &str) -> Result<i64> {

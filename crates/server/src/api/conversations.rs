@@ -47,8 +47,11 @@ pub(crate) async fn list_conversations(
                             .unwrap_or_else(|| "".into()),
                     })
                     .collect();
-                // Total conversations count (approximate using number returned if page_size=0)
-                let total_count = dtos.len() as u64;
+                let total_count =
+                    match crate::store_db::conversations::conversations_total(&pool).await {
+                        Ok(c) => c as u64,
+                        Err(_) => dtos.len() as u64,
+                    };
                 (dtos, total_count)
             }
             Err(_) => (Vec::new(), 0),
@@ -102,7 +105,14 @@ pub(crate) async fn list_messages(
                                 timestamp: m.received_at.unwrap_or(m.sent_at).to_rfc3339(),
                             })
                             .collect();
-                        (dtos, 0)
+                        let total_count =
+                            match crate::store_db::conversations::messages_total(&pool, conv_id)
+                                .await
+                            {
+                                Ok(c) => c as u64,
+                                Err(_) => dtos.len() as u64,
+                            };
+                        (dtos, total_count)
                     }
                     Err(_) => (Vec::new(), 0),
                 }

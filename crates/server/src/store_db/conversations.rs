@@ -79,3 +79,20 @@ pub async fn list_messages(
         })
         .collect())
 }
+
+pub async fn conversations_total(pool: &PgPool) -> Result<i64> {
+    let row = sqlx::query!(r#"SELECT COUNT(*) as count FROM conversations"#)
+        .fetch_one(pool)
+        .await?;
+    Ok(row.count.unwrap_or(0))
+}
+
+pub async fn messages_total(pool: &PgPool, conversation_id: i64) -> Result<i64> {
+    let row = sqlx::query!(
+        r#"SELECT COUNT(*) as count FROM messages WHERE conversation_id = $1"#,
+        conversation_id
+    )
+    .fetch_one(pool)
+    .await?;
+    Ok(row.count.unwrap_or(0))
+}
