@@ -1,3 +1,17 @@
+## [Feature 008] Provider Routing, Breaker Isolation, Deterministic Seeds (2025-11-07)
+
+Added:
+- Channel → provider registry with mock `sms-mms` and `email` providers.
+- Per-provider metrics (attempts, success, rate_limited, error) and breaker transition counters.
+- Per-provider circuit breaker isolation; failures in one provider no longer impact others.
+- Deterministic outcome sequencing via provider-specific RNG seeds with audit logs.
+- Invalid routing metric to surface missing provider mappings.
+- Unit & integration tests for routing, isolation, and deterministic reproducibility.
+
+Improved:
+- Expanded `Provider` trait documentation and internal message/result contracts.
+- Quickstart guide now covers breaker isolation and deterministic testing procedures.
+
 # Changelog
 
 All notable changes to this project will be documented in this file.

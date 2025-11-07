@@ -44,6 +44,12 @@ impl std::str::FromStr for ChannelKind {
 }
 
 /// Internal representation of an outbound message ready for provider dispatch.
+///
+/// Contract (US1):
+/// - `channel` must map to an initialized provider; otherwise routing layer records `invalid_routing`.
+/// - `to`, `from`, `body` may be empty strings (validation handled earlier in API layer in future phases).
+/// - `attachments` currently unused by mock providers but retained for parity with future real providers.
+/// - `idempotency_key` propagates idempotency semantics into provider layer for future dedup.
 #[derive(Debug, Clone)]
 pub struct OutboundMessage {
     pub channel: ChannelKind,
@@ -55,6 +61,10 @@ pub struct OutboundMessage {
 }
 
 /// Result of a provider dispatch attempt.
+///
+/// Contract:
+/// - `provider_name` echoes the logical provider (metrics/log correlation key).
+/// - `outcome` drives metrics & breaker state updates.
 #[derive(Debug, Clone)]
 pub struct DispatchResult {
     pub provider_name: String,
@@ -62,6 +72,12 @@ pub struct DispatchResult {
 }
 
 /// Provider abstraction; implementations will perform mock/real dispatch.
+///
+/// Implementor guidance:
+/// - Must be cheap to clone via Arc (no large interior mutable state; use separate stores if needed).
+/// - `dispatch` must be side-effect free except for external I/O (mock providers simulate outcomes only).
+/// - Deterministic test support: when seeds provided, outcome sequence must be reproducible.
+/// - Error modes: return `Outcome::Error` for server-side failures; `Outcome::Timeout` for simulated timeouts.
 pub trait Provider: Send + Sync {
     fn name(&self) -> &str;
     fn dispatch(&self, msg: &OutboundMessage, cfg: &ApiConfig) -> DispatchResult;
