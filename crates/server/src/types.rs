@@ -122,6 +122,9 @@ pub struct ListResponse<T> {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConversationDto {
     pub id: String,
+    pub key: String,
+    pub message_count: u32,
+    pub last_activity_at: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

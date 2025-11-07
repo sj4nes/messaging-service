@@ -49,11 +49,11 @@ Independent test criteria: With configured failure mix, observe breaker open/hal
 Story goal: Group messages by (channel, normalized_from, normalized_to); list conversations and messages.
 Independent test criteria: Outbound + inbound pair appears as one conversation with correct order by timestamp.
 
-- [ ] T050 [US4] Implement conversation key normalization in crates/server/src/store/conversations.rs
-- [ ] T051 [US4] Upsert conversation on message ingest in crates/server/src/store/conversations.rs
-- [ ] T052 [US4] Implement GET /api/conversations in crates/server/src/api/conversations.rs
-- [ ] T053 [US4] Implement GET /api/conversations/{id}/messages in crates/server/src/api/conversations.rs
-- [ ] T054 [P] [US4] Wire routes in crates/server/src/lib.rs
+- [x] T050 [US4] Implement conversation key normalization in crates/server/src/store/conversations.rs
+- [x] T051 [US4] Upsert conversation on message ingest in crates/server/src/store/conversations.rs
+- [x] T052 [US4] Implement GET /api/conversations in crates/server/src/api/conversations.rs
+- [x] T053 [US4] Implement GET /api/conversations/{id}/messages in crates/server/src/api/conversations.rs
+- [x] T054 [P] [US4] Wire routes in crates/server/src/lib.rs
 
 ## Phase 7 — Polish & Cross-Cutting
 - [ ] T060 Update specs/006-unified-messaging/quickstart.md with any new routes/flags

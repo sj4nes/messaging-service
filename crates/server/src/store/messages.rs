@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::types::{EmailInbound, ProviderInboundRequest, SmsInbound};
+use super::conversations;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Direction {
@@ -62,6 +63,43 @@ pub fn insert_inbound(req: &ProviderInboundRequest) -> String {
 	let lock = store();
 	let mut w = lock.write().unwrap();
 	w.push(msg);
+	// Update conversation index
+	if let Some(last) = w.last() {
+		conversations::on_message_stored(last);
+	}
+	id
+}
+
+pub fn insert_outbound_sms(from: &str, to: &str, body: &str, attachments: &Option<Vec<String>>, timestamp: &str) -> String {
+	insert_outbound(Channel::Sms, from, to, body, attachments, timestamp)
+}
+
+pub fn insert_outbound_mms(from: &str, to: &str, body: &str, attachments: &Option<Vec<String>>, timestamp: &str) -> String {
+	insert_outbound(Channel::Mms, from, to, body, attachments, timestamp)
+}
+
+pub fn insert_outbound_email(from: &str, to: &str, body: &str, attachments: &Option<Vec<String>>, timestamp: &str) -> String {
+	insert_outbound(Channel::Email, from, to, body, attachments, timestamp)
+}
+
+fn insert_outbound(channel: Channel, from: &str, to: &str, body: &str, attachments: &Option<Vec<String>>, timestamp: &str) -> String {
+	let id = Uuid::new_v4().to_string();
+	let msg = StoredMessage {
+		id: id.clone(),
+		direction: Direction::Outbound,
+		channel,
+		from: from.to_string(),
+		to: to.to_string(),
+		body: body.to_string(),
+		attachments: attachments.clone(),
+		timestamp: timestamp.to_string(),
+	};
+	let lock = store();
+	let mut w = lock.write().unwrap();
+	w.push(msg);
+	if let Some(last) = w.last() {
+		conversations::on_message_stored(last);
+	}
 	id
 }
 
