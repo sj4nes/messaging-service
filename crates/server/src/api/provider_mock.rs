@@ -5,6 +5,7 @@ use std::sync::{OnceLock, RwLock};
 use crate::errors;
 use crate::queue::inbound_events::InboundEvent;
 use crate::types::{ProviderInboundRequest, Validate};
+use crate::store::messages as message_store;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ProviderMockConfig {
@@ -66,6 +67,8 @@ pub(crate) async fn post_inbound(
         idempotency_key: None,
         source: "provider.mock".to_string(),
     };
+    // Persist inbound to in-memory store (US2)
+    let _stored_id = message_store::insert_inbound(&body);
     let _ = state.queue.enqueue(event).await;
 
     (StatusCode::ACCEPTED, Json(json!({ "status": "accepted" }))).into_response()

@@ -141,13 +141,7 @@ pub async fn run_server(
     config: Arc<Config>,
 ) -> Result<(tokio::task::JoinHandle<()>, SocketAddr), String> {
     // Build shared state
-    let (queue, mut rx) = InboundQueue::new(1024);
-    // Drain queue in background (stub)
-    let _drain = tokio::spawn(async move {
-        while let Some(_evt) = rx.recv().await {
-            // TODO: persist/dispatch
-        }
-    });
+    let (queue, rx) = InboundQueue::new(1024);
     let api_cfg = ApiConfig::load();
     let state = AppState {
         rate: RateLimiter::new(
@@ -159,6 +153,12 @@ pub async fn run_server(
         idempotency: IdempotencyStore::new(2 * 60 * 60), // 2 hours
         api: api_cfg,
     };
+    // Spawn outbound worker
+    let worker_state = state.clone();
+    tokio::spawn(async move {
+        crate::queue::outbound::run(rx, worker_state).await;
+    });
+
     let router = build_router(&config.health_path, state);
 
     // Bind to 127.0.0.1 for tests; for production US1 scope, bind on 0.0.0.0
@@ -189,13 +189,7 @@ where
     F: Future<Output = ()> + Send + 'static,
 {
     // Build shared state
-    let (queue, mut rx) = InboundQueue::new(1024);
-    // Drain queue in background (stub)
-    let _drain = tokio::spawn(async move {
-        while let Some(_evt) = rx.recv().await {
-            // TODO: persist/dispatch
-        }
-    });
+    let (queue, rx) = InboundQueue::new(1024);
     let api_cfg = ApiConfig::load();
     let state = AppState {
         rate: RateLimiter::new(
@@ -207,6 +201,12 @@ where
         idempotency: IdempotencyStore::new(2 * 60 * 60),
         api: api_cfg,
     };
+    // Spawn outbound worker with shutdown signal? For now, fire-and-forget; shutdown will drop rx
+    let worker_state = state.clone();
+    tokio::spawn(async move {
+        crate::queue::outbound::run(rx, worker_state).await;
+    });
+
     let router = build_router(&config.health_path, state);
 
     let bind_addr: SocketAddr = ([0, 0, 0, 0], config.port).into();

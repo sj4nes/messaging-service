@@ -32,18 +32,18 @@ Independent test criteria: Valid inbound yields 202 and stored message; malforme
 
 - [x] T030 [US2] Implement POST /api/provider/mock/inbound in crates/server/src/api/provider_mock.rs
 - [x] T031 [US2] Normalize inbound payloads in crates/server/src/types/message.rs
-- [ ] T032 [P] [US2] Persist (in-memory) inbound message in crates/server/src/store/messages.rs
+ - [x] T032 [P] [US2] Persist (in-memory) inbound message in crates/server/src/store/messages.rs
 
 ## Phase 5 — User Story 3: Provider Mock Fault & Rate Behavior (P2)
 Story goal: Provide mock provider with configurable 200/429/5xx outcomes and deterministic seed; expose runtime config.
 Independent test criteria: With configured failure mix, observe breaker open/half-open transitions and expected outcome ratios.
 
-- [ ] T040 [US3] Implement mock provider with RNG + probabilities in crates/server/src/providers/mock.rs
+ - [x] T040 [US3] Implement mock provider with RNG + probabilities in crates/server/src/providers/mock.rs
 - [x] T041 [US3] Add GET /api/provider/mock/config in crates/server/src/api/provider_mock.rs
 - [x] T042 [US3] Add PUT /api/provider/mock/config in crates/server/src/api/provider_mock.rs
 - [x] T043 [P] [US3] Read config defaults from env in crates/server/src/config.rs
-- [ ] T044 [US3] Queue worker dispatch logic in crates/server/src/queue/outbound.rs (rate limiter + circuit breaker)
-- [ ] T045 [US3] Increment metrics for outcomes and breaker transitions in crates/server/src/metrics.rs
+ - [x] T044 [US3] Queue worker dispatch logic in crates/server/src/queue/outbound.rs (rate limiter + circuit breaker)
+ - [x] T045 [US3] Increment metrics for outcomes and breaker transitions in crates/server/src/metrics.rs
 
 ## Phase 6 — User Story 4: Conversation Grouping (Stretch) (P3)
 Story goal: Group messages by (channel, normalized_from, normalized_to); list conversations and messages.
