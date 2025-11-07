@@ -27,9 +27,19 @@ pub mod middleware {
 }
 pub mod queue {
     pub mod inbound_events;
+    pub mod outbound;
 }
 pub mod state {
     pub mod idempotency;
+}
+
+// New modules for provider mocks and stores (Feature 006)
+pub mod providers {
+    pub mod mock;
+}
+pub mod store {
+    pub mod conversations;
+    pub mod messages;
 }
 
 use crate::config::ApiConfig;
@@ -41,6 +51,7 @@ use crate::state::idempotency::IdempotencyStore;
 pub mod api {
     pub mod conversations;
     pub mod messages;
+    pub mod provider_mock;
     pub mod webhooks;
 }
 
@@ -87,6 +98,14 @@ fn build_router(health_path: &str, state: AppState) -> Router {
         .route(
             "/api/conversations/{id}/messages",
             get(api::conversations::list_messages),
+        )
+        .route(
+            "/api/provider/mock/inbound",
+            axum::routing::post(api::provider_mock::post_inbound),
+        )
+        .route(
+            "/api/provider/mock/config",
+            get(api::provider_mock::get_config).put(api::provider_mock::put_config),
         )
         // Global middleware for this phase; specific routes will be added in later phases
         .layer(axmw::from_fn(

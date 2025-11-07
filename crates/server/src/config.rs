@@ -17,6 +17,14 @@ pub struct ApiConfig {
     pub breaker_error_threshold: u32,
     /// Circuit breaker: open state duration in seconds before half-open
     pub breaker_open_secs: u64,
+    /// Mock provider: percentage of timeouts (0-100)
+    pub provider_timeout_pct: u32,
+    /// Mock provider: percentage of 5xx errors (0-100)
+    pub provider_error_pct: u32,
+    /// Mock provider: percentage of 429 rate limits (0-100)
+    pub provider_ratelimit_pct: u32,
+    /// Mock provider: deterministic RNG seed (optional)
+    pub provider_seed: Option<u64>,
 }
 
 impl Default for ApiConfig {
@@ -28,6 +36,10 @@ impl Default for ApiConfig {
             rate_limit_per_sender_per_min: 60,
             breaker_error_threshold: 20,
             breaker_open_secs: 30,
+            provider_timeout_pct: 0,
+            provider_error_pct: 0,
+            provider_ratelimit_pct: 0,
+            provider_seed: None,
         }
     }
 }
@@ -85,6 +97,17 @@ impl ApiConfig {
         );
         override_u!(breaker_error_threshold, "API_BREAKER_ERROR_THRESHOLD", u32);
         override_u!(breaker_open_secs, "API_BREAKER_OPEN_SECS", u64);
+        override_u!(provider_timeout_pct, "API_PROVIDER_TIMEOUT_PCT", u32);
+        override_u!(provider_error_pct, "API_PROVIDER_ERROR_PCT", u32);
+        override_u!(provider_ratelimit_pct, "API_PROVIDER_RATELIMIT_PCT", u32);
+        if let Ok(seed) = std::env::var("API_PROVIDER_SEED") {
+            match seed.parse::<u64>() {
+                Ok(n) => cfg.provider_seed = Some(n),
+                Err(_) => {
+                    tracing::warn!(target="server", key="API_PROVIDER_SEED", value=%seed, "Invalid numeric env override")
+                }
+            }
+        }
         cfg
     }
 }

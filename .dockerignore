@@ -1,0 +1,30 @@
+# Docker ignore for Rust backend
+# VCS
+.git/
+.jj/
+
+# IDE/editor
+.vscode/
+.idea/
+.DS_Store
+
+# Rust build artifacts
+/target/
+/debug/
+/release/
+**/*.rs.bk
+**/*.rlib
+**/*.prof*
+
+# Env files
+.env
+.env.*
+
+# Node/Python (if present)
+node_modules/
+__pycache__/
+*.pyc
+
+# Tests and coverage
+coverage/
+*.log

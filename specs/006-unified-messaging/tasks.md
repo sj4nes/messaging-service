@@ -3,35 +3,35 @@
 This task plan is generated per the speckit.tasks workflow and organized by user story. Each task uses the strict checklist format.
 
 ## Phase 1 — Setup
-- [ ] T001 Create API module skeletons in crates/server/src/api/ (messages.rs, provider_mock.rs, conversations.rs)
-- [ ] T002 Create providers module for mocks in crates/server/src/providers/mock.rs
-- [ ] T003 Create queue modules for outbound worker in crates/server/src/queue/outbound.rs
-- [ ] T004 Create in-memory stores in crates/server/src/store/messages.rs and crates/server/src/store/conversations.rs
-- [ ] T005 Wire mod declarations in crates/server/src/api/mod.rs and crates/server/src/lib.rs
+- [x] T001 Create API module skeletons in crates/server/src/api/ (messages.rs, provider_mock.rs, conversations.rs)
+- [x] T002 Create providers module for mocks in crates/server/src/providers/mock.rs
+- [x] T003 Create queue modules for outbound worker in crates/server/src/queue/outbound.rs
+- [x] T004 Create in-memory stores in crates/server/src/store/messages.rs and crates/server/src/store/conversations.rs
+- [x] T005 Wire mod declarations in crates/server/src/api/mod.rs and crates/server/src/lib.rs
 
 ## Phase 2 — Foundational
-- [ ] T010 Add shared DTOs for messages in crates/server/src/types/message.rs
-- [ ] T011 Extend config for API_PROVIDER_* in crates/server/src/config.rs (timeout_pct, error_pct, ratelimit_pct, seed)
-- [ ] T012 Extend metrics counters in crates/server/src/metrics.rs (dispatch_attempts, dispatch_success, dispatch_rate_limited, dispatch_error, breaker_transitions)
-- [ ] T013 Update logging for dispatch/inbound paths in crates/server/src/middleware/logging.rs (reuse correlation IDs)
+- [x] T010 Add shared DTOs for messages in crates/server/src/types/message.rs
+- [x] T011 Extend config for API_PROVIDER_* in crates/server/src/config.rs (timeout_pct, error_pct, ratelimit_pct, seed)
+- [x] T012 Extend metrics counters in crates/server/src/metrics.rs (dispatch_attempts, dispatch_success, dispatch_rate_limited, dispatch_error, breaker_transitions)
+- [x] T013 Update logging for dispatch/inbound paths in crates/server/src/middleware/logging.rs (reuse correlation IDs)
 
 ## Phase 3 — User Story 1: Send Outbound Messages via Unified API (P1)
 Story goal: Accept SMS/MMS/Email requests, apply idempotency and rate limits, enqueue for dispatch.
 Independent test criteria: 202 Accepted within 200ms; duplicate with same Idempotency-Key returns cached 202; 429 when rate limit exceeded.
 
-- [ ] T020 [US1] Define SmsRequest/EmailRequest validators in crates/server/src/types/message.rs
-- [ ] T021 [US1] Implement POST /api/messages/sms in crates/server/src/api/messages.rs
-- [ ] T022 [US1] Implement POST /api/messages/email in crates/server/src/api/messages.rs
-- [ ] T023 [P] [US1] Register routes in crates/server/src/lib.rs (Axum router wiring)
-- [ ] T024 [US1] Integrate idempotency cache in crates/server/src/api/messages.rs
-- [ ] T025 [US1] Enqueue outbound event to queue in crates/server/src/api/messages.rs
+- [x] T020 [US1] Define SmsRequest/EmailRequest validators in crates/server/src/types/message.rs
+- [x] T021 [US1] Implement POST /api/messages/sms in crates/server/src/api/messages.rs
+- [x] T022 [US1] Implement POST /api/messages/email in crates/server/src/api/messages.rs
+- [x] T023 [P] [US1] Register routes in crates/server/src/lib.rs (Axum router wiring)
+- [x] T024 [US1] Integrate idempotency cache in crates/server/src/api/messages.rs
+- [x] T025 [US1] Enqueue outbound event to queue in crates/server/src/api/messages.rs
 
 ## Phase 4 — User Story 2: Process Inbound Provider-Originated Messages (P1)
 Story goal: Accept inbound mock events, validate/normalize, and record in message store.
 Independent test criteria: Valid inbound yields 202 and stored message; malformed inbound rejected once with error log.
 
-- [ ] T030 [US2] Implement POST /api/provider/mock/inbound in crates/server/src/api/provider_mock.rs
-- [ ] T031 [US2] Normalize inbound payloads in crates/server/src/types/message.rs
+- [x] T030 [US2] Implement POST /api/provider/mock/inbound in crates/server/src/api/provider_mock.rs
+- [x] T031 [US2] Normalize inbound payloads in crates/server/src/types/message.rs
 - [ ] T032 [P] [US2] Persist (in-memory) inbound message in crates/server/src/store/messages.rs
 
 ## Phase 5 — User Story 3: Provider Mock Fault & Rate Behavior (P2)
@@ -39,9 +39,9 @@ Story goal: Provide mock provider with configurable 200/429/5xx outcomes and det
 Independent test criteria: With configured failure mix, observe breaker open/half-open transitions and expected outcome ratios.
 
 - [ ] T040 [US3] Implement mock provider with RNG + probabilities in crates/server/src/providers/mock.rs
-- [ ] T041 [US3] Add GET /api/provider/mock/config in crates/server/src/api/provider_mock.rs
-- [ ] T042 [US3] Add PUT /api/provider/mock/config in crates/server/src/api/provider_mock.rs
-- [ ] T043 [P] [US3] Read config defaults from env in crates/server/src/config.rs
+- [x] T041 [US3] Add GET /api/provider/mock/config in crates/server/src/api/provider_mock.rs
+- [x] T042 [US3] Add PUT /api/provider/mock/config in crates/server/src/api/provider_mock.rs
+- [x] T043 [P] [US3] Read config defaults from env in crates/server/src/config.rs
 - [ ] T044 [US3] Queue worker dispatch logic in crates/server/src/queue/outbound.rs (rate limiter + circuit breaker)
 - [ ] T045 [US3] Increment metrics for outcomes and breaker transitions in crates/server/src/metrics.rs
 

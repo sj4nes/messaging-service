@@ -2,6 +2,9 @@ use axum::{body::Body, http::Request, middleware::Next, response::Response};
 use std::time::Instant;
 use uuid::Uuid;
 
+/// Public header constant for correlation IDs
+pub const HDR_REQUEST_ID: &str = "x-request-id";
+
 fn client_ip(req: &Request<Body>) -> String {
     const XFF: &str = "x-forwarded-for";
     const X_REAL_IP: &str = "x-real-ip";
@@ -33,7 +36,6 @@ pub async fn log_requests(mut req: Request<Body>, next: Next) -> Response {
     let start = Instant::now();
 
     // Correlation / request ID: honor inbound header or generate new
-    const HDR_REQUEST_ID: &str = "x-request-id";
     let correlation_id = req
         .headers()
         .get(HDR_REQUEST_ID)
