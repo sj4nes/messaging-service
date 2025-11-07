@@ -1,7 +1,7 @@
 use anyhow::Result;
 use chrono::{DateTime, Utc};
 use sqlx::{PgPool, Row};
-use tracing::instrument;
+use tracing::{instrument, warn};
 
 use super::normalize::conversation_key;
 
@@ -46,18 +46,30 @@ pub async fn insert_from_inbound(
     let message_id = rec.id;
     // Persist attachments (URLs) if any
     for url in attachments {
-        let a = sqlx::query(r#"INSERT INTO attachment_urls (url) VALUES ($1) RETURNING id"#)
+        match sqlx::query(r#"INSERT INTO attachment_urls (url) VALUES ($1) RETURNING id"#)
             .bind(url)
             .fetch_one(pool)
-            .await?;
-        let attachment_id: i64 = a.get("id");
-        let _ = sqlx::query(
-            r#"INSERT INTO message_attachment_urls (message_id, attachment_url_id) VALUES ($1, $2)"#,
-        )
-        .bind(message_id)
-        .bind(attachment_id)
-        .execute(pool)
-        .await?;
+            .await
+        {
+            Ok(a) => {
+                let attachment_id: i64 = a.get("id");
+                if let Err(e) = sqlx::query(
+                    r#"INSERT INTO message_attachment_urls (message_id, attachment_url_id) VALUES ($1, $2)"#,
+                )
+                .bind(message_id)
+                .bind(attachment_id)
+                .execute(pool)
+                .await
+                {
+                    warn!(target="server", event="attach_link_fail", error=?e, message_id, url=%url, "failed to link attachment; continuing");
+                }
+            }
+            Err(e) => {
+                // Likely migration 0008 not yet applied; log and continue without attachments
+                warn!(target="server", event="attach_insert_fail", error=?e, message_id, url=%url, "failed to persist attachment; continuing");
+                continue;
+            }
+        }
     }
     Ok(message_id)
 }

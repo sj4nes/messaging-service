@@ -5,49 +5,49 @@ Plan: plan.md | Spec: spec.md | Research: research.md | Data Model: data-model.m
 
 ## Phase 1 – Setup
 
-- [ ] T001 Ensure migrations folder exists at crates/db-migrate/migrations_sqlx/
-- [ ] T002 Create migration (UP): alter inbound_events to add channel, from, to, provider_message_id, processor_id, error_code, error_message, updated_at, processed_at; add UNIQUE(channel, provider_message_id) WHERE provider_message_id IS NOT NULL at crates/db-migrate/migrations_sqlx/0007_alter_inbound_events_unified.up.sql
-- [ ] T003 Create migration (DOWN): drop added columns and unique index at crates/db-migrate/migrations_sqlx/0007_alter_inbound_events_unified.down.sql
-- [ ] T004 Add config knobs in crates/server/src/config.rs (batch_size, claim_timeout_secs, max_retries, backoff_base_ms)
-- [ ] T005 [P] Extend metrics in crates/server/src/metrics.rs for worker_queued, worker_claimed, worker_processed, worker_error, worker_dead_letter, and latency
+- [x] T001 Ensure migrations folder exists at crates/db-migrate/migrations_sqlx/
+- [x] T002 Create migration (UP): alter inbound_events to add channel, from, to, provider_message_id, processor_id, error_code, error_message, updated_at, processed_at; add UNIQUE(channel, provider_message_id) WHERE provider_message_id IS NOT NULL at crates/db-migrate/migrations_sqlx/0007_alter_inbound_events_unified.up.sql
+- [x] T003 Create migration (DOWN): drop added columns and unique index at crates/db-migrate/migrations_sqlx/0007_alter_inbound_events_unified.down.sql
+- [x] T004 Add config knobs in crates/server/src/config.rs (batch_size, claim_timeout_secs, max_retries, backoff_base_ms)
+- [x] T005 [P] Extend metrics in crates/server/src/metrics.rs for worker_queued, worker_claimed, worker_processed, worker_error, worker_dead_letter, and latency
 
 ## Phase 2 – Foundational
 
-- [ ] T010 Create DB module root crates/server/src/store_db/mod.rs
-- [ ] T011 Create inbound events store crates/server/src/store_db/inbound_events.rs (insert, claim_batch, mark_processed, mark_error, reap_stale)
-- [ ] T012 Create messages store crates/server/src/store_db/messages.rs (insert_from_inbound, helpers)
-- [ ] T013 Create conversations store crates/server/src/store_db/conversations.rs (upsert_on_message, list, list_messages)
-- [ ] T014 [P] Add shared normalization helper crates/server/src/store_db/normalize.rs (channel-aware address normalization and conversation key)
+- [x] T010 Create DB module root crates/server/src/store_db/mod.rs
+- [x] T011 Create inbound events store crates/server/src/store_db/inbound_events.rs (insert, claim_batch, mark_processed, mark_error, reap_stale)
+- [x] T012 Create messages store crates/server/src/store_db/messages.rs (insert_from_inbound, helpers)
+- [x] T013 Create conversations store crates/server/src/store_db/conversations.rs (upsert_on_message, list, list_messages)
+- [x] T014 [P] Add shared normalization helper crates/server/src/store_db/normalize.rs (channel-aware address normalization and conversation key)
 
 ## Phase 3 – [US1] Persist inbound events (P1)
 
-- [ ] T015 [US1] Implement insert_inbound_event in crates/server/src/store_db/inbound_events.rs using SQLx and idempotent upsert on (channel, provider_message_id)
-- [ ] T016 [US1] Wire provider webhooks to DB: update crates/server/src/api/provider_mock.rs to persist inbound_events instead of in-memory
-- [ ] T017 [US1] Wire real webhooks to DB: update crates/server/src/api/messages.rs (inbound/webhooks handlers) to persist inbound_events
-- [ ] T018 [P] [US1] Add tracing (mock=true, event ids) in provider inbound handlers crates/server/src/api/provider_mock.rs
-- [ ] T019 [US1] Verify duplicate inbound (same provider id) returns 202 without duplicate rows (graceful unique violation handling)
+- [x] T015 [US1] Implement insert_inbound_event in crates/server/src/store_db/inbound_events.rs using SQLx and idempotent upsert on (channel, provider_message_id)
+- [x] T016 [US1] Wire provider webhooks to DB: update crates/server/src/api/provider_mock.rs to persist inbound_events instead of in-memory
+- [x] T017 [US1] Wire real webhooks to DB: update crates/server/src/api/webhooks.rs to persist inbound_events
+- [x] T018 [P] [US1] Add tracing (mock=true, event ids) in provider inbound handlers crates/server/src/api/provider_mock.rs
+- [x] T019 [US1] Verify duplicate inbound (same provider id) returns 202 without duplicate rows (graceful unique violation handling)
 
 ## Phase 4 – [US2] Background worker processes events (P1)
 
-- [ ] T020 [US2] Add worker module crates/server/src/worker/inbound.rs to claim with SELECT … FOR UPDATE SKIP LOCKED and set status=processing, processor_id
-- [ ] T021 [US2] Implement processing path: create Message rows and mark inbound_events processed in crates/server/src/worker/inbound.rs
+- [x] T020 [US2] Add worker module crates/server/src/worker/inbound.rs to claim with SELECT … FOR UPDATE SKIP LOCKED and set status=processing, processor_id
+- [x] T021 [US2] Implement processing path: create Message rows and mark inbound_events processed in crates/server/src/worker/inbound.rs
 - [ ] T022 [P] [US2] Implement retry policy with exponential backoff (attempt_count, next_attempt_at) and mark dead_letter after max_retries in crates/server/src/worker/inbound.rs
-- [ ] T023 [US2] Add metrics increments and timings in worker using crates/server/src/metrics.rs
-- [ ] T024 [US2] Wire worker startup in crates/server/src/lib.rs (spawn background task; read config knobs)
+- [x] T023 [US2] Add metrics increments and timings in worker using crates/server/src/metrics.rs
+- [x] T024 [US2] Wire worker startup in crates/server/src/lib.rs (spawn background task; read config knobs)
 
 ## Phase 5 – [US3] Conversations read from DB (P2)
 
-- [ ] T025 [US3] Implement conversations list using DB: crates/server/src/store_db/conversations.rs (aggregate by key, order by last_activity_at desc)
-- [ ] T026 [US3] Implement messages list using DB: crates/server/src/store_db/conversations.rs (order by timestamp asc, pagination)
-- [ ] T027 [P] [US3] Update API handlers to use DB stores: crates/server/src/api/conversations.rs (list_conversations, list_messages)
+- [x] T025 [US3] Implement conversations list using DB: crates/server/src/store_db/conversations.rs (aggregate by key, order by last_activity_at desc)
+- [x] T026 [US3] Implement messages list using DB: crates/server/src/store_db/conversations.rs (order by timestamp asc, pagination)
+- [x] T027 [P] [US3] Update API handlers to use DB stores: crates/server/src/api/conversations.rs (list_conversations, list_messages)
 
 ## Phase 6 – Polish & Cross-cutting
 
-- [ ] T028 Document DB quickstart and verify steps in specs/007-wire-postgresql-store/quickstart.md (psql queries, config)
-- [ ] T029 Update README anchors to reference this feature’s quickstart (optional) at README.md
+- [x] T028 Document DB quickstart and verify steps in specs/007-wire-postgresql-store/quickstart.md (psql queries, config)
+- [x] T029 Update README anchors to reference this feature’s quickstart (optional) at README.md
 - [ ] T030 [P] Update tests to assert conversations non-empty after activity: tests/http/tests.json (add "assert": ".items | length > 0" to the List conversations case)
 - [ ] T031 Ensure SQLX_OFFLINE compatibility for CI builds (sqlx-data.json refresh if needed)
-- [ ] T032 Add basic health/metrics note for worker throughput in README.md
+- [x] T032 Add basic health/metrics note for worker throughput in README.md
 
 ## Dependencies
 
