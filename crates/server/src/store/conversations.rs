@@ -23,9 +23,7 @@ fn normalize_addr(channel: &Channel, s: &str) -> String {
         Channel::Sms | Channel::Mms => {
             let mut out = String::new();
             for c in s.chars() {
-                if c == '+' && out.is_empty() {
-                    out.push(c);
-                } else if c.is_ascii_digit() {
+                if (c == '+' && out.is_empty()) || c.is_ascii_digit() {
                     out.push(c);
                 }
             }

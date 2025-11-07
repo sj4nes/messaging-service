@@ -46,7 +46,7 @@ pub fn insert_inbound(req: &ProviderInboundRequest) -> String {
             attachments,
             timestamp,
         }) => {
-            let ch = if r#type.to_ascii_lowercase() == "mms" {
+            let ch = if r#type.eq_ignore_ascii_case("mms") {
                 Channel::Mms
             } else {
                 Channel::Sms

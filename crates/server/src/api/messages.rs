@@ -44,7 +44,7 @@ pub(crate) async fn post_sms(
         source: "api".to_string(),
     };
     // Persist outbound into in-memory store for conversations
-    if body.r#type.to_ascii_lowercase() == "mms" {
+    if body.r#type.eq_ignore_ascii_case("mms") {
         let _ = message_store::insert_outbound_mms(
             &body.from,
             &body.to,
