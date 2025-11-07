@@ -28,6 +28,13 @@
 - [ ] T009 Implement provider outcome probability helper reused by both providers in `crates/server/src/providers/common.rs`
 - [ ] T010 Introduce per-provider circuit breaker storage (hash map) in `crates/server/src/state/idempotency.rs` (or new file `state/breakers.rs`)
 - [ ] T011 Add invalid_routing counter in `crates/server/src/metrics.rs`
+ - [X] T005 Define Provider trait in `crates/server/src/providers/registry.rs`
+ - [X] T006 [P] Define OutboundMessage & DispatchResult structs in `crates/server/src/providers/registry.rs`
+ - [X] T007 Extend `AppState` (file: `crates/server/src/lib.rs` or dedicated state module) with provider registry map
+ - [ ] T008 [P] Add per-provider config fields (sms/email) in `crates/server/src/config.rs` (env override keys)
+ - [X] T009 Implement provider outcome probability helper reused by both providers in `crates/server/src/providers/common.rs`
+ - [ ] T010 Introduce per-provider circuit breaker storage (hash map) in `crates/server/src/state/idempotency.rs` (or new file `state/breakers.rs`)
+ - [X] T011 Add invalid_routing counter in `crates/server/src/metrics.rs`
 
 **Checkpoint**: Provider abstraction & registry ready; breakers isolated; proceed to story implementation.
 

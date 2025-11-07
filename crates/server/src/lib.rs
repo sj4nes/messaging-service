@@ -38,6 +38,10 @@ pub mod state {
 // New modules for provider mocks and stores (Feature 006)
 pub mod providers {
     pub mod mock;
+    // Feature 008 provider modules scaffolds
+    pub mod email;
+    pub mod registry;
+    pub mod sms_mms;
 }
 pub mod store {
     pub mod conversations;
@@ -81,6 +85,8 @@ pub(crate) struct AppState {
     queue: InboundQueue,
     idempotency: IdempotencyStore,
     db: Option<sqlx::PgPool>,
+    // Feature 008: provider registry (per-channel routing)
+    provider_registry: crate::providers::registry::ProviderRegistry,
 }
 
 impl AppState {
@@ -185,6 +191,7 @@ pub async fn run_server(
         idempotency: IdempotencyStore::new(2 * 60 * 60), // 2 hours
         api: api_cfg,
         db: db_pool.clone(),
+        provider_registry: crate::providers::registry::ProviderRegistry::new(),
     };
     // Spawn outbound worker (mock provider)
     let worker_state = state.clone();
@@ -278,6 +285,7 @@ where
         idempotency: IdempotencyStore::new(2 * 60 * 60),
         api: api_cfg,
         db: db_pool.clone(),
+        provider_registry: crate::providers::registry::ProviderRegistry::new(),
     };
     // Spawn outbound worker with shutdown signal? For now, fire-and-forget; shutdown will drop rx
     let worker_state = state.clone();

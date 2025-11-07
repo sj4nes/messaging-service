@@ -119,3 +119,10 @@ pub fn record_worker_error() {
 pub fn record_worker_dead_letter() {
     WORKER_DEAD_LETTER.fetch_add(1, Ordering::Relaxed);
 }
+
+// --- Feature 008 additional metrics (Phase 2 placeholder impl) ---
+static INVALID_ROUTING: AtomicU64 = AtomicU64::new(0);
+
+pub fn record_invalid_routing() {
+    INVALID_ROUTING.fetch_add(1, Ordering::Relaxed);
+}
