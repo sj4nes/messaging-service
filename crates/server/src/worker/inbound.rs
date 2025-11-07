@@ -1,12 +1,11 @@
 use sqlx::PgPool;
 use std::time::Duration;
 use tokio::time::sleep;
-use tracing::{error, info, instrument, warn};
+use tracing::{error, instrument, warn};
 
 use crate::config::ApiConfig;
 use crate::metrics;
-use crate::store_db::inbound_events::{claim_batch, mark_error, mark_processed, reap_stale};
-use crate::store_db::messages::insert_from_inbound;
+use crate::store_db::inbound_events::{claim_batch, mark_processed, reap_stale};
 
 pub struct InboundWorker {
     pool: PgPool,
