@@ -186,22 +186,37 @@ async fn persist_attachment(pool: &PgPool, message_id: i64, url: &str) -> Result
             {
                 Some(row.get("id"))
             } else {
-                let lookup_sql = match schema {
+                match schema {
                     AttachmentSchema::RawHashUrl => {
-                        r#"SELECT id FROM attachment_urls WHERE url = $1 LIMIT 1"#
+                        match sqlx::query(r#"SELECT id FROM attachment_urls WHERE url = $1 LIMIT 1"#)
+                            .bind(url)
+                            .fetch_one(pool)
+                            .await {
+                            Ok(r) => Some(r.get("id")),
+                            Err(_) => None,
+                        }
                     }
-                    _ => r#"SELECT id FROM attachment_urls WHERE hash = $1 LIMIT 1"#,
-                };
-                match sqlx::query(lookup_sql)
-                    .bind(match schema {
-                        AttachmentSchema::RawHashUrl => url.to_string(),
-                        _ => hash.to_string(),
-                    })
-                    .fetch_one(pool)
-                    .await
-                {
-                    Ok(r) => Some(r.get("id")),
-                    Err(_) => None,
+                    AttachmentSchema::RawHash => {
+                        // Lookup by hash then verify raw matches to detect collisions.
+                        match sqlx::query(
+                            r#"SELECT id, raw FROM attachment_urls WHERE hash = $1 LIMIT 1"#,
+                        )
+                        .bind(hash)
+                        .fetch_one(pool)
+                        .await {
+                            Ok(r) => {
+                                let existing_raw: String = r.get("raw");
+                                if existing_raw != url {
+                                    warn!(target="server", event="attach_hash_collision", message_id, existing_raw=%existing_raw, url=%url, hash=%hash, "hash collision on legacy RawHash schema; skipping link");
+                                    None
+                                } else {
+                                    Some(r.get("id"))
+                                }
+                            }
+                            Err(_) => None,
+                        }
+                    }
+                    AttachmentSchema::UrlOnly => None,
                 }
             }
         }
