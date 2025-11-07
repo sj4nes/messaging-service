@@ -6,6 +6,12 @@
 #[derive(Debug, Clone)]
 pub struct EmailMockProvider;
 
+impl Default for EmailMockProvider {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl EmailMockProvider {
     #[allow(dead_code)]
     pub fn new() -> Self {

@@ -6,6 +6,12 @@
 #[derive(Debug, Clone)]
 pub struct SmsMmsMockProvider;
 
+impl Default for SmsMmsMockProvider {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SmsMmsMockProvider {
     #[allow(dead_code)]
     pub fn new() -> Self {
