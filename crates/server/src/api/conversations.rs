@@ -33,7 +33,7 @@ pub(crate) async fn list_conversations(
         } else {
             ((page.max(1) - 1) * page_size) as i64
         };
-        match crate::store_db::conversations::list_conversations(&pool, limit as i64, offset as i64)
+        match crate::store_db::conversations::list_conversations(&pool, limit, offset)
             .await
         {
             Ok(rows) => {
