@@ -8,6 +8,7 @@ use serde_json::json;
 
 use crate::errors;
 use crate::queue::inbound_events::InboundEvent;
+use crate::store_db::inbound_events::insert_inbound_event;
 use crate::types::{WebhookEmailRequest, WebhookSmsRequest};
 
 pub(crate) async fn post_sms(
@@ -31,14 +32,29 @@ pub(crate) async fn post_sms(
         }
     }
 
-    let event = InboundEvent {
-        event_name: "webhooks.sms".to_string(),
-        payload: serde_json::to_value(&body).unwrap_or_else(|_| json!({})),
-        occurred_at: body.timestamp.clone(),
-        idempotency_key: None,
-        source: "webhook".to_string(),
-    };
-    let _ = state.queue.enqueue(event).await;
+    // If DB is configured, insert inbound_event for worker; otherwise fall back to in-memory queue
+    if let Some(pool) = state.db() {
+        let channel = body.r#type.to_ascii_lowercase();
+        let payload = serde_json::to_value(&body).unwrap_or_else(|_| json!({}));
+        let _ = insert_inbound_event(
+            &pool,
+            &channel,
+            &body.from,
+            &body.to,
+            Some(&body.messaging_provider_id),
+            payload,
+        )
+        .await;
+    } else {
+        let event = InboundEvent {
+            event_name: "webhooks.sms".to_string(),
+            payload: serde_json::to_value(&body).unwrap_or_else(|_| json!({})),
+            occurred_at: body.timestamp.clone(),
+            idempotency_key: None,
+            source: "webhook".to_string(),
+        };
+        let _ = state.queue.enqueue(event).await;
+    }
 
     (StatusCode::ACCEPTED, Json(json!({ "status": "accepted" }))).into_response()
 }
@@ -59,14 +75,27 @@ pub(crate) async fn post_email(
         }
     }
 
-    let event = InboundEvent {
-        event_name: "webhooks.email".to_string(),
-        payload: serde_json::to_value(&body).unwrap_or_else(|_| json!({})),
-        occurred_at: body.timestamp.clone(),
-        idempotency_key: None,
-        source: "webhook".to_string(),
-    };
-    let _ = state.queue.enqueue(event).await;
+    if let Some(pool) = state.db() {
+        let payload = serde_json::to_value(&body).unwrap_or_else(|_| json!({}));
+        let _ = insert_inbound_event(
+            &pool,
+            "email",
+            &body.from,
+            &body.to,
+            Some(&body.xillio_id),
+            payload,
+        )
+        .await;
+    } else {
+        let event = InboundEvent {
+            event_name: "webhooks.email".to_string(),
+            payload: serde_json::to_value(&body).unwrap_or_else(|_| json!({})),
+            occurred_at: body.timestamp.clone(),
+            idempotency_key: None,
+            source: "webhook".to_string(),
+        };
+        let _ = state.queue.enqueue(event).await;
+    }
 
     (StatusCode::ACCEPTED, Json(json!({ "status": "accepted" }))).into_response()
 }

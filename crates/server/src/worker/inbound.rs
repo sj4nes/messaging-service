@@ -1,3 +1,5 @@
+use crate::store_db::inbound_events::{claim_batch, fetch_event, mark_processed, reap_stale};
+use crate::store_db::messages::insert_from_inbound;
 use sqlx::PgPool;
 use std::time::Duration;
 use tokio::time::sleep;
@@ -5,7 +7,6 @@ use tracing::{error, instrument, warn};
 
 use crate::config::ApiConfig;
 use crate::metrics;
-use crate::store_db::inbound_events::{claim_batch, mark_processed, reap_stale};
 
 pub struct InboundWorker {
     pool: PgPool,
@@ -47,10 +48,39 @@ impl InboundWorker {
     }
 
     async fn process_one(&self, inbound_id: i64) -> anyhow::Result<()> {
-        // TODO: fetch event details and create message record(s).
+        let started = std::time::Instant::now();
+        if let Some((channel, from, to, payload)) = fetch_event(&self.pool, inbound_id).await? {
+            // Minimal parse: attempt body + timestamp fields if present
+            let body = payload.get("body").and_then(|v| v.as_str()).unwrap_or("");
+            let attachments: Vec<String> = payload
+                .get("attachments")
+                .and_then(|v| v.as_array())
+                .map(|arr| {
+                    arr.iter()
+                        .filter_map(|x| x.as_str().map(|s| s.to_string()))
+                        .collect()
+                })
+                .unwrap_or_default();
+            let ts = payload
+                .get("timestamp")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string())
+                .unwrap_or_else(|| chrono::Utc::now().to_rfc3339());
+            // Insert placeholder message representation (no actual DB writes yet)
+            let _ = insert_from_inbound(
+                &self.pool,
+                inbound_id,
+                &channel,
+                from.as_deref().unwrap_or("unknown"),
+                to.as_deref().unwrap_or("unknown"),
+                body,
+                &attachments,
+                &ts,
+            )
+            .await;
+        }
         mark_processed(&self.pool, inbound_id).await?;
-        // For now, record zero latency; future work will measure per-event processing time.
-        metrics::record_worker_processed(0);
+        metrics::record_worker_processed(started.elapsed().as_micros() as u64);
         Ok(())
     }
 }

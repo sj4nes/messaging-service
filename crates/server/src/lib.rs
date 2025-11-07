@@ -8,6 +8,7 @@ use axum::{routing::get, Json, Router};
 use messaging_core::Config;
 use serde::Serialize;
 use sqlx::postgres::PgPoolOptions;
+// (deduped) PgPoolOptions imported above
 use std::future::Future;
 use std::{net::SocketAddr, sync::Arc};
 use tokio::net::TcpListener;
@@ -78,6 +79,13 @@ pub(crate) struct AppState {
     breaker: CircuitBreaker,
     queue: InboundQueue,
     idempotency: IdempotencyStore,
+    db: Option<sqlx::PgPool>,
+}
+
+impl AppState {
+    pub(crate) fn db(&self) -> Option<sqlx::PgPool> {
+        self.db.clone()
+    }
 }
 
 fn build_router(health_path: &str, state: AppState) -> Router {
@@ -155,6 +163,17 @@ pub async fn run_server(
     let (queue, rx) = InboundQueue::new(1024);
     let api_cfg = ApiConfig::load();
     let api_cfg_for_worker = api_cfg.clone();
+    // Optionally create DB pool if DATABASE_URL is set
+    let db_pool: Option<sqlx::PgPool> = match std::env::var("DATABASE_URL") {
+        Ok(url) => match PgPoolOptions::new().max_connections(5).connect(&url).await {
+            Ok(pool) => Some(pool),
+            Err(e) => {
+                tracing::warn!(target="server", event="db_pool_error", error=%e, "failed to create DB pool; continuing without DB");
+                None
+            }
+        },
+        Err(_) => None,
+    };
     let state = AppState {
         rate: RateLimiter::new(
             api_cfg.rate_limit_per_ip_per_min,
@@ -164,6 +183,7 @@ pub async fn run_server(
         queue,
         idempotency: IdempotencyStore::new(2 * 60 * 60), // 2 hours
         api: api_cfg,
+        db: db_pool.clone(),
     };
     // Spawn outbound worker (mock provider)
     let worker_state = state.clone();
@@ -171,36 +191,25 @@ pub async fn run_server(
         crate::queue::outbound::run(rx, worker_state).await;
     });
 
-    // Optionally spawn inbound DB worker if DATABASE_URL is configured
-    if let Ok(database_url) = std::env::var("DATABASE_URL") {
+    // Spawn inbound DB worker if pool is available
+    if let Some(pool) = db_pool.clone() {
         let cfg_clone = api_cfg_for_worker.clone();
         tokio::spawn(async move {
-            match PgPoolOptions::new()
-                .max_connections(5)
-                .connect(&database_url)
-                .await
-            {
-                Ok(pool) => {
-                    tracing::info!(
-                        target = "server",
-                        event = "worker_start",
-                        worker = "inbound",
-                        "starting inbound DB worker"
-                    );
-                    let w = crate::worker::inbound::InboundWorker::new(pool, cfg_clone);
-                    w.run().await;
-                }
-                Err(e) => {
-                    tracing::warn!(target="server", event="worker_skip", worker="inbound", error=%e, "failed to connect to DB; inbound worker not started");
-                }
-            }
+            tracing::info!(
+                target = "server",
+                event = "worker_start",
+                worker = "inbound",
+                "starting inbound DB worker"
+            );
+            let w = crate::worker::inbound::InboundWorker::new(pool, cfg_clone);
+            w.run().await;
         });
     } else {
         tracing::info!(
             target = "server",
             event = "worker_skip",
             worker = "inbound",
-            "DATABASE_URL not set; inbound worker disabled"
+            "no DB pool; inbound worker disabled"
         );
     }
 
@@ -238,6 +247,17 @@ where
     // Build shared state
     let (queue, rx) = InboundQueue::new(1024);
     let api_cfg = ApiConfig::load();
+    // Optionally create DB pool if DATABASE_URL is set
+    let db_pool: Option<sqlx::PgPool> = match std::env::var("DATABASE_URL") {
+        Ok(url) => match PgPoolOptions::new().max_connections(5).connect(&url).await {
+            Ok(pool) => Some(pool),
+            Err(e) => {
+                tracing::warn!(target="server", event="db_pool_error", error=%e, "failed to create DB pool; continuing without DB");
+                None
+            }
+        },
+        Err(_) => None,
+    };
     let state = AppState {
         rate: RateLimiter::new(
             api_cfg.rate_limit_per_ip_per_min,
@@ -247,12 +267,35 @@ where
         queue,
         idempotency: IdempotencyStore::new(2 * 60 * 60),
         api: api_cfg,
+        db: db_pool.clone(),
     };
     // Spawn outbound worker with shutdown signal? For now, fire-and-forget; shutdown will drop rx
     let worker_state = state.clone();
     tokio::spawn(async move {
         crate::queue::outbound::run(rx, worker_state).await;
     });
+
+    // Spawn inbound DB worker if pool is available
+    if let Some(pool) = db_pool.clone() {
+        let cfg_clone = state.api.clone();
+        tokio::spawn(async move {
+            tracing::info!(
+                target = "server",
+                event = "worker_start",
+                worker = "inbound",
+                "starting inbound DB worker"
+            );
+            let w = crate::worker::inbound::InboundWorker::new(pool, cfg_clone);
+            w.run().await;
+        });
+    } else {
+        tracing::info!(
+            target = "server",
+            event = "worker_skip",
+            worker = "inbound",
+            "no DB pool; inbound worker disabled"
+        );
+    }
 
     let router = build_router(&config.health_path, state);
 

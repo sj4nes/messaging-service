@@ -65,6 +65,20 @@ pub async fn mark_processed(pool: &PgPool, id: i64) -> Result<()> {
     Ok(())
 }
 
+/// Fetch a single inbound event payload and metadata for processing
+pub async fn fetch_event(
+    pool: &PgPool,
+    id: i64,
+) -> Result<Option<(String, Option<String>, Option<String>, serde_json::Value)>> {
+    let row = sqlx::query!(
+        r#"SELECT channel, "from", "to", payload FROM inbound_events WHERE id=$1"#,
+        id
+    )
+    .fetch_optional(pool)
+    .await?;
+    Ok(row.map(|r| (r.channel.unwrap_or_default(), r.from, r.to, r.payload)))
+}
+
 pub async fn mark_error(
     pool: &PgPool,
     id: i64,
