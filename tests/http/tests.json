@@ -99,13 +99,24 @@
     "expect": 202
   },
   {
+    "name": "Wait for worker (1s)",
+    "method": "GET",
+    "path": "/healthz",
+    "headers": [],
+    "body": null,
+    "expect": 200,
+    "delay_ms": 1000
+  },
+  {
     "name": "List conversations",
     "method": "GET",
     "path": "/api/conversations",
     "headers": [],
     "body": null,
     "expect": 200,
-    "assert": ".items | length > 0"
+    "assert": ".items | length > 0",
+    "assert_poll_ms": 250,
+    "assert_max_tries": 8
   },
   {
     "name": "List messages for conversation",
@@ -114,7 +125,9 @@
     "headers": [],
     "body": null,
     "expect": 200,
-    "assert": ".items | length > 0"
+    "assert": ".items | length > 0",
+    "assert_poll_ms": 250,
+    "assert_max_tries": 8
   },
   {
     "name": "Idempotent SMS (first)",

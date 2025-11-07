@@ -18,6 +18,102 @@ echo "=== Messaging Service Test Runner ==="
 echo "Base URL: $BASE_URL"
 echo
 
+# -----------------------------
+# Optional: start server in background
+# -----------------------------
+# By default, attempt to start the server with `make run-server` in the background
+# if nothing is listening on the target port derived from BASE_URL. Disable with START_SERVER=false.
+START_SERVER="${START_SERVER:-true}"
+SERVER_LOG="${SERVER_LOG:-server.log}"
+
+# Derive host and port from BASE_URL (simple parsing sufficient for http(s)://host[:port])
+BASE_SCHEME="${BASE_URL%%://*}" # crude; unused beyond default inference
+# Strip scheme
+_after_scheme="${BASE_URL#*://}"
+# Extract host:port (first path segment before /)
+_hostport="${_after_scheme%%/*}" # e.g. localhost:8080 or localhost
+if printf '%s' "$_hostport" | grep -q ':'; then
+  BASE_HOST="${_hostport%%:*}"
+  BASE_PORT="${_hostport##*:}"
+else
+  BASE_HOST="$_hostport"
+  BASE_PORT=""
+fi
+if [ -z "$BASE_PORT" ]; then
+  if [ "$BASE_SCHEME" = "https" ]; then BASE_PORT=443; else BASE_PORT=80; fi
+fi
+
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+STARTED_SERVER="false"
+SERVER_PID=""
+
+is_listening() {
+  # Prefer lsof; fallback to nc
+  if command -v lsof >/dev/null 2>&1; then
+    lsof -i TCP:"$1" -sTCP:LISTEN >/dev/null 2>&1
+    return $?
+  elif command -v nc >/dev/null 2>&1; then
+    nc -z "$BASE_HOST" "$1" >/dev/null 2>&1
+    return $?
+  else
+    # Last resort: try a quick HTTP request (may fail if non-HTTP listener)
+    curl -sS --max-time 1 "$BASE_URL" >/dev/null 2>&1
+    return $?
+  fi
+}
+
+wait_for_port() {
+  local port="$1" timeout_ms="$2" interval_ms="$3"
+  local waited=0
+  while [ "$waited" -lt "$timeout_ms" ]; do
+    if is_listening "$port"; then return 0; fi
+    local sleep_s
+    sleep_s=$(awk -v ms="$interval_ms" 'BEGIN { printf "%.3f", ms/1000 }')
+    sleep "$sleep_s"
+    waited=$((waited+interval_ms))
+  done
+  return 1
+}
+
+cleanup_server() {
+  if [ "$STARTED_SERVER" = "true" ] && [ -n "$SERVER_PID" ]; then
+    if ps -p "$SERVER_PID" >/dev/null 2>&1; then
+      echo "Stopping background server (pid=$SERVER_PID)"
+      kill "$SERVER_PID" >/dev/null 2>&1 || true
+      # Give it a moment; force kill if needed
+      sleep 0.5
+      if ps -p "$SERVER_PID" >/dev/null 2>&1; then kill -9 "$SERVER_PID" >/dev/null 2>&1 || true; fi
+    fi
+  fi
+}
+trap cleanup_server EXIT INT TERM
+
+if [ "$START_SERVER" = "true" ]; then
+  if is_listening "$BASE_PORT"; then
+    echo "Server already listening on $BASE_HOST:$BASE_PORT — will not start a new one."
+  else
+    echo "Starting server in background via 'make run-server' (log: $SERVER_LOG)"
+    (
+      cd "$REPO_ROOT" || exit 1
+      # Ensure server uses the port implied by BASE_URL
+      PORT="$BASE_PORT" make run-server >"$SERVER_LOG" 2>&1
+    ) &
+    SERVER_PID=$!
+    STARTED_SERVER="true"
+
+    # Wait for server readiness (port open)
+    START_TIMEOUT_MS=${SERVER_START_TIMEOUT_MS:-20000}
+    POLL_INTERVAL_MS=${SERVER_START_POLL_MS:-250}
+    if wait_for_port "$BASE_PORT" "$START_TIMEOUT_MS" "$POLL_INTERVAL_MS"; then
+      echo "Server is up on $BASE_HOST:$BASE_PORT"
+    else
+      echo "Server failed to start within $START_TIMEOUT_MS ms. Tail of log:" >&2
+      tail -n 100 "$SERVER_LOG" >&2 || true
+      exit 1
+    fi
+  fi
+fi
+
 # If modern tooling (jq) is available, prefer JSON-defined test cases for easier editing.
 USE_JSON_TESTS=false
 if command -v jq >/dev/null 2>&1 && [ -f "$TESTS_FILE" ]; then
@@ -42,7 +138,15 @@ build_header_args() {
 }
 
 run_test() {
-  local idx="$1" name="$2" method="$3" path="$4" headers="$5" body="$6" expect="$7" assert_filter="$8"
+  local idx="$1" name="$2" method="$3" path="$4" headers="$5" body="$6" expect="$7" assert_filter="$8" delay_ms="$9" assert_poll_ms="${10}" assert_max_tries="${11}"
+
+  if [ -n "$delay_ms" ] && [ "$delay_ms" != "0" ]; then
+    # Convert ms to fractional seconds (sleep supports fractional on macOS & GNU)
+    local delay_secs
+    delay_secs=$(awk -v ms="$delay_ms" 'BEGIN { printf "%.3f", ms/1000 }')
+    echo "  (delaying ${delay_ms}ms before request to allow async processing)"
+    sleep "$delay_secs"
+  fi
 
   build_header_args "$headers"
 
@@ -104,21 +208,40 @@ run_test() {
   fi
   echo
 
-  # If we passed status code check and an assert is provided, evaluate jq assert against JSON body
+  # If we passed status code check and an assert is provided, evaluate jq assert, optionally polling for GET
   if [ "$pass" = "PASS" ] && [ -n "$assert_filter" ]; then
-    if command -v jq >/dev/null 2>&1; then
-      if jq -e . >/dev/null 2>&1 < "$tmp_body"; then
-        if jq -e "$assert_filter" "$tmp_body" >/dev/null 2>&1; then
-          echo "  Assert result: PASS"
-        else
-          echo "  Assert result: FAIL"
-          pass="FAIL"
+    local tries=${assert_max_tries:-1}
+    local poll_ms=${assert_poll_ms:-0}
+    local assert_pass=false
+    local attempt=1
+    while [ $attempt -le $tries ]; do
+      if command -v jq >/dev/null 2>&1; then
+        if jq -e . >/dev/null 2>&1 < "$tmp_body" && jq -e "$assert_filter" "$tmp_body" >/dev/null 2>&1; then
+          assert_pass=true
+          break
         fi
-      else
-        echo "  Assert skipped (response not JSON)"
       fi
+      # If not last try and method is GET, poll: sleep and re-request
+      if [ $attempt -lt $tries ] && [ "$method" = "GET" ]; then
+        if [ "$poll_ms" -gt 0 ]; then
+          local poll_secs
+          poll_secs=$(awk -v ms="$poll_ms" 'BEGIN { printf "%.3f", ms/1000 }')
+          echo "  (assert polling: attempt $((attempt+1))/$tries after ${poll_ms}ms)"
+          sleep "$poll_secs"
+        fi
+        # Re-issue GET request
+        code=$(curl -sS -o "$tmp_body" -w "%{http_code}" -X "$method" "$url" \
+          "${HEADER_ARGS[@]}")
+      else
+        break
+      fi
+      attempt=$((attempt+1))
+    done
+    if [ "$assert_pass" = true ]; then
+      echo "  Assert result: PASS"
     else
-      echo "  Assert skipped (jq not found)"
+      echo "  Assert result: FAIL"
+      pass="FAIL"
     fi
   fi
 
@@ -187,10 +310,13 @@ if [ "$USE_JSON_TESTS" = true ]; then
     headers_joined=$(jq -r '(.headers // []) | join("||")' <<< "$test")
     body_json=$(jq -c 'if .body == null then "" else .body end' <<< "$test")
   assert_filter=$(jq -r '(.assert // "")' <<< "$test")
+  delay_ms=$(jq -r '(.delay_ms // 0)' <<< "$test")
+  assert_poll_ms=$(jq -r '(.assert_poll_ms // 0)' <<< "$test")
+  assert_max_tries=$(jq -r '(.assert_max_tries // 1)' <<< "$test")
     # jq -c returns '""' for empty string; strip surrounding quotes to get empty
     if [ "$body_json" = '""' ]; then body_json=""; fi
 
-    if run_test "$INDEX" "$name" "$method" "$path" "$headers_joined" "$body_json" "$expect" "$assert_filter"; then
+  if run_test "$INDEX" "$name" "$method" "$path" "$headers_joined" "$body_json" "$expect" "$assert_filter" "$delay_ms" "$assert_poll_ms" "$assert_max_tries"; then
       PASS_COUNT=$((PASS_COUNT+1))
     else
       FAIL_COUNT=$((FAIL_COUNT+1))
