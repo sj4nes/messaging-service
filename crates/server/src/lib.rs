@@ -49,6 +49,7 @@ pub mod store_db {
     pub mod inbound_events;
     pub mod messages;
     pub mod normalize;
+    pub mod seed;
 }
 pub mod worker {
     pub mod inbound;
@@ -193,6 +194,13 @@ pub async fn run_server(
 
     // Spawn inbound DB worker if pool is available
     if let Some(pool) = db_pool.clone() {
+        // Optional: seed demo data to make DB-backed lists non-empty for local runs
+        if std::env::var("SEED_DB").ok().as_deref() == Some("1") {
+            tokio::spawn({
+                let pool = pool.clone();
+                async move { crate::store_db::seed::seed_bootstrap(&pool).await }
+            });
+        }
         let cfg_clone = api_cfg_for_worker.clone();
         tokio::spawn(async move {
             tracing::info!(
@@ -277,6 +285,13 @@ where
 
     // Spawn inbound DB worker if pool is available
     if let Some(pool) = db_pool.clone() {
+        // Optional: seed demo data for graceful startup with DB present
+        if std::env::var("SEED_DB").ok().as_deref() == Some("1") {
+            tokio::spawn({
+                let pool = pool.clone();
+                async move { crate::store_db::seed::seed_bootstrap(&pool).await }
+            });
+        }
         let cfg_clone = state.api.clone();
         tokio::spawn(async move {
             tracing::info!(

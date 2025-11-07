@@ -3,6 +3,7 @@
 CREATE TABLE IF NOT EXISTS message_bodies (
     id BIGSERIAL PRIMARY KEY,
     body TEXT NOT NULL,
+    snippet TEXT GENERATED ALWAYS AS (LEFT(body, 160)) STORED,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
