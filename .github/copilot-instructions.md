@@ -28,9 +28,9 @@ tests/
 Bash (POSIX-compatible): Follow standard conventions
 
 ## Recent Changes
+- 008-provider-routing-by-channel: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
 - 007-wire-postgresql-store: Added Rust (stable; repo targets 1.75+) + Axum, Tokio, SQLx, Serde, Tracing
 - 006-unified-messaging: Added Rust 1.75+ (repo currently builds on stable) + Axum (HTTP), Tokio (async runtime), Serde, Tracing; internal modules for rate limiting, circuit breaker, idempotency, inbound queue
-- 005-api-ingest-endpoints: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
 
 
 <!-- MANUAL ADDITIONS START -->
