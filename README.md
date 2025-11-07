@@ -130,6 +130,17 @@ This project structure is laid out for you already. You are welcome to move or c
 - Quickstart (flows, curl examples, runtime config): `specs/006-unified-messaging/quickstart.md`
 - OpenAPI contracts for messaging, provider mock, and conversations: `specs/006-unified-messaging/contracts/openapi.yaml`
 
+### PostgreSQL-backed worker (Feature 007)
+
+- Migrations for `inbound_events` extended with processing metadata: `crates/db-migrate/migrations_sqlx/0007_alter_inbound_events_unified.up.sql`
+- Server now includes scaffolding modules for DB-backed stores and an inbound worker loop; wiring a PgPool and swapping handlers to persist events are upcoming steps.
+
+Default worker config (override via env `API_*`): see `crates/server/config/default.toml` for:
+- `worker_batch_size`
+- `worker_claim_timeout_secs`
+- `worker_max_retries`
+- `worker_backoff_base_ms`
+
 ### Jujutsu (JJ) Support
 
 This repo supports Jujutsu (JJ) as a first-class VCS. If a `.jj/` directory is present,

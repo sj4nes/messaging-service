@@ -25,6 +25,14 @@ pub struct ApiConfig {
     pub provider_ratelimit_pct: u32,
     /// Mock provider: deterministic RNG seed (optional)
     pub provider_seed: Option<u64>,
+    /// Worker: number of inbound events claimed per cycle
+    pub worker_batch_size: u32,
+    /// Worker: seconds before a claim is considered stale and can be reaped
+    pub worker_claim_timeout_secs: u64,
+    /// Worker: maximum processing retries before dead_letter
+    pub worker_max_retries: u32,
+    /// Worker: base backoff in milliseconds for exponential retry
+    pub worker_backoff_base_ms: u64,
 }
 
 impl Default for ApiConfig {
@@ -40,6 +48,10 @@ impl Default for ApiConfig {
             provider_error_pct: 0,
             provider_ratelimit_pct: 0,
             provider_seed: None,
+            worker_batch_size: 10,
+            worker_claim_timeout_secs: 60,
+            worker_max_retries: 5,
+            worker_backoff_base_ms: 500,
         }
     }
 }
@@ -100,6 +112,14 @@ impl ApiConfig {
         override_u!(provider_timeout_pct, "API_PROVIDER_TIMEOUT_PCT", u32);
         override_u!(provider_error_pct, "API_PROVIDER_ERROR_PCT", u32);
         override_u!(provider_ratelimit_pct, "API_PROVIDER_RATELIMIT_PCT", u32);
+        override_u!(worker_batch_size, "API_WORKER_BATCH_SIZE", u32);
+        override_u!(
+            worker_claim_timeout_secs,
+            "API_WORKER_CLAIM_TIMEOUT_SECS",
+            u64
+        );
+        override_u!(worker_max_retries, "API_WORKER_MAX_RETRIES", u32);
+        override_u!(worker_backoff_base_ms, "API_WORKER_BACKOFF_BASE_MS", u64);
         if let Ok(seed) = std::env::var("API_PROVIDER_SEED") {
             match seed.parse::<u64>() {
                 Ok(n) => cfg.provider_seed = Some(n),

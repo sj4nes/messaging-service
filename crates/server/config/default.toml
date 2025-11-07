@@ -15,3 +15,9 @@ provider_error_pct = 0
 provider_ratelimit_pct = 0
 # Optional deterministic RNG seed (unset = random)
 # provider_seed = 123456789
+
+# Inbound worker (Feature 007) processing tunables
+worker_batch_size = 25            # events claimed per loop
+worker_claim_timeout_secs = 60    # seconds until a processing claim is stale
+worker_max_retries = 8            # attempts before dead lettering
+worker_backoff_base_ms = 750      # base backoff (ms) for exponential retry scheduling

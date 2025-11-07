@@ -7,6 +7,7 @@ use axum::response::{IntoResponse, Response};
 use axum::{routing::get, Json, Router};
 use messaging_core::Config;
 use serde::Serialize;
+use sqlx::postgres::PgPoolOptions;
 use std::future::Future;
 use std::{net::SocketAddr, sync::Arc};
 use tokio::net::TcpListener;
@@ -40,6 +41,16 @@ pub mod providers {
 pub mod store {
     pub mod conversations;
     pub mod messages;
+}
+// DB-backed stores (Feature 007 scaffolding)
+pub mod store_db {
+    pub mod conversations;
+    pub mod inbound_events;
+    pub mod messages;
+    pub mod normalize;
+}
+pub mod worker {
+    pub mod inbound;
 }
 
 use crate::config::ApiConfig;
@@ -143,6 +154,7 @@ pub async fn run_server(
     // Build shared state
     let (queue, rx) = InboundQueue::new(1024);
     let api_cfg = ApiConfig::load();
+    let api_cfg_for_worker = api_cfg.clone();
     let state = AppState {
         rate: RateLimiter::new(
             api_cfg.rate_limit_per_ip_per_min,
@@ -153,11 +165,46 @@ pub async fn run_server(
         idempotency: IdempotencyStore::new(2 * 60 * 60), // 2 hours
         api: api_cfg,
     };
-    // Spawn outbound worker
+    // Spawn outbound worker (mock provider)
     let worker_state = state.clone();
     tokio::spawn(async move {
         crate::queue::outbound::run(rx, worker_state).await;
     });
+
+    // Optionally spawn inbound DB worker if DATABASE_URL is configured
+    if let Ok(database_url) = std::env::var("DATABASE_URL") {
+        let cfg_clone = api_cfg_for_worker.clone();
+        tokio::spawn(async move {
+            match PgPoolOptions::new()
+                .max_connections(5)
+                .connect(&database_url)
+                .await
+            {
+                Ok(pool) => {
+                    tracing::info!(
+                        target = "server",
+                        event = "worker_start",
+                        worker = "inbound",
+                        "starting inbound DB worker"
+                    );
+                    let w = crate::worker::inbound::InboundWorker::new(pool, cfg_clone);
+                    w.run().await;
+                }
+                Err(e) => {
+                    tracing::warn!(target="server", event="worker_skip", worker="inbound", error=%e, "failed to connect to DB; inbound worker not started");
+                }
+            }
+        });
+    } else {
+        tracing::info!(
+            target = "server",
+            event = "worker_skip",
+            worker = "inbound",
+            "DATABASE_URL not set; inbound worker disabled"
+        );
+    }
+
+    // TODO (Feature 007): create PgPool and spawn inbound DB worker
 
     let router = build_router(&config.health_path, state);
 
