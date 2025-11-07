@@ -1,37 +1,78 @@
 # Tasks: Unified Messaging (Feature 006)
 
-Legend: [ ] todo, [x] done
+This task plan is generated per the speckit.tasks workflow and organized by user story. Each task uses the strict checklist format.
 
-## Phase 1 — Contracts & Docs
-- [x] T600: Author OpenAPI contracts for outbound send (SMS/Email)
-- [x] T601: Add inbound injection endpoint + mock runtime config endpoints to OpenAPI
-- [x] T602: Write Quickstart with curl examples, metrics, config
+## Phase 1 — Setup
+- [ ] T001 Create API module skeletons in crates/server/src/api/ (messages.rs, provider_mock.rs, conversations.rs)
+- [ ] T002 Create providers module for mocks in crates/server/src/providers/mock.rs
+- [ ] T003 Create queue modules for outbound worker in crates/server/src/queue/outbound.rs
+- [ ] T004 Create in-memory stores in crates/server/src/store/messages.rs and crates/server/src/store/conversations.rs
+- [ ] T005 Wire mod declarations in crates/server/src/api/mod.rs and crates/server/src/lib.rs
 
-## Phase 2 — Implementation
-- [ ] T610: Define request DTOs and validators for SmsRequest, EmailRequest
-- [ ] T611: Implement POST /api/messages/sms and /api/messages/email to enqueue outbound messages
-- [ ] T612: Implement in-process provider mock with configurable probabilities (timeout/error/429) and deterministic seed
-- [ ] T613: Implement GET/PUT /api/provider/mock/config to read/update mock config (in-memory)
-- [ ] T614: Implement POST /api/provider/mock/inbound to accept and normalize inbound events
-- [ ] T615: Add worker/queue consumer to dispatch outbound messages via provider mock with rate limiter + circuit breaker integration
-- [ ] T616: Add metrics for dispatch attempts/outcomes and breaker transitions; expose via /metrics
-- [ ] T617: Wire configuration from env vars (API_PROVIDER_*), with file overrides, and sane defaults
-- [ ] T618: Structured logging for dispatch and inbound paths; include correlation IDs
+## Phase 2 — Foundational
+- [ ] T010 Add shared DTOs for messages in crates/server/src/types/message.rs
+- [ ] T011 Extend config for API_PROVIDER_* in crates/server/src/config.rs (timeout_pct, error_pct, ratelimit_pct, seed)
+- [ ] T012 Extend metrics counters in crates/server/src/metrics.rs (dispatch_attempts, dispatch_success, dispatch_rate_limited, dispatch_error, breaker_transitions)
+- [ ] T013 Update logging for dispatch/inbound paths in crates/server/src/middleware/logging.rs (reuse correlation IDs)
 
-## Phase 3 — Stretch: Conversations
-- [ ] T620: Implement in-memory conversation grouping (channel, normalized_from, normalized_to)
-- [ ] T621: Add GET /api/conversations and GET /api/conversations/{id}/messages (in-memory)
+## Phase 3 — User Story 1: Send Outbound Messages via Unified API (P1)
+Story goal: Accept SMS/MMS/Email requests, apply idempotency and rate limits, enqueue for dispatch.
+Independent test criteria: 202 Accepted within 200ms; duplicate with same Idempotency-Key returns cached 202; 429 when rate limit exceeded.
 
-## Phase 4 — Tests & Validation
-- [ ] T630: Unit tests for DTO validation and normalization edge cases
-- [ ] T631: Scenario tests: success, 429 with Retry-After, 5xx causing breaker open/half-open/close
-- [ ] T632: Deterministic seed tests for reproducibility
-- [ ] T633: Contract tests against OpenAPI via JSON cases (bin/test.sh)
+- [ ] T020 [US1] Define SmsRequest/EmailRequest validators in crates/server/src/types/message.rs
+- [ ] T021 [US1] Implement POST /api/messages/sms in crates/server/src/api/messages.rs
+- [ ] T022 [US1] Implement POST /api/messages/email in crates/server/src/api/messages.rs
+- [ ] T023 [P] [US1] Register routes in crates/server/src/lib.rs (Axum router wiring)
+- [ ] T024 [US1] Integrate idempotency cache in crates/server/src/api/messages.rs
+- [ ] T025 [US1] Enqueue outbound event to queue in crates/server/src/api/messages.rs
 
-## Phase 5 — DX Polish
-- [ ] T640: README updates linking to Quickstart and contracts
-- [ ] T641: Example env file and Make targets for running mocks and scenario tests
+## Phase 4 — User Story 2: Process Inbound Provider-Originated Messages (P1)
+Story goal: Accept inbound mock events, validate/normalize, and record in message store.
+Independent test criteria: Valid inbound yields 202 and stored message; malformed inbound rejected once with error log.
 
-Notes:
-- Keep persistence in-memory for this feature unless otherwise required; ensure seams allow swapping to SQLx later.
-- Favor small, composable modules for provider mock and queue consumer.
+- [ ] T030 [US2] Implement POST /api/provider/mock/inbound in crates/server/src/api/provider_mock.rs
+- [ ] T031 [US2] Normalize inbound payloads in crates/server/src/types/message.rs
+- [ ] T032 [P] [US2] Persist (in-memory) inbound message in crates/server/src/store/messages.rs
+
+## Phase 5 — User Story 3: Provider Mock Fault & Rate Behavior (P2)
+Story goal: Provide mock provider with configurable 200/429/5xx outcomes and deterministic seed; expose runtime config.
+Independent test criteria: With configured failure mix, observe breaker open/half-open transitions and expected outcome ratios.
+
+- [ ] T040 [US3] Implement mock provider with RNG + probabilities in crates/server/src/providers/mock.rs
+- [ ] T041 [US3] Add GET /api/provider/mock/config in crates/server/src/api/provider_mock.rs
+- [ ] T042 [US3] Add PUT /api/provider/mock/config in crates/server/src/api/provider_mock.rs
+- [ ] T043 [P] [US3] Read config defaults from env in crates/server/src/config.rs
+- [ ] T044 [US3] Queue worker dispatch logic in crates/server/src/queue/outbound.rs (rate limiter + circuit breaker)
+- [ ] T045 [US3] Increment metrics for outcomes and breaker transitions in crates/server/src/metrics.rs
+
+## Phase 6 — User Story 4: Conversation Grouping (Stretch) (P3)
+Story goal: Group messages by (channel, normalized_from, normalized_to); list conversations and messages.
+Independent test criteria: Outbound + inbound pair appears as one conversation with correct order by timestamp.
+
+- [ ] T050 [US4] Implement conversation key normalization in crates/server/src/store/conversations.rs
+- [ ] T051 [US4] Upsert conversation on message ingest in crates/server/src/store/conversations.rs
+- [ ] T052 [US4] Implement GET /api/conversations in crates/server/src/api/conversations.rs
+- [ ] T053 [US4] Implement GET /api/conversations/{id}/messages in crates/server/src/api/conversations.rs
+- [ ] T054 [P] [US4] Wire routes in crates/server/src/lib.rs
+
+## Phase 7 — Polish & Cross-Cutting
+- [ ] T060 Update specs/006-unified-messaging/quickstart.md with any new routes/flags
+- [ ] T061 Link contracts and quickstart from README.md
+- [ ] T062 Add Makefile target(s) for scenario runs (optional)
+
+---
+
+## Dependencies (Story Order)
+1) US1 → 2) US2 → 3) US3 → 4) US4 (stretch)
+
+Foundational (Phase 1–2) precede all user stories. US1 and US2 are both P1; US2 depends on foundational only and may proceed in parallel once Phase 2 is complete.
+
+## Parallel Execution Examples
+- T023 (router wiring) can run in parallel with T021/T022 once path names are agreed.
+- T032 (persist inbound) can proceed in parallel with T030 (endpoint) with a mock store trait.
+- T043 (env config) can run in parallel with T041/T042 (mock config endpoints).
+- T054 (routes) can run in parallel with T052/T053 (conversations API) after path confirmation.
+
+## Implementation Strategy
+- MVP: Complete Phases 1–5 through US3 to validate send, receive, and resilience behavior without conversations.
+- Incremental delivery: Ship US1 first (outbound send + queue), then US2 (inbound injection), then US3 (provider fault profiles). Add US4 (conversations) as a stretch.
