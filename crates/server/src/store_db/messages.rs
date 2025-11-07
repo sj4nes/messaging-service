@@ -188,10 +188,13 @@ async fn persist_attachment(pool: &PgPool, message_id: i64, url: &str) -> Result
             } else {
                 match schema {
                     AttachmentSchema::RawHashUrl => {
-                        match sqlx::query(r#"SELECT id FROM attachment_urls WHERE url = $1 LIMIT 1"#)
-                            .bind(url)
-                            .fetch_one(pool)
-                            .await {
+                        match sqlx::query(
+                            r#"SELECT id FROM attachment_urls WHERE url = $1 LIMIT 1"#,
+                        )
+                        .bind(url)
+                        .fetch_one(pool)
+                        .await
+                        {
                             Ok(r) => Some(r.get("id")),
                             Err(_) => None,
                         }
@@ -203,7 +206,8 @@ async fn persist_attachment(pool: &PgPool, message_id: i64, url: &str) -> Result
                         )
                         .bind(hash)
                         .fetch_one(pool)
-                        .await {
+                        .await
+                        {
                             Ok(r) => {
                                 let existing_raw: String = r.get("raw");
                                 if existing_raw != url {

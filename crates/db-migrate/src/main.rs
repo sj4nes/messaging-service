@@ -2,7 +2,7 @@ use std::{env, fs, io::Write, path::PathBuf};
 
 use anyhow::{bail, Context, Result};
 use chrono::Utc;
-use sqlx::{migrate::Migrator, postgres::PgPoolOptions};
+use sqlx::{migrate::Migrator, postgres::PgPoolOptions, Row};
 
 // Point to the dedicated SQLx migrations directory that contains only .up/.down.sql files
 static MIGRATIONS: Migrator = sqlx::migrate!("./migrations_sqlx");
@@ -55,38 +55,61 @@ async fn status() -> Result<()> {
         .await
         .context("failed to connect to database")?;
 
-    let row = sqlx::query!(
-        r#"SELECT current_database()::text AS db, current_user::text AS usr, inet_server_addr()::TEXT AS host, inet_server_port()::int AS port"#
+    let row = sqlx::query(
+        r#"SELECT current_database()::text AS db,
+                  current_user::text AS usr,
+                  inet_server_addr()::TEXT AS host,
+                  inet_server_port()::int AS port"#,
     )
     .fetch_one(&pool)
     .await?;
 
     println!(
         "Connected to {}@{}:{} (db={})",
-        row.usr.unwrap_or_else(|| "?".into()),
-        row.host.unwrap_or_else(|| "?".into()),
-        row.port.unwrap_or(0),
-        row.db.unwrap_or_else(|| "?".into())
+        row.try_get::<String, _>("usr")
+            .unwrap_or_else(|_| "?".into()),
+        row.try_get::<String, _>("host")
+            .unwrap_or_else(|_| "?".into()),
+        row.try_get::<i32, _>("port").unwrap_or(0),
+        row.try_get::<String, _>("db")
+            .unwrap_or_else(|_| "?".into())
     );
 
-    let applied = sqlx::query!(
-        r#"SELECT version, description, success, installed_on::text AS "installed_on?: String" FROM _sqlx_migrations ORDER BY version"#
+    // Gracefully handle a fresh database that has not yet had any migrations applied.
+    // After a volume reset, _sqlx_migrations will not exist until the first apply.
+    let migrations_table_exists = sqlx::query(
+        r#"SELECT 1 FROM information_schema.tables WHERE table_name = '_sqlx_migrations' LIMIT 1"#,
+    )
+    .fetch_optional(&pool)
+    .await?
+    .is_some();
+
+    if !migrations_table_exists {
+        println!("_sqlx_migrations table not found (fresh database). No migrations applied yet.");
+        return Ok(());
+    }
+
+    let applied_rows = sqlx::query(
+        r#"SELECT version, description, success, installed_on::text AS installed_on
+           FROM _sqlx_migrations ORDER BY version"#,
     )
     .fetch_all(&pool)
     .await
     .unwrap_or_default();
 
-    if applied.is_empty() {
+    if applied_rows.is_empty() {
         println!("No entries in _sqlx_migrations.");
     } else {
         println!("Applied migrations:");
-        for r in applied {
+        for r in applied_rows {
             println!(
                 "  {:>4}  {:<24}  success={}  at={}",
-                r.version,
-                r.description,
-                r.success,
-                r.installed_on.unwrap_or_else(|| "?".into())
+                r.try_get::<i64, _>("version").unwrap_or(0),
+                r.try_get::<String, _>("description")
+                    .unwrap_or_else(|_| "?".into()),
+                r.try_get::<bool, _>("success").unwrap_or(false),
+                r.try_get::<String, _>("installed_on")
+                    .unwrap_or_else(|_| "?".into())
             );
         }
     }
