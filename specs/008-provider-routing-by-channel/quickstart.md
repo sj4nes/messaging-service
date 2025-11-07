@@ -20,10 +20,10 @@ Fallback globals:
 
 ## Run Tests
 
-Use existing `bin/test.sh` plus new seeded tests (to be added) to verify:
+Use existing `bin/test.sh` plus new seeded tests to verify:
 1. SMS and Email route to distinct providers (check metrics counters `provider_sms_mms_attempts` vs `provider_email_attempts`).
-2. Breaker isolation: induce failures for sms-mms only (later phase).
-3. Deterministic outcomes under fixed seeds (later phase).
+2. Breaker isolation (US2): induce failures for sms-mms only; confirm `provider_sms_mms_breaker_transitions >= 1` and `provider_email_breaker_transitions == 0`.
+3. Deterministic outcomes under fixed seeds (US3 - later phase).
 
 ### Provider Routing Verification (US1)
 
@@ -38,7 +38,19 @@ After starting the server:
 
 ## Observability
 - Logs include provider_name and outcome per dispatch.
-- Metrics expose provider-labeled counters.
+- Metrics expose provider-labeled counters:
+	- Attempts / Success / RateLimited / Error per provider
+	- Breaker transitions per provider (`provider_sms_mms_breaker_transitions`, `provider_email_breaker_transitions`)
+	- Global breaker transitions (`breaker_transitions`) retained
+	- Routing failures (`invalid_routing`) if channel has no registered provider
 
 ## Failure Simulation
-Adjust pct variables to create error/timeouts for a single provider; confirm other provider unaffected.
+Adjust pct variables to create error/timeouts for a single provider; confirm other provider unaffected and only that provider's breaker transitions.
+
+Example (open SMS breaker quickly, leave Email healthy):
+```
+export API_BREAKER_ERROR_THRESHOLD=1
+export API_PROVIDER_SMS_ERROR_PCT=100
+export API_PROVIDER_EMAIL_ERROR_PCT=0
+```
+Send two SMS messages and one Email, then GET `/metrics`. Expect SMS breaker transition count ≥1, Email breaker transition count 0.

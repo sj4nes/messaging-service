@@ -50,15 +50,20 @@ pub(crate) async fn run(mut rx: Receiver<InboundEvent>, state: crate::AppState) 
         info!(target="server", event="dispatch_attempt", provider=%provider.name(), channel=%channel.as_str(), event_name=%evt.event_name, "processing outbound event");
         crate::metrics::record_provider_attempt(provider.name());
 
-        // Short-circuit if breaker is open
-        if state.breaker.before_request() == BreakerState::Open {
+        // Use per-provider breaker (fallback to global if not found)
+        // Per-provider breaker lookup
+        let provider_breaker = state
+            .provider_breakers
+            .get(provider.name())
+            .unwrap_or(&state.breaker);
+        if provider_breaker.before_request() == BreakerState::Open {
             crate::metrics::record_breaker_open();
             info!(
                 target = "server",
-                event = "mock_dispatch_short_circuit",
-                mock = true,
+                event = "dispatch_short_circuit",
+                provider = %provider.name(),
                 breaker_state = "open",
-                "breaker open; short-circuiting dispatch"
+                "provider breaker open; short-circuiting dispatch"
             );
             continue;
         }
@@ -110,8 +115,15 @@ pub(crate) async fn run(mut rx: Receiver<InboundEvent>, state: crate::AppState) 
             Outcome::Success => {
                 crate::metrics::record_dispatch_success();
                 crate::metrics::record_provider_success(provider.name());
-                // Successful attempt closes/keeps closed breaker
-                state.breaker.record_success();
+                // Successful attempt may transition breaker (e.g., half-open -> closed)
+                let before = provider_breaker.state();
+                provider_breaker.record_success();
+                let after = provider_breaker.state();
+                if before != after {
+                    crate::metrics::record_breaker_transition();
+                    crate::metrics::record_provider_breaker_transition(provider.name());
+                    info!(target = "server", event = "breaker_transition", provider=%provider.name(), from=?before, to=?after, "circuit breaker state transitioned");
+                }
                 info!(target = "server", event = "dispatch_outcome", provider=%provider.name(), outcome="success", channel=%channel.as_str(), "provider dispatch succeeded");
             }
             Outcome::RateLimited => {
@@ -123,11 +135,14 @@ pub(crate) async fn run(mut rx: Receiver<InboundEvent>, state: crate::AppState) 
             Outcome::Error | Outcome::Timeout => {
                 crate::metrics::record_dispatch_error();
                 crate::metrics::record_provider_error(provider.name());
-                let before = state.breaker.state();
-                state.breaker.record_failure();
-                let after = state.breaker.state();
+                // Record failure against provider-specific breaker (fallback may be global)
+                let before = provider_breaker.state();
+                provider_breaker.record_failure();
+                let after = provider_breaker.state();
                 if before != after {
+                    // Global transition counter retained + per-provider counter
                     crate::metrics::record_breaker_transition();
+                    crate::metrics::record_provider_breaker_transition(provider.name());
                     info!(target="server", event="breaker_transition", provider=%provider.name(), from=?before, to=?after, "circuit breaker state transitioned");
                 }
                 let label = if matches!(outcome, Outcome::Timeout) {

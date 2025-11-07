@@ -17,7 +17,10 @@ static EMAIL_ATTEMPTS: AtomicU64 = AtomicU64::new(0);
 static EMAIL_SUCCESS: AtomicU64 = AtomicU64::new(0);
 static EMAIL_RATE_LIMITED: AtomicU64 = AtomicU64::new(0);
 static EMAIL_ERROR: AtomicU64 = AtomicU64::new(0);
-static BREAKER_TRANSITIONS: AtomicU64 = AtomicU64::new(0);
+static BREAKER_TRANSITIONS: AtomicU64 = AtomicU64::new(0); // global breaker transitions (legacy)
+                                                           // Per-provider breaker transition counters (Feature 008 US2)
+static SMS_MMS_BREAKER_TRANSITIONS: AtomicU64 = AtomicU64::new(0);
+static EMAIL_BREAKER_TRANSITIONS: AtomicU64 = AtomicU64::new(0);
 static WORKER_CLAIMED: AtomicU64 = AtomicU64::new(0);
 static WORKER_PROCESSED: AtomicU64 = AtomicU64::new(0);
 static WORKER_ERROR: AtomicU64 = AtomicU64::new(0);
@@ -48,12 +51,15 @@ pub struct MetricsSnapshot {
     provider_email_rate_limited: u64,
     provider_email_error: u64,
     breaker_transitions: u64,
+    provider_sms_mms_breaker_transitions: u64,
+    provider_email_breaker_transitions: u64,
     worker_claimed: u64,
     worker_processed: u64,
     worker_error: u64,
     worker_dead_letter: u64,
     worker_latency_avg_us: u64,
     worker_latency_max_us: u64,
+    invalid_routing: u64,
 }
 
 pub fn record_rate_limited() {
@@ -66,6 +72,18 @@ pub fn record_breaker_open() {
 
 pub fn record_breaker_transition() {
     BREAKER_TRANSITIONS.fetch_add(1, Ordering::Relaxed);
+}
+
+pub fn record_provider_breaker_transition(label: &str) {
+    match label {
+        PROVIDER_LABEL_SMS_MMS => {
+            SMS_MMS_BREAKER_TRANSITIONS.fetch_add(1, Ordering::Relaxed);
+        }
+        PROVIDER_LABEL_EMAIL => {
+            EMAIL_BREAKER_TRANSITIONS.fetch_add(1, Ordering::Relaxed);
+        }
+        _ => {}
+    }
 }
 
 pub fn record_dispatch_attempt() {
@@ -154,6 +172,8 @@ pub fn snapshot() -> MetricsSnapshot {
         provider_email_rate_limited: EMAIL_RATE_LIMITED.load(Ordering::Relaxed),
         provider_email_error: EMAIL_ERROR.load(Ordering::Relaxed),
         breaker_transitions: BREAKER_TRANSITIONS.load(Ordering::Relaxed),
+        provider_sms_mms_breaker_transitions: SMS_MMS_BREAKER_TRANSITIONS.load(Ordering::Relaxed),
+        provider_email_breaker_transitions: EMAIL_BREAKER_TRANSITIONS.load(Ordering::Relaxed),
         worker_claimed: WORKER_CLAIMED.load(Ordering::Relaxed),
         worker_processed: WORKER_PROCESSED.load(Ordering::Relaxed),
         worker_error: WORKER_ERROR.load(Ordering::Relaxed),
@@ -164,6 +184,7 @@ pub fn snapshot() -> MetricsSnapshot {
             total / processed
         },
         worker_latency_max_us: WORKER_LATENCY_MAX_US.load(Ordering::Relaxed),
+        invalid_routing: INVALID_ROUTING.load(Ordering::Relaxed),
     }
 }
 
