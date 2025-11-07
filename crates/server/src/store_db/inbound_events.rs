@@ -102,7 +102,7 @@ pub async fn mark_error(
         )
         .execute(pool)
         .await?;
-        return Ok(true);
+        Ok(true)
     } else {
         // backoff = base_ms * 2^((attempts-1)) with a simple cap at 60s for now
         let pow = (attempts - 1).max(0) as u32;
@@ -127,7 +127,7 @@ pub async fn mark_error(
         )
         .execute(pool)
         .await?;
-        return Ok(false);
+        Ok(false)
     }
 }
 
