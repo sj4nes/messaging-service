@@ -69,7 +69,6 @@ impl InboundWorker {
             // Insert placeholder message representation (no actual DB writes yet)
             let _ = insert_from_inbound(
                 &self.pool,
-                inbound_id,
                 &channel,
                 from.as_deref().unwrap_or("unknown"),
                 to.as_deref().unwrap_or("unknown"),
@@ -77,7 +76,7 @@ impl InboundWorker {
                 &attachments,
                 &ts,
             )
-            .await;
+            .await?;
         }
         mark_processed(&self.pool, inbound_id).await?;
         metrics::record_worker_processed(started.elapsed().as_micros() as u64);
