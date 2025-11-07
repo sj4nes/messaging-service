@@ -5,15 +5,11 @@ Plan: plan.md | Spec: spec.md | Research: research.md | Data Model: data-model.m
 
 ## Phase 1 – Setup
 
-- [ ] T001 Ensure migrations folder exists at migrations_sqlx/ (verify in repo root)
-- [ ] T002 Create migration: inbound_events table at migrations_sqlx/20251106_01_wire_inbound_events_up.sql
-- [ ] T003 Create migration (down): inbound_events table at migrations_sqlx/20251106_01_wire_inbound_events_down.sql
-- [ ] T004 Create migration: messages table at migrations_sqlx/20251106_02_wire_messages_up.sql
-- [ ] T005 Create migration (down): messages table at migrations_sqlx/20251106_02_wire_messages_down.sql
-- [ ] T006 Create migration: conversations table at migrations_sqlx/20251106_03_wire_conversations_up.sql
-- [ ] T007 Create migration (down): conversations table at migrations_sqlx/20251106_03_wire_conversations_down.sql
-- [ ] T008 Add config knobs in crates/server/src/config.rs (batch_size, claim_timeout_secs, max_retries, backoff_base_ms)
-- [ ] T009 [P] Extend metrics in crates/server/src/metrics.rs for worker_queued, worker_claimed, worker_processed, worker_error, worker_dead_letter, and latency
+- [ ] T001 Ensure migrations folder exists at crates/db-migrate/migrations_sqlx/
+- [ ] T002 Create migration (UP): alter inbound_events to add channel, from, to, provider_message_id, processor_id, error_code, error_message, updated_at, processed_at; add UNIQUE(channel, provider_message_id) WHERE provider_message_id IS NOT NULL at crates/db-migrate/migrations_sqlx/0007_alter_inbound_events_unified.up.sql
+- [ ] T003 Create migration (DOWN): drop added columns and unique index at crates/db-migrate/migrations_sqlx/0007_alter_inbound_events_unified.down.sql
+- [ ] T004 Add config knobs in crates/server/src/config.rs (batch_size, claim_timeout_secs, max_retries, backoff_base_ms)
+- [ ] T005 [P] Extend metrics in crates/server/src/metrics.rs for worker_queued, worker_claimed, worker_processed, worker_error, worker_dead_letter, and latency
 
 ## Phase 2 – Foundational
 
