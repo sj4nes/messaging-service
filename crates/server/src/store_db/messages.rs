@@ -27,11 +27,25 @@ pub async fn insert_from_inbound(
     let body_id: Option<i64> = if body.is_empty() {
         None
     } else {
-        let b = sqlx::query(r#"INSERT INTO message_bodies (body) VALUES ($1) RETURNING id"#)
-            .bind(body)
-            .fetch_one(pool)
-            .await?;
-        Some(b.get::<i64, _>("id"))
+        // Attempt insert with ON CONFLICT to deduplicate.
+        // If a duplicate exists we won't get a RETURNING row, so fallback to SELECT.
+        let inserted = sqlx::query(
+            r#"INSERT INTO message_bodies (body) VALUES ($1)
+            ON CONFLICT (body) DO NOTHING RETURNING id"#,
+        )
+        .bind(body)
+        .fetch_optional(pool)
+        .await?;
+        if let Some(row) = inserted {
+            Some(row.get::<i64, _>("id"))
+        } else {
+            // Fetch existing id
+            let existing = sqlx::query(r#"SELECT id FROM message_bodies WHERE body = $1 LIMIT 1"#)
+                .bind(body)
+                .fetch_one(pool)
+                .await?;
+            Some(existing.get::<i64, _>("id"))
+        }
     };
     // Insert message referencing body
     let rec = sqlx::query!(
@@ -46,13 +60,31 @@ pub async fn insert_from_inbound(
     let message_id = rec.id;
     // Persist attachments (URLs) if any
     for url in attachments {
-        match sqlx::query(r#"INSERT INTO attachment_urls (url) VALUES ($1) RETURNING id"#)
-            .bind(url)
-            .fetch_one(pool)
-            .await
+        match sqlx::query(
+            r#"INSERT INTO attachment_urls (url) VALUES ($1)
+                ON CONFLICT (url) DO NOTHING RETURNING id"#,
+        )
+        .bind(url)
+        .fetch_optional(pool)
+        .await
         {
-            Ok(a) => {
-                let attachment_id: i64 = a.get("id");
+            Ok(opt) => {
+                // If we didn't insert due to conflict, fetch existing id
+                let attachment_id: i64 = if let Some(a) = opt {
+                    a.get("id")
+                } else {
+                    match sqlx::query(r#"SELECT id FROM attachment_urls WHERE url = $1 LIMIT 1"#)
+                        .bind(url)
+                        .fetch_one(pool)
+                        .await
+                    {
+                        Ok(row) => row.get("id"),
+                        Err(e) => {
+                            warn!(target="server", event="attach_lookup_fail", error=?e, message_id, url=%url, "failed to lookup existing attachment after conflict; continuing");
+                            continue;
+                        }
+                    }
+                };
                 if let Err(e) = sqlx::query(
                     r#"INSERT INTO message_attachment_urls (message_id, attachment_url_id) VALUES ($1, $2)"#,
                 )
