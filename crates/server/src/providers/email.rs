@@ -25,7 +25,7 @@ impl Provider for EmailMockProvider {
         "email"
     }
     fn dispatch(&self, _msg: &OutboundMessage, cfg: &ApiConfig) -> DispatchResult {
-        let outcome: Outcome = pick_outcome_for_provider(self.name(), cfg);
+        let (outcome, _roll): (Outcome, u32) = pick_outcome_for_provider(self.name(), cfg);
         DispatchResult {
             provider_name: self.name().to_string(),
             outcome,

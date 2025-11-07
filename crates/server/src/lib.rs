@@ -173,6 +173,8 @@ pub async fn run_server(
     // Build shared state
     let (queue, rx) = InboundQueue::new(1024);
     let api_cfg = ApiConfig::load();
+    // Initialize deterministic provider RNG seeds (US3 T030/T033)
+    crate::providers::common::init_rng_seeds(&api_cfg);
     let api_cfg_for_worker = api_cfg.clone();
     let brk_thresh = api_cfg.breaker_error_threshold;
     let brk_open_secs = api_cfg.breaker_open_secs;
@@ -210,7 +212,7 @@ pub async fn run_server(
         breaker: CircuitBreaker::new(api_cfg.breaker_error_threshold, api_cfg.breaker_open_secs),
         queue,
         idempotency: IdempotencyStore::new(2 * 60 * 60), // 2 hours
-        api: api_cfg,
+        api: api_cfg.clone(),
         db: db_pool.clone(),
         provider_registry,
         provider_breakers: {
@@ -279,6 +281,19 @@ pub async fn run_server(
         .map_err(|e| format!("failed to read local addr: {e}"))?;
 
     tracing::info!(target: "server", event = "startup", %local_addr, health_path = %config.health_path, "listening");
+    // Audit log seeds (US3 T033) using cloned cfg (api_cfg was moved into state)
+    if let Some(s) = api_cfg_for_worker
+        .provider_sms_seed
+        .or(api_cfg_for_worker.provider_seed)
+    {
+        tracing::info!(target="server", event="provider_seed", provider="sms-mms", seed=%s, "provider seed initialized");
+    }
+    if let Some(s) = api_cfg_for_worker
+        .provider_email_seed
+        .or(api_cfg_for_worker.provider_seed)
+    {
+        tracing::info!(target="server", event="provider_seed", provider="email", seed=%s, "provider seed initialized");
+    }
 
     let server = axum::serve(listener, router.into_make_service());
     let handle = tokio::spawn(async move {
@@ -299,6 +314,7 @@ where
     // Build shared state
     let (queue, rx) = InboundQueue::new(1024);
     let api_cfg = ApiConfig::load();
+    crate::providers::common::init_rng_seeds(&api_cfg);
     let brk_thresh = api_cfg.breaker_error_threshold;
     let brk_open_secs = api_cfg.breaker_open_secs;
     // Optionally create DB pool if DATABASE_URL is set
@@ -335,7 +351,7 @@ where
         breaker: CircuitBreaker::new(api_cfg.breaker_error_threshold, api_cfg.breaker_open_secs),
         queue,
         idempotency: IdempotencyStore::new(2 * 60 * 60),
-        api: api_cfg,
+        api: api_cfg.clone(),
         db: db_pool.clone(),
         provider_registry,
         provider_breakers: {
@@ -400,6 +416,12 @@ where
         .map_err(|e| format!("failed to read local addr: {e}"))?;
 
     tracing::info!(target: "server", event = "startup", %local_addr, health_path = %config.health_path, "listening");
+    if let Some(s) = api_cfg.provider_sms_seed.or(api_cfg.provider_seed) {
+        tracing::info!(target="server", event="provider_seed", provider="sms-mms", seed=%s, "provider seed initialized");
+    }
+    if let Some(s) = api_cfg.provider_email_seed.or(api_cfg.provider_seed) {
+        tracing::info!(target="server", event="provider_seed", provider="email", seed=%s, "provider seed initialized");
+    }
 
     let server = axum::serve(listener, router.into_make_service()).with_graceful_shutdown(shutdown);
 

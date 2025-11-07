@@ -21,9 +21,9 @@ Fallback globals:
 ## Run Tests
 
 Use existing `bin/test.sh` plus new seeded tests to verify:
-1. SMS and Email route to distinct providers (check metrics counters `provider_sms_mms_attempts` vs `provider_email_attempts`).
-2. Breaker isolation (US2): induce failures for sms-mms only; confirm `provider_sms_mms_breaker_transitions >= 1` and `provider_email_breaker_transitions == 0`.
-3. Deterministic outcomes under fixed seeds (US3 - later phase).
+1. SMS and Email route to distinct providers (US1)
+2. Breaker isolation (US2)
+3. Deterministic outcomes under fixed seeds (US3)
 
 ### Provider Routing Verification (US1)
 
@@ -43,6 +43,22 @@ After starting the server:
 	- Breaker transitions per provider (`provider_sms_mms_breaker_transitions`, `provider_email_breaker_transitions`)
 	- Global breaker transitions (`breaker_transitions`) retained
 	- Routing failures (`invalid_routing`) if channel has no registered provider
+	- Deterministic seed audit logs (`provider_seed` log events at startup)
+
+## Deterministic Testing (US3)
+Set seeds to produce reproducible sequences. Each provider maintains its own RNG stream.
+
+Example:
+```
+export API_PROVIDER_SEED=777            # global fallback
+export API_PROVIDER_SMS_ERROR_PCT=15
+export API_PROVIDER_SMS_RATELIMIT_PCT=5
+export API_PROVIDER_EMAIL_ERROR_PCT=20
+export API_PROVIDER_EMAIL_RATELIMIT_PCT=10
+```
+Run server twice with identical env and send N SMS + N Email messages interleaved.
+Metrics deltas (attempts, error, rate_limited) will match across runs.
+For unit-level reproducibility, see test `deterministic.rs` which predicts counts from seed.
 
 ## Failure Simulation
 Adjust pct variables to create error/timeouts for a single provider; confirm other provider unaffected and only that provider's breaker transitions.
