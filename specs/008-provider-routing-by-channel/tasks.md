@@ -81,12 +81,12 @@
 
 ### Implementation
 
-- [ ] T023 [P] [US2] Add per-provider breaker lookup helper in `crates/server/src/providers/registry.rs`
-- [ ] T024 [US2] Modify outbound worker to use provider-specific breaker (remove global assumption) in `crates/server/src/queue/outbound.rs`
-- [ ] T025 [US2] Add breaker transition metrics (per provider) in `crates/server/src/metrics.rs`
-- [ ] T026 [P] [US2] Unit test: breaker failure isolation in `crates/server/tests/breaker_isolation.rs`
-- [ ] T027 [US2] Integration test: induced failures only open sms-mms breaker in `crates/server/tests/breaker_integration.rs`
-- [ ] T028 [US2] Document breaker isolation test procedure in quickstart
+- [X] T023 [P] [US2] Add per-provider breaker lookup helper in `crates/server/src/providers/registry.rs`
+- [X] T024 [US2] Modify outbound worker to use provider-specific breaker (remove global assumption) in `crates/server/src/queue/outbound.rs`
+- [X] T025 [US2] Add breaker transition metrics (per provider) in `crates/server/src/metrics.rs`
+- [X] T026 [P] [US2] Unit test: breaker failure isolation in `crates/server/tests/breaker_isolation.rs`
+- [X] T027 [US2] Integration test: induced failures only open sms-mms breaker in `crates/server/tests/breaker_integration.rs`
+- [X] T028 [US2] Document breaker isolation test procedure in quickstart
 
 **Checkpoint**: Isolation confirmed; resilience validated.
 
@@ -99,12 +99,12 @@
 
 ### Implementation
 
-- [ ] T029 [P] [US3] Add per-provider seed handling logic in `crates/server/src/providers/common.rs`
-- [ ] T030 [US3] Extend provider initialization to apply seeds (one-time) in `crates/server/src/lib.rs`
-- [ ] T031 [P] [US3] Unit test: deterministic sequence reproducibility in `crates/server/tests/deterministic.rs`
-- [ ] T032 [US3] Integration test: mixed traffic reproducibility (seeded) in `crates/server/tests/deterministic_integration.rs`
-- [ ] T033 [US3] Log seed presence at startup for audit in `crates/server/src/lib.rs`
-- [ ] T034 [US3] Document deterministic testing steps in quickstart
+- [X] T029 [P] [US3] Add per-provider seed handling logic in `crates/server/src/providers/common.rs`
+- [X] T030 [US3] Extend provider initialization to apply seeds (one-time) in `crates/server/src/lib.rs`
+- [X] T031 [P] [US3] Unit test: deterministic sequence reproducibility in `crates/server/tests/deterministic.rs`
+- [X] T032 [US3] Integration test: mixed traffic reproducibility (seeded) in `crates/server/tests/deterministic_integration.rs`
+- [X] T033 [US3] Log seed presence at startup for audit in `crates/server/src/lib.rs`
+- [X] T034 [US3] Document deterministic testing steps in quickstart
 
 **Checkpoint**: Deterministic behavior validated; observability enhancements complete.
 
@@ -114,12 +114,12 @@
 
 **Purpose**: Final improvements and validation.
 
-- [ ] T035 [P] Add invalid_routing metric test in `crates/server/tests/invalid_routing.rs`
-- [ ] T036 Refactor shared probability logic for clarity in `crates/server/src/providers/common.rs`
-- [ ] T037 [P] Add doc comments for Provider trait & structs in `crates/server/src/providers/registry.rs`
-- [ ] T038 Security/log review: verify no sensitive data in provider logs in `crates/server/src/queue/outbound.rs`
+- [X] T035 [P] Add invalid_routing metric test in `crates/server/tests/invalid_routing.rs`
+- [X] T036 Refactor shared probability logic for clarity in `crates/server/src/providers/common.rs`
+- [X] T037 [P] Add doc comments for Provider trait & structs in `crates/server/src/providers/registry.rs`
+- [X] T038 Security/log review: verify no sensitive data in provider logs in `crates/server/src/queue/outbound.rs`
 - [ ] T039 [P] Performance sanity test (benchmark dispatch loop) in `crates/server/tests/perf_dispatch.rs`
-- [ ] T040 Update `CHANGELOG.md` entry for feature 008
+- [X] T040 Update `CHANGELOG.md` entry for feature 008
 - [ ] T041 Run quickstart validation steps end-to-end
 
 ---
