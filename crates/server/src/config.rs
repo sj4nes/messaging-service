@@ -25,6 +25,24 @@ pub struct ApiConfig {
     pub provider_ratelimit_pct: u32,
     /// Mock provider: deterministic RNG seed (optional)
     pub provider_seed: Option<u64>,
+    // --- Feature 008 per-provider override placeholders (Phase 1) ---
+    // These will be populated in Phase 2 (T008) via env overrides
+    #[serde(skip)]
+    pub provider_sms_timeout_pct: Option<u32>,
+    #[serde(skip)]
+    pub provider_sms_error_pct: Option<u32>,
+    #[serde(skip)]
+    pub provider_sms_ratelimit_pct: Option<u32>,
+    #[serde(skip)]
+    pub provider_sms_seed: Option<u64>,
+    #[serde(skip)]
+    pub provider_email_timeout_pct: Option<u32>,
+    #[serde(skip)]
+    pub provider_email_error_pct: Option<u32>,
+    #[serde(skip)]
+    pub provider_email_ratelimit_pct: Option<u32>,
+    #[serde(skip)]
+    pub provider_email_seed: Option<u64>,
     /// Worker: number of inbound events claimed per cycle
     pub worker_batch_size: u32,
     /// Worker: seconds before a claim is considered stale and can be reaped
@@ -48,6 +66,14 @@ impl Default for ApiConfig {
             provider_error_pct: 0,
             provider_ratelimit_pct: 0,
             provider_seed: None,
+            provider_sms_timeout_pct: None,
+            provider_sms_error_pct: None,
+            provider_sms_ratelimit_pct: None,
+            provider_sms_seed: None,
+            provider_email_timeout_pct: None,
+            provider_email_error_pct: None,
+            provider_email_ratelimit_pct: None,
+            provider_email_seed: None,
             worker_batch_size: 10,
             worker_claim_timeout_secs: 60,
             worker_max_retries: 5,
@@ -128,6 +154,34 @@ impl ApiConfig {
                 }
             }
         }
+        // --- Feature 008 env placeholders (Phase 1) ---
+        // Phase 2 will parse these into the Option fields above
+        // Using presence only for now (no parsing) to avoid behavior changes before implementation.
+        macro_rules! env_opt_u32_placeholder {
+            ($field:ident, $key:literal) => {
+                if std::env::var($key).is_ok() {
+                    cfg.$field = None; // reserved
+                }
+            };
+        }
+        macro_rules! env_opt_u64_placeholder {
+            ($field:ident, $key:literal) => {
+                if std::env::var($key).is_ok() {
+                    cfg.$field = None; // reserved
+                }
+            };
+        }
+        env_opt_u32_placeholder!(provider_sms_timeout_pct, "API_PROVIDER_SMS_TIMEOUT_PCT");
+        env_opt_u32_placeholder!(provider_sms_error_pct, "API_PROVIDER_SMS_ERROR_PCT");
+        env_opt_u32_placeholder!(provider_sms_ratelimit_pct, "API_PROVIDER_SMS_RATELIMIT_PCT");
+        env_opt_u64_placeholder!(provider_sms_seed, "API_PROVIDER_SMS_SEED");
+        env_opt_u32_placeholder!(provider_email_timeout_pct, "API_PROVIDER_EMAIL_TIMEOUT_PCT");
+        env_opt_u32_placeholder!(provider_email_error_pct, "API_PROVIDER_EMAIL_ERROR_PCT");
+        env_opt_u32_placeholder!(
+            provider_email_ratelimit_pct,
+            "API_PROVIDER_EMAIL_RATELIMIT_PCT"
+        );
+        env_opt_u64_placeholder!(provider_email_seed, "API_PROVIDER_EMAIL_SEED");
         cfg
     }
 }

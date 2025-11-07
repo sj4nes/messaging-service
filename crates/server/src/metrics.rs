@@ -16,6 +16,11 @@ static WORKER_DEAD_LETTER: AtomicU64 = AtomicU64::new(0);
 static WORKER_LATENCY_TOTAL_US: AtomicU64 = AtomicU64::new(0);
 static WORKER_LATENCY_MAX_US: AtomicU64 = AtomicU64::new(0);
 
+// --- Feature 008 placeholders (Phase 1) ---
+// Provider label constants used for per-provider metrics in later phases
+pub const PROVIDER_LABEL_SMS_MMS: &str = "sms-mms";
+pub const PROVIDER_LABEL_EMAIL: &str = "email";
+
 #[derive(serde::Serialize)]
 pub struct MetricsSnapshot {
     ts_unix_ms: u128,

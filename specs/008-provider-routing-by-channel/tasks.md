@@ -11,11 +11,10 @@
 
 **Purpose**: Prepare folder/module structure for provider routing feature.
 
-- [ ] T001 Create `crates/server/src/providers/` submodules `sms_mms.rs` and `email.rs`
-- [ ] T002 Add provider registry module file `crates/server/src/providers/registry.rs`
-- [ ] T003 [P] Add placeholder metrics label constants in `crates/server/src/metrics.rs`
-- [ ] T004 [P] Ensure config parsing section ready for new env overrides in `crates/server/src/config.rs`
-
+ - [X] T001 Create `crates/server/src/providers/` submodules `sms_mms.rs` and `email.rs`
+ - [X] T002 Add provider registry module file `crates/server/src/providers/registry.rs`
+ - [X] T003 [P] Add placeholder metrics label constants in `crates/server/src/metrics.rs`
+ - [X] T004 [P] Ensure config parsing section ready for new env overrides in `crates/server/src/config.rs`
 ---
 
 ## Phase 2: Foundational (Blocking Prerequisites)
