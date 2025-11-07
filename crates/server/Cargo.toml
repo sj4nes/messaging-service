@@ -13,14 +13,14 @@ tracing = "0.1.41"
 uuid = { version = "1.8.0", features = ["v4"] }
 toml = "0.8"
 anyhow = "1.0"
-chrono = { version = "0.4", features = ["clock"] }
+chrono = { version = "0.4", features = ["serde", "clock"] }
 sqlx = { version = "0.7", default-features = false, features = [
-	"runtime-tokio",
-	"postgres",
-	"macros",
-	"chrono",
-	"uuid",
-	"json"] }
+    "runtime-tokio",
+    "postgres",
+    "macros",
+    "chrono",
+    "uuid",
+    "json"] }
 
 [dev-dependencies]
 reqwest = { version = "0.12.24", features = ["json"] }
