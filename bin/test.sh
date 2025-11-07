@@ -42,7 +42,7 @@ build_header_args() {
 }
 
 run_test() {
-  local idx="$1" name="$2" method="$3" path="$4" headers="$5" body="$6" expect="$7"
+  local idx="$1" name="$2" method="$3" path="$4" headers="$5" body="$6" expect="$7" assert_filter="$8"
 
   build_header_args "$headers"
 
@@ -86,6 +86,9 @@ run_test() {
     fi
   fi
   echo "  Expect: $expect  Got: $code  => $pass"
+  if [ -n "$assert_filter" ]; then
+    echo "  Assert (jq): $assert_filter"
+  fi
   if [ "$SHOW_BODY" = "true" ]; then
     echo "  Response body:"
     if command -v jq >/dev/null 2>&1; then
@@ -100,6 +103,24 @@ run_test() {
     fi
   fi
   echo
+
+  # If we passed status code check and an assert is provided, evaluate jq assert against JSON body
+  if [ "$pass" = "PASS" ] && [ -n "$assert_filter" ]; then
+    if command -v jq >/dev/null 2>&1; then
+      if jq -e . >/dev/null 2>&1 < "$tmp_body"; then
+        if jq -e "$assert_filter" "$tmp_body" >/dev/null 2>&1; then
+          echo "  Assert result: PASS"
+        else
+          echo "  Assert result: FAIL"
+          pass="FAIL"
+        fi
+      else
+        echo "  Assert skipped (response not JSON)"
+      fi
+    else
+      echo "  Assert skipped (jq not found)"
+    fi
+  fi
 
   rm -f "$tmp_body" 2>/dev/null || true
 
@@ -143,7 +164,10 @@ if [ "$USE_JSON_TESTS" = true ]; then
       # expect
       ( $e.value.expect ) as $x |
       if ($x|type)!="number" or ($x|floor)!=$x or ($x<100 or $x>599)
-      then err($e.key;"expect";"must be integer HTTP code 100-599") else empty end
+      then err($e.key;"expect";"must be integer HTTP code 100-599") else empty end,
+      # assert (optional jq filter string)
+      ( $e.value.assert ) as $a |
+      if ($a!=null and ($a|type)!="string") then err($e.key;"assert";"must be string if present") else empty end
     ' "$TESTS_FILE")
     if [ -n "$errs" ]; then
       echo "Test schema validation failed for $TESTS_FILE:" >&2
@@ -156,16 +180,17 @@ if [ "$USE_JSON_TESTS" = true ]; then
   TOTAL=$(jq 'length' "$TESTS_FILE")
   INDEX=1
   while IFS= read -r test; do
-    name=$(jq -r '.name' <<< "$test")
-    method=$(jq -r '.method' <<< "$test")
-    path=$(jq -r '.path' <<< "$test")
-    expect=$(jq -r '.expect' <<< "$test")
+  name=$(jq -r '.name' <<< "$test")
+  method=$(jq -r '.method' <<< "$test")
+  path=$(jq -r '.path' <<< "$test")
+  expect=$(jq -r '.expect' <<< "$test")
     headers_joined=$(jq -r '(.headers // []) | join("||")' <<< "$test")
     body_json=$(jq -c 'if .body == null then "" else .body end' <<< "$test")
+  assert_filter=$(jq -r '(.assert // "")' <<< "$test")
     # jq -c returns '""' for empty string; strip surrounding quotes to get empty
     if [ "$body_json" = '""' ]; then body_json=""; fi
 
-    if run_test "$INDEX" "$name" "$method" "$path" "$headers_joined" "$body_json" "$expect"; then
+    if run_test "$INDEX" "$name" "$method" "$path" "$headers_joined" "$body_json" "$expect" "$assert_filter"; then
       PASS_COUNT=$((PASS_COUNT+1))
     else
       FAIL_COUNT=$((FAIL_COUNT+1))
@@ -223,7 +248,7 @@ else
   for ((i=0; i<TOTAL; i++)); do
     name="${NAMES[$i]}"; method="${METHODS[$i]}"; path="${PATHS[$i]}"
     headers="${HEADERS[$i]}"; body="${BODIES[$i]}"; expect="${EXPECTS[$i]}"
-    if run_test "$((i+1))" "$name" "$method" "$path" "$headers" "$body" "$expect"; then
+    if run_test "$(($i+1))" "$name" "$method" "$path" "$headers" "$body" "$expect" ""; then
       PASS_COUNT=$((PASS_COUNT+1))
     else
       FAIL_COUNT=$((FAIL_COUNT+1))
