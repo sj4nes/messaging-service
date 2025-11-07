@@ -17,6 +17,16 @@ pub async fn seed_bootstrap(pool: &PgPool) {
     }
 }
 
+/// Minimal identities-only seeding; ensures FK targets exist without adding demo conversations/messages.
+pub async fn seed_identities(pool: &PgPool) {
+    if let Err(e) = seed_customer(pool).await {
+        info!(target="server", event="seed_error", step="customer", error=?e, "seed identities: customer step failed");
+    }
+    if let Err(e) = seed_provider(pool).await {
+        info!(target="server", event="seed_error", step="provider", error=?e, "seed identities: provider step failed");
+    }
+}
+
 async fn seed_customer(pool: &PgPool) -> sqlx::Result<()> {
     let existing = sqlx::query("SELECT id FROM customers WHERE id = 1")
         .fetch_optional(pool)

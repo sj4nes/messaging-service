@@ -194,6 +194,8 @@ pub async fn run_server(
 
     // Spawn inbound DB worker if pool is available
     if let Some(pool) = db_pool.clone() {
+        // Ensure base identities exist (customer id=1, provider id=1) to satisfy FKs for worker inserts
+        crate::store_db::seed::seed_identities(&pool).await;
         // Optional: seed demo data to make DB-backed lists non-empty for local runs
         if std::env::var("SEED_DB").ok().as_deref() == Some("1") {
             tokio::spawn({
@@ -285,6 +287,8 @@ where
 
     // Spawn inbound DB worker if pool is available
     if let Some(pool) = db_pool.clone() {
+        // Ensure base identities exist (customer id=1, provider id=1) to satisfy FKs for worker inserts
+        crate::store_db::seed::seed_identities(&pool).await;
         // Optional: seed demo data for graceful startup with DB present
         if std::env::var("SEED_DB").ok().as_deref() == Some("1") {
             tokio::spawn({
