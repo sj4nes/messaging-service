@@ -1,11 +1,12 @@
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 use serde_json::json;
 use std::sync::{OnceLock, RwLock};
+use tracing::info;
 
 use crate::errors;
 use crate::queue::inbound_events::InboundEvent;
-use crate::types::{ProviderInboundRequest, Validate};
 use crate::store::messages as message_store;
+use crate::types::{ProviderInboundRequest, Validate};
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ProviderMockConfig {
@@ -54,11 +55,32 @@ pub(crate) async fn post_inbound(
     }
 
     // Normalize event name by variant for downstream handlers
-    let (event_name, occurred_at) = match &body {
-        ProviderInboundRequest::Sms(s) => ("provider.mock.sms.inbound", s.timestamp.clone()),
-        ProviderInboundRequest::Mms(s) => ("provider.mock.mms.inbound", s.timestamp.clone()),
-        ProviderInboundRequest::Email(e) => ("provider.mock.email.inbound", e.timestamp.clone()),
+    let (event_name, occurred_at, ch, from, to) = match &body {
+        ProviderInboundRequest::Sms(s) => (
+            "provider.mock.sms.inbound",
+            s.timestamp.clone(),
+            "sms",
+            s.from.clone(),
+            s.to.clone(),
+        ),
+        ProviderInboundRequest::Mms(s) => (
+            "provider.mock.mms.inbound",
+            s.timestamp.clone(),
+            "mms",
+            s.from.clone(),
+            s.to.clone(),
+        ),
+        ProviderInboundRequest::Email(e) => (
+            "provider.mock.email.inbound",
+            e.timestamp.clone(),
+            "email",
+            e.from.clone(),
+            e.to.clone(),
+        ),
     };
+
+    // Log mock inbound receipt
+    info!(target = "server", event = "mock_inbound", mock = true, channel = %ch, from = %from, to = %to, "received mock inbound event");
 
     let event = InboundEvent {
         event_name: event_name.to_string(),
@@ -92,6 +114,7 @@ pub(crate) async fn get_config(State(state): State<crate::AppState>) -> axum::re
         }
     }
     let cfg = lock.read().unwrap().clone();
+    info!(target = "server", event = "mock_config_get", mock = true, timeout_pct = %cfg.timeout_pct, error_pct = %cfg.error_pct, ratelimit_pct = %cfg.ratelimit_pct, seed = ?cfg.seed, "served mock provider config");
     Json(cfg).into_response()
 }
 
@@ -102,5 +125,6 @@ pub(crate) async fn put_config(Json(body): Json<ProviderMockConfig>) -> axum::re
         let mut w = lock.write().unwrap();
         *w = body.clone();
     }
+    info!(target = "server", event = "mock_config_put", mock = true, timeout_pct = %body.timeout_pct, error_pct = %body.error_pct, ratelimit_pct = %body.ratelimit_pct, seed = ?body.seed, "updated mock provider config");
     Json(body).into_response()
 }

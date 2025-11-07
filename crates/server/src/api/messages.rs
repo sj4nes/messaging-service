@@ -45,9 +45,21 @@ pub(crate) async fn post_sms(
     };
     // Persist outbound into in-memory store for conversations
     if body.r#type.to_ascii_lowercase() == "mms" {
-        let _ = message_store::insert_outbound_mms(&body.from, &body.to, &body.body, &body.attachments, &body.timestamp);
+        let _ = message_store::insert_outbound_mms(
+            &body.from,
+            &body.to,
+            &body.body,
+            &body.attachments,
+            &body.timestamp,
+        );
     } else {
-        let _ = message_store::insert_outbound_sms(&body.from, &body.to, &body.body, &body.attachments, &body.timestamp);
+        let _ = message_store::insert_outbound_sms(
+            &body.from,
+            &body.to,
+            &body.body,
+            &body.attachments,
+            &body.timestamp,
+        );
     }
     let _ = state.queue.enqueue(event).await;
 
@@ -83,7 +95,13 @@ pub(crate) async fn post_email(
         source: "api".to_string(),
     };
     // Persist outbound email
-    let _ = message_store::insert_outbound_email(&body.from, &body.to, &body.body, &body.attachments, &body.timestamp);
+    let _ = message_store::insert_outbound_email(
+        &body.from,
+        &body.to,
+        &body.body,
+        &body.attachments,
+        &body.timestamp,
+    );
     let _ = state.queue.enqueue(event).await;
 
     (StatusCode::ACCEPTED, Json(json!({ "status": "accepted" }))).into_response()

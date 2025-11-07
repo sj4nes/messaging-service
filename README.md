@@ -125,6 +125,11 @@ This project structure is laid out for you already. You are welcome to move or c
             - `curl -sS http://localhost:8080/healthz | jq`
 5. Run `make test` to run tests
 
+### Unified Messaging (Feature 006)
+
+- Quickstart (flows, curl examples, runtime config): `specs/006-unified-messaging/quickstart.md`
+- OpenAPI contracts for messaging, provider mock, and conversations: `specs/006-unified-messaging/contracts/openapi.yaml`
+
 ### Jujutsu (JJ) Support
 
 This repo supports Jujutsu (JJ) as a first-class VCS. If a `.jj/` directory is present,
@@ -184,15 +189,26 @@ CI tip: set `SQLX_OFFLINE=true` to build without a live database connection when
 
 Request logging emits: method, path, status, duration_us, client_ip (from `X-Forwarded-For` / `X-Real-IP`), correlation_id (`X-Request-Id` propagated or generated), header_count, and names of sensitive headers (values redacted).
 
-Minimal in-process metrics at `GET /metrics` return JSON counters:
+Minimal in-process metrics at `GET /metrics` return JSON counters. For unified messaging, additional dispatch and breaker counters are included:
 
 ```json
 {
     "ts_unix_ms": 0,
     "rate_limited": 0,
-    "breaker_open": 0
+    "breaker_open": 0,
+    "dispatch_attempts": 0,
+    "dispatch_success": 0,
+    "dispatch_rate_limited": 0,
+    "dispatch_error": 0,
+    "breaker_transitions": 0
 }
 ```
+
+Tracing logs clearly mark provider mocking so you can distinguish real vs simulated flows during development. Look for events prefixed with `mock_...` and the field `mock=true` on records like:
+
+- `mock_inbound` when the mock provider inbound endpoint is hit
+- `mock_config_get` / `mock_config_put` when reading/updating mock behavior
+- `mock_dispatch_attempt`, `mock_dispatch_outcome`, and `mock_breaker_transition` in the background dispatch worker
 
 ## Tests
 
