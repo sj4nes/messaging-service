@@ -154,34 +154,38 @@ impl ApiConfig {
                 }
             }
         }
-        // --- Feature 008 env placeholders (Phase 1) ---
-        // Phase 2 will parse these into the Option fields above
-        // Using presence only for now (no parsing) to avoid behavior changes before implementation.
-        macro_rules! env_opt_u32_placeholder {
-            ($field:ident, $key:literal) => {
-                if std::env::var($key).is_ok() {
-                    cfg.$field = None; // reserved
+        // --- Feature 008 per-provider overrides (Phase 2) ---
+        macro_rules! override_opt_u32 {
+            ($field:ident, $env:literal) => {
+                if let Ok(val) = std::env::var($env) {
+                    match val.parse::<u32>() {
+                        Ok(n) => cfg.$field = Some(n),
+                        Err(_) => tracing::warn!(target="server", key=$env, value=%val, "Invalid numeric env override (u32)")
+                    }
                 }
             };
         }
-        macro_rules! env_opt_u64_placeholder {
-            ($field:ident, $key:literal) => {
-                if std::env::var($key).is_ok() {
-                    cfg.$field = None; // reserved
+        macro_rules! override_opt_u64 {
+            ($field:ident, $env:literal) => {
+                if let Ok(val) = std::env::var($env) {
+                    match val.parse::<u64>() {
+                        Ok(n) => cfg.$field = Some(n),
+                        Err(_) => tracing::warn!(target="server", key=$env, value=%val, "Invalid numeric env override (u64)")
+                    }
                 }
             };
         }
-        env_opt_u32_placeholder!(provider_sms_timeout_pct, "API_PROVIDER_SMS_TIMEOUT_PCT");
-        env_opt_u32_placeholder!(provider_sms_error_pct, "API_PROVIDER_SMS_ERROR_PCT");
-        env_opt_u32_placeholder!(provider_sms_ratelimit_pct, "API_PROVIDER_SMS_RATELIMIT_PCT");
-        env_opt_u64_placeholder!(provider_sms_seed, "API_PROVIDER_SMS_SEED");
-        env_opt_u32_placeholder!(provider_email_timeout_pct, "API_PROVIDER_EMAIL_TIMEOUT_PCT");
-        env_opt_u32_placeholder!(provider_email_error_pct, "API_PROVIDER_EMAIL_ERROR_PCT");
-        env_opt_u32_placeholder!(
+        override_opt_u32!(provider_sms_timeout_pct, "API_PROVIDER_SMS_TIMEOUT_PCT");
+        override_opt_u32!(provider_sms_error_pct, "API_PROVIDER_SMS_ERROR_PCT");
+        override_opt_u32!(provider_sms_ratelimit_pct, "API_PROVIDER_SMS_RATELIMIT_PCT");
+        override_opt_u64!(provider_sms_seed, "API_PROVIDER_SMS_SEED");
+        override_opt_u32!(provider_email_timeout_pct, "API_PROVIDER_EMAIL_TIMEOUT_PCT");
+        override_opt_u32!(provider_email_error_pct, "API_PROVIDER_EMAIL_ERROR_PCT");
+        override_opt_u32!(
             provider_email_ratelimit_pct,
             "API_PROVIDER_EMAIL_RATELIMIT_PCT"
         );
-        env_opt_u64_placeholder!(provider_email_seed, "API_PROVIDER_EMAIL_SEED");
+        override_opt_u64!(provider_email_seed, "API_PROVIDER_EMAIL_SEED");
         cfg
     }
 }

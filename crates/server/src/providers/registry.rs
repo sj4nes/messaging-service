@@ -22,19 +22,23 @@ pub enum ChannelKind {
 }
 
 impl ChannelKind {
-    pub fn from_str(s: &str) -> Option<Self> {
-        match s {
-            "sms" => Some(ChannelKind::Sms),
-            "mms" => Some(ChannelKind::Mms),
-            "email" => Some(ChannelKind::Email),
-            _ => None,
-        }
-    }
     pub fn as_str(&self) -> &'static str {
         match self {
             ChannelKind::Sms => "sms",
             ChannelKind::Mms => "mms",
             ChannelKind::Email => "email",
+        }
+    }
+}
+
+impl std::str::FromStr for ChannelKind {
+    type Err = &'static str;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "sms" => Ok(ChannelKind::Sms),
+            "mms" => Ok(ChannelKind::Mms),
+            "email" => Ok(ChannelKind::Email),
+            _ => Err("unsupported channel"),
         }
     }
 }

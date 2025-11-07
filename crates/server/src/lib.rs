@@ -32,6 +32,7 @@ pub mod queue {
     pub mod outbound;
 }
 pub mod state {
+    pub mod breakers;
     pub mod idempotency;
 }
 
@@ -87,6 +88,8 @@ pub(crate) struct AppState {
     db: Option<sqlx::PgPool>,
     // Feature 008: provider registry (per-channel routing)
     provider_registry: crate::providers::registry::ProviderRegistry,
+    // Feature 008: per-provider circuit breakers
+    provider_breakers: crate::state::breakers::ProviderBreakers,
 }
 
 impl AppState {
@@ -170,6 +173,8 @@ pub async fn run_server(
     let (queue, rx) = InboundQueue::new(1024);
     let api_cfg = ApiConfig::load();
     let api_cfg_for_worker = api_cfg.clone();
+    let brk_thresh = api_cfg.breaker_error_threshold;
+    let brk_open_secs = api_cfg.breaker_open_secs;
     // Optionally create DB pool if DATABASE_URL is set
     let db_pool: Option<sqlx::PgPool> = match std::env::var("DATABASE_URL") {
         Ok(url) => match PgPoolOptions::new().max_connections(5).connect(&url).await {
@@ -192,6 +197,20 @@ pub async fn run_server(
         api: api_cfg,
         db: db_pool.clone(),
         provider_registry: crate::providers::registry::ProviderRegistry::new(),
+        provider_breakers: {
+            use crate::middleware::circuit_breaker::CircuitBreaker;
+            let mut map = std::collections::HashMap::new();
+            // Pre-create breakers for known providers; names align with metrics labels
+            map.insert(
+                crate::metrics::PROVIDER_LABEL_SMS_MMS.to_string(),
+                CircuitBreaker::new(brk_thresh, brk_open_secs),
+            );
+            map.insert(
+                crate::metrics::PROVIDER_LABEL_EMAIL.to_string(),
+                CircuitBreaker::new(brk_thresh, brk_open_secs),
+            );
+            crate::state::breakers::ProviderBreakers::new(map)
+        },
     };
     // Spawn outbound worker (mock provider)
     let worker_state = state.clone();
@@ -264,6 +283,8 @@ where
     // Build shared state
     let (queue, rx) = InboundQueue::new(1024);
     let api_cfg = ApiConfig::load();
+    let brk_thresh = api_cfg.breaker_error_threshold;
+    let brk_open_secs = api_cfg.breaker_open_secs;
     // Optionally create DB pool if DATABASE_URL is set
     let db_pool: Option<sqlx::PgPool> = match std::env::var("DATABASE_URL") {
         Ok(url) => match PgPoolOptions::new().max_connections(5).connect(&url).await {
@@ -286,6 +307,19 @@ where
         api: api_cfg,
         db: db_pool.clone(),
         provider_registry: crate::providers::registry::ProviderRegistry::new(),
+        provider_breakers: {
+            use crate::middleware::circuit_breaker::CircuitBreaker;
+            let mut map = std::collections::HashMap::new();
+            map.insert(
+                crate::metrics::PROVIDER_LABEL_SMS_MMS.to_string(),
+                CircuitBreaker::new(brk_thresh, brk_open_secs),
+            );
+            map.insert(
+                crate::metrics::PROVIDER_LABEL_EMAIL.to_string(),
+                CircuitBreaker::new(brk_thresh, brk_open_secs),
+            );
+            crate::state::breakers::ProviderBreakers::new(map)
+        },
     };
     // Spawn outbound worker with shutdown signal? For now, fire-and-forget; shutdown will drop rx
     let worker_state = state.clone();
