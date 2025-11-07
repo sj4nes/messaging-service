@@ -4,6 +4,9 @@
 build:
 	@cargo build --all
 
+build-release:
+	@cargo build --release --all
+
 # Load local env vars from .env if present (export to all recipes)
 ifneq (,$(wildcard .env))
 include .env
