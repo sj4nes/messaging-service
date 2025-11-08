@@ -22,10 +22,10 @@ description: "Tasks for Conversation Persistence & Unification"
 
 **Purpose**: Establish directories, configs, and scaffolding referenced by the plan
 
-- [ ] T001 Ensure migrations folder exists at crates/db-migrate/migrations_sqlx/
-- [ ] T002 Ensure server config directory present at crates/server/config/
-- [ ] T003 [P] Add config key default for snippet length in crates/server/config (e.g., conversations.snippet_length=64)
-- [ ] T004 [P] Create module folder crates/core/src/conversations/ for normalization and key derivation
+- [x] T001 Ensure migrations folder exists at crates/db-migrate/migrations_sqlx/
+- [x] T002 Ensure server config directory present at crates/server/config/
+- [x] T003 [P] Add config key default for snippet length in crates/server/config (e.g., conversations.snippet_length=64)
+- [x] T004 [P] Create module folder crates/core/src/conversations/ for normalization and key derivation
 
 ---
 

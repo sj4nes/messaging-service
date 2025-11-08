@@ -19,6 +19,7 @@ pub struct Config {
     pub port: u16,
     pub health_path: String,
     pub log_level: String,
+    pub conversation_snippet_length: usize,
 }
 
 impl Config {
@@ -84,11 +85,21 @@ impl Config {
         // LOG_LEVEL default "info"
         let log_level = env::var("LOG_LEVEL").unwrap_or_else(|_| "info".to_string());
 
+        // CONVERSATION_SNIPPET_LENGTH default 64 (must be >= 1 and <= 4096)
+        let snippet_len_str = env::var("CONVERSATION_SNIPPET_LENGTH").unwrap_or_else(|_| "64".to_string());
+        let conversation_snippet_length: usize = snippet_len_str
+            .parse()
+            .map_err(|_| format!("Invalid CONVERSATION_SNIPPET_LENGTH value: '{snippet_len_str}'"))?;
+        if !(1..=4096).contains(&conversation_snippet_length) {
+            return Err("CONVERSATION_SNIPPET_LENGTH must be in 1..=4096".to_string());
+        }
+
         Ok((
             Config {
                 port,
                 health_path,
                 log_level,
+                conversation_snippet_length,
             },
             ConfigSources {
                 port: src_port,
@@ -133,25 +144,28 @@ mod tests {
     #[rstest]
     fn defaults_when_unset() {
         let _lock = TEST_GUARD.get_or_init(|| Mutex::new(())).lock().unwrap();
-        let saved = save_and_clear(&["PORT", "HEALTH_PATH", "LOG_LEVEL"]);
+        let saved = save_and_clear(&["PORT", "HEALTH_PATH", "LOG_LEVEL", "CONVERSATION_SNIPPET_LENGTH"]);
         let cfg = Config::load().expect("load defaults");
         assert_eq!(cfg.port, 8080);
         assert_eq!(cfg.health_path, "/healthz");
         assert_eq!(cfg.log_level, "info");
+        assert_eq!(cfg.conversation_snippet_length, 64);
         restore(saved);
     }
 
     #[rstest]
     fn env_precedence_and_validation() {
         let _lock = TEST_GUARD.get_or_init(|| Mutex::new(())).lock().unwrap();
-        let saved = save_and_clear(&["PORT", "HEALTH_PATH", "LOG_LEVEL"]);
+        let saved = save_and_clear(&["PORT", "HEALTH_PATH", "LOG_LEVEL", "CONVERSATION_SNIPPET_LENGTH"]);
         std::env::set_var("PORT", "9090");
         std::env::set_var("HEALTH_PATH", "status");
         std::env::set_var("LOG_LEVEL", "debug");
+        std::env::set_var("CONVERSATION_SNIPPET_LENGTH", "128");
         let cfg = Config::load().expect("load env");
         assert_eq!(cfg.port, 9090);
         assert_eq!(cfg.health_path, "/status");
         assert_eq!(cfg.log_level, "debug");
+        assert_eq!(cfg.conversation_snippet_length, 128);
         restore(saved);
     }
 
