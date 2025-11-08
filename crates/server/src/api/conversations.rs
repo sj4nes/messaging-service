@@ -114,8 +114,8 @@ pub(crate) async fn list_messages(
                         .into_iter()
                         .map(|m| MessageDto {
                             id: m.id.to_string(),
-                            from: "".into(),
-                            to: "".into(),
+                            from: m.from_addr.unwrap_or_default(),
+                            to: m.to_addr.unwrap_or_default(),
                             r#type: m.direction,
                             snippet: make_snippet(m.body.as_deref(), snippet_len),
                             timestamp: m.received_at.unwrap_or(m.sent_at).to_rfc3339(),
@@ -145,8 +145,8 @@ pub(crate) async fn list_messages(
                                     .into_iter()
                                     .map(|m| MessageDto {
                                         id: m.id.to_string(),
-                                        from: "".into(),
-                                        to: "".into(),
+                                        from: m.from_addr.unwrap_or_default(),
+                                        to: m.to_addr.unwrap_or_default(),
                                         r#type: m.direction,
                                         snippet: make_snippet(m.body.as_deref(), snippet_len),
                                         timestamp: m.received_at.unwrap_or(m.sent_at).to_rfc3339(),

@@ -91,7 +91,7 @@ description: "Tasks for Conversation Persistence & Unification"
 
 ### Tests for User Story 2
 
-- [ ] T024 [P] [US2] Contract test for GET /api/conversations in tests/contract/conversations_list.rs
+- [X] T024 [P] [US2] Contract test for GET /api/conversations in tests/contract/conversations_list.rs
 
 ### Implementation for User Story 2
 
@@ -112,15 +112,15 @@ description: "Tasks for Conversation Persistence & Unification"
 
 ### Tests for User Story 3
 
-- [ ] T029 [P] [US3] Contract test for GET /api/conversations/{id}/messages in tests/contract/conversation_messages.rs
+- [X] T029 [P] [US3] Contract test for GET /api/conversations/{id}/messages in tests/contract/conversation_messages.rs
 - [X] T030 [P] [US3] UTF-8 snippet boundary test in tests/unit/snippet_unicode.rs
 
 ### Implementation for User Story 3
 
 - [X] T031 [P] [US3] Implement snippet utility with Unicode-safe truncation in crates/core/src/conversations/snippet.rs
-- [ ] T032 [US3] Expose snippet length config and wire into handler in crates/server/src/config/mod.rs
-- [ ] T033 [US3] Update conversation messages handler to include from/to and snippet in crates/server/src/api/conversations.rs
-- [ ] T034 [US3] Ensure timestamp ordering uses received_at for inbound, sent_at for outbound in crates/server/src/api/conversations.rs
+- [X] T032 [US3] Expose snippet length config and wire into handler in crates/server/src/config/mod.rs
+- [X] T033 [US3] Update conversation messages handler to include from/to and snippet in crates/server/src/api/conversations.rs
+- [X] T034 [US3] Ensure timestamp ordering uses received_at for inbound, sent_at for outbound in crates/server/src/api/conversations.rs
 
 **Checkpoint**: US3 functional — message listing with correct addresses and safe snippets
 
@@ -132,7 +132,7 @@ description: "Tasks for Conversation Persistence & Unification"
 
 - [ ] T035 [P] Backfill implementation: batch NULL conversation_id → upsert + set FK; aggregate recompute in crates/db-migrate/src/backfill_conversations.rs
 - [ ] T036 [P] Add verification query/report after backfill in crates/db-migrate/src/backfill_conversations.rs
-- [ ] T037 Documentation updates per quickstart and normalization rules in README.md and specs/009-conversation-persistence/quickstart.md
+- [X] T037 Documentation updates per quickstart and normalization rules in README.md and specs/009-conversation-persistence/quickstart.md
 - [ ] T038 Observability: ensure metrics exported and dashboards/alerts updated in docs/observability.md
 - [ ] T039 Feature toggle or gating for legacy in-memory store in crates/core/src/conversations/mod.rs
 - [ ] T040 Final load test sweep and latency report script in tests/integration/load_report.rs

@@ -212,6 +212,33 @@ This repo includes a small utility `db-migrate` to manage SQLx migrations:
 
 CI tip: set `SQLX_OFFLINE=true` to build without a live database connection when using SQLx elsewhere. Local development can remain online.
 
+## Conversations
+
+Messages are automatically grouped into conversations based on channel and participants. Each conversation:
+
+- Has a **unique key** formatted as `{channel}:{participant_a}<->{participant_b}`
+- Maintains **message_count** and **last_activity_at** atomically with each message
+- Uses **normalized addresses**:
+  - **Email**: Lowercased with plus-tag equivalence (user+tag@example.com → user@example.com)
+  - **Phone (SMS/MMS)**: Digits only with optional leading '+' (formatting removed)
+- Orders participants lexicographically (participant_a < participant_b)
+- Handles concurrent message inserts safely via database constraints
+
+### API Endpoints
+
+- `GET /api/conversations` - List conversations with pagination
+  - Returns: id, key, channel, participant_a, participant_b, message_count, last_activity_at
+  - Ordered by last_activity_at DESC, id DESC (deterministic)
+  
+- `GET /api/conversations/{id}/messages` - List messages in a conversation
+  - Returns: id, from, to, direction (inbound/outbound), snippet, timestamp
+  - Snippets are Unicode-safe (max 64 chars by default, configurable via CONVERSATION_SNIPPET_LENGTH)
+  - Ordered chronologically using received_at for inbound, sent_at for outbound
+
+### Configuration
+
+- `CONVERSATION_SNIPPET_LENGTH` - Max characters for message snippets (default: 64, range: 1-4096)
+
 ## Observability
 
 Request logging emits: method, path, status, duration_us, client_ip (from `X-Forwarded-For` / `X-Real-IP`), correlation_id (`X-Request-Id` propagated or generated), header_count, and names of sensitive headers (values redacted).

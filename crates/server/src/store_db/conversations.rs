@@ -84,6 +84,8 @@ pub struct ConversationMessage {
     pub sent_at: DateTime<Utc>,
     pub received_at: Option<DateTime<Utc>>,
     pub body: Option<String>,
+    pub from_addr: Option<String>,
+    pub to_addr: Option<String>,
 }
 
 pub async fn list_messages(
@@ -93,11 +95,13 @@ pub async fn list_messages(
     offset: i64,
 ) -> Result<Vec<ConversationMessage>> {
     let rows = sqlx::query(
-        r#"SELECT m.id, m.direction, m.provider_id, m.sent_at, m.received_at, b.body
+        r#"SELECT m.id, m.direction, m.provider_id, m.sent_at, m.received_at, b.body,
+                  c.participant_a, c.participant_b
             FROM messages m
             LEFT JOIN message_bodies b ON m.body_id = b.id
+            LEFT JOIN conversations c ON m.conversation_id = c.id
             WHERE m.conversation_id = $1
-            ORDER BY COALESCE(m.received_at, m.sent_at) DESC
+            ORDER BY COALESCE(m.received_at, m.sent_at) ASC
             LIMIT $2 OFFSET $3"#,
     )
     .bind(conversation_id)
@@ -107,13 +111,30 @@ pub async fn list_messages(
     .await?;
     Ok(rows
         .into_iter()
-        .map(|r| ConversationMessage {
-            id: r.get("id"),
-            direction: r.get("direction"),
-            provider_id: r.get("provider_id"),
-            sent_at: r.get("sent_at"),
-            received_at: r.get("received_at"),
-            body: r.get("body"),
+        .map(|r| {
+            let direction: String = r.get("direction");
+            let participant_a: Option<String> = r.get("participant_a");
+            let participant_b: Option<String> = r.get("participant_b");
+
+            // For outbound: from = participant_a, to = participant_b
+            // For inbound: from = participant_b, to = participant_a
+            // This assumes participant_a is the "local" side
+            let (from_addr, to_addr) = if direction == "outbound" {
+                (participant_a.clone(), participant_b.clone())
+            } else {
+                (participant_b.clone(), participant_a.clone())
+            };
+
+            ConversationMessage {
+                id: r.get("id"),
+                direction,
+                provider_id: r.get("provider_id"),
+                sent_at: r.get("sent_at"),
+                received_at: r.get("received_at"),
+                body: r.get("body"),
+                from_addr,
+                to_addr,
+            }
         })
         .collect())
 }
