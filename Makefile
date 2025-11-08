@@ -1,5 +1,6 @@
 .PHONY: setup run test clean help db-up db-down db-logs db-shell build db-reset migrate-status migrate-reset-history \
-	dx-setup py-venv py-install-jsonschema validate-events rust-check rust-install rust-ensure rust-version
+	dx-setup py-venv py-install-jsonschema validate-events rust-check rust-install rust-ensure rust-version \
+	docker-build docker-up docker-down docker-logs docker-restart
 
 # Load local env vars from .env if present (export to all recipes)
 ifneq (,$(wildcard .env))
@@ -33,6 +34,13 @@ help:
 	@echo "  validate-events - Validate event examples against the envelope schema (uses .venv)"
 	@echo "  py-venv - Create Python virtual environment at .venv (and upgrade pip)"
 	@echo "  rust-ensure - Install Rust via rustup if cargo is not present"
+	@echo ""
+	@echo "Docker Compose targets:"
+	@echo "  docker-build   - Build Docker images for the application"
+	@echo "  docker-up      - Start all services in containers (builds if needed)"
+	@echo "  docker-down    - Stop and remove all containers"
+	@echo "  docker-logs    - Show logs from all containers"
+	@echo "  docker-restart - Restart all containers"
 
 build:
 	@cargo build --all
@@ -192,3 +200,33 @@ rust-ensure:
 update-agent-context:
 	@echo "Updating agent context files..."
 	@.specify/scripts/bash/update-agent-context.sh
+
+# -----------------------------
+# Docker Compose Targets
+# -----------------------------
+
+.PHONY: docker-build
+docker-build:
+	@echo "Building Docker images..."
+	@docker-compose build
+
+.PHONY: docker-up
+docker-up:
+	@echo "Starting all services via Docker Compose..."
+	@docker-compose up --build -d
+	@echo "Services starting. Check status with: docker-compose ps"
+	@echo "View logs with: make docker-logs"
+
+.PHONY: docker-down
+docker-down:
+	@echo "Stopping all Docker Compose services..."
+	@docker-compose down
+
+.PHONY: docker-logs
+docker-logs:
+	@echo "Showing logs from all containers (Ctrl+C to exit)..."
+	@docker-compose logs -f
+
+.PHONY: docker-restart
+docker-restart: docker-down docker-up
+	@echo "All services restarted"

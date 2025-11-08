@@ -2,6 +2,67 @@
 
 This is a scaffold for Hatch's backend interview project. It includes basic setup for development, testing, and deployment.
 
+## Prerequisites
+
+Before running this project, ensure you have the following installed:
+
+### Required
+- **Docker** 20.10 or higher ([Install Docker](https://docs.docker.com/get-docker/))
+- **Docker Compose** 2.x or higher (usually included with Docker Desktop)
+- **Minimum 4GB available RAM** (2GB for PostgreSQL, 2GB for application)
+- **Git** or **Jujutsu** (jj) for version control
+
+### Optional (for local development without containers)
+- **Rust** 1.75 or higher ([Install via rustup](https://rustup.rs/))
+- **cargo** (included with Rust installation)
+
+**Note**: The `bin/start.sh` script will automatically attempt to install Rust via `make rust-ensure` if not present. However, for containerized deployment via `docker-compose`, Rust is **not required** on the host machine.
+
+### First-Time Setup
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd messaging-service
+   ```
+
+2. **Copy environment configuration**
+   ```bash
+   cp .env.example .env
+   ```
+   Review and adjust `.env` if needed (defaults are suitable for local development).
+
+3. **Choose deployment method**:
+
+   **Option A: Containerized (Recommended for new developers)**
+   ```bash
+   docker-compose up --build
+   ```
+   This will:
+   - Build the Rust application in a container
+   - Start PostgreSQL database
+   - Apply database migrations automatically
+   - Start the messaging server on http://localhost:8080
+
+   **Option B: Local Rust development**
+   ```bash
+   make setup    # Starts database and builds Rust binary
+   make run      # Runs server locally with cargo
+   ```
+
+4. **Verify installation**
+   ```bash
+   curl http://localhost:8080/healthz
+   ```
+   Expected response: `{"status":"healthy"}`
+
+5. **Run tests** (optional)
+   ```bash
+   make test
+   # or for containerized:
+   docker-compose exec messaging-server cargo test
+   ```
+
 ## Guidelines
 
 At Hatch, we work with several message providers to offer a unified way for our Customers to  communicate to their Contacts. Today we offer SMS, MMS, email, voice calls, and voicemail drops. Your task is to implement an HTTP service that supports the core messaging functionality of Hatch, on a much smaller scale. Specific instructions and guidelines on completing the project are below.
@@ -114,16 +175,32 @@ This project structure is laid out for you already. You are welcome to move or c
 └── README.md              # This file
 ```
 
-## Getting Started
+## Quick Start
 
-1. Clone the repository
-2. Run `make setup` to initialize the project
-3. Run `docker-compose up -d` to start the PostgreSQL database, or modify it to choose a database of your choice
-4. Run `make run` to start the application
-        - Or run the Rust server directly: `make run-server`
-        - Health check:
-            - `curl -sS http://localhost:8080/healthz | jq`
-5. Run `make test` to run tests
+For detailed setup instructions, see the **Prerequisites** section above.
+
+### Using Docker Compose (Recommended)
+```bash
+docker-compose up --build
+```
+Access the service at http://localhost:8080
+
+### Using Local Development
+```bash
+make setup  # Initialize database and build
+make run    # Start the server
+```
+
+### Health Check
+```bash
+curl -sS http://localhost:8080/healthz | jq
+```
+
+### Run Tests
+```bash
+make test
+# or: ./bin/test.sh
+```
 
 ### Unified Messaging (Feature 006)
 
@@ -166,11 +243,27 @@ troubleshooting.
 
 ## Development
 
-- Use `docker-compose up -d` to start the PostgreSQL database
-- Use `make run` to start the development server
-- Use `make test` to run tests
-- Use `make update-agent-context` to refresh AI agent context files (e.g., Copilot instructions)
-- Use `docker-compose down` to stop the database
+### Containerized Development (Recommended)
+```bash
+make docker-up      # Start all services (builds images if needed)
+make docker-logs    # View container logs
+make docker-down    # Stop all services
+make docker-restart # Rebuild and restart
+```
+
+### Local Development (requires Rust on host)
+```bash
+docker-compose up -d postgres  # Start only the database
+make run                       # Run server locally with cargo
+make test                      # Run tests
+make update-agent-context      # Refresh AI agent context files
+docker-compose down            # Stop database
+```
+
+### Development Tips
+- Changes to source code require rebuild: `make docker-up` (rebuilds automatically)
+- Database persists across restarts via Docker volume `postgres_data`
+- To reset database: `make db-reset` then restart services
 
 ### Contracts
 

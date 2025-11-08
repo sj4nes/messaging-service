@@ -3,6 +3,7 @@
 set -euo pipefail
 
 # Simple launcher for the messaging service.
+# Checks for Rust toolchain and installs if missing via make rust-ensure
 # Responsibilities:
 # - Optionally start the database (docker-compose) unless START_DB=false
 # - Optionally apply migrations if DATABASE_URL is set and APPLY_MIGRATIONS=true
@@ -14,6 +15,28 @@ PORT="${PORT:-8080}"
 START_DB="${START_DB:-true}"
 APPLY_MIGRATIONS="${APPLY_MIGRATIONS:-true}"
 FORCE_RESTART="${FORCE_RESTART:-false}"
+
+# Check for Rust toolchain and install if missing
+if ! command -v cargo >/dev/null 2>&1; then
+	echo "Rust toolchain not found. Attempting to install via 'make rust-ensure'..."
+	if ! make rust-ensure; then
+		echo "Failed to install Rust automatically." >&2
+		echo "Please install Rust manually: https://rustup.rs/" >&2
+		echo "After installation, restart your shell and re-run this script." >&2
+		exit 1
+	fi
+	# Source cargo env if available (for current shell)
+	if [ -f "$HOME/.cargo/env" ]; then
+		# shellcheck disable=SC1091
+		. "$HOME/.cargo/env"
+	fi
+	# Verify cargo is now available
+	if ! command -v cargo >/dev/null 2>&1; then
+		echo "Rust installed but cargo not on PATH. Please restart your shell." >&2
+		exit 1
+	fi
+	echo "Rust toolchain installed successfully: $(cargo --version)"
+fi
 
 echo "Starting messaging-service"
 echo "Environment: $ENVIRONMENT"
