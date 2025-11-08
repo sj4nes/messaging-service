@@ -41,10 +41,10 @@ pub(crate) async fn list_conversations(
                     .into_iter()
                     .map(|r| ConversationDto {
                         id: r.id.to_string(),
-                        key: r.topic.unwrap_or_else(|| "".into()),
+                        key: r.key,
                         message_count: r.message_count as u32,
                         last_activity_at: r
-                            .last_message_at
+                            .last_activity_at
                             .map(|t| t.to_rfc3339())
                             .unwrap_or_else(|| "".into()),
                     })

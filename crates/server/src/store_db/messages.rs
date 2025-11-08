@@ -1,6 +1,7 @@
 use anyhow::Result;
 use chrono::{DateTime, Utc};
 use once_cell::sync::OnceCell;
+// use super::normalize::conversation_key; // legacy helper (removed)
 use sqlx::{PgPool, Row};
 use tracing::{instrument, warn};
 use twox_hash::xxh3::hash64;
