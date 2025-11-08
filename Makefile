@@ -1,17 +1,12 @@
 .PHONY: setup run test clean help db-up db-down db-logs db-shell build db-reset migrate-status migrate-reset-history \
 	dx-setup py-venv py-install-jsonschema validate-events rust-check rust-install rust-ensure rust-version
 
-build:
-	@cargo build --all
-
-build-release:
-	@cargo build --release --all
-
 # Load local env vars from .env if present (export to all recipes)
 ifneq (,$(wildcard .env))
 include .env
 export
 endif
+
 
 help:
 	@echo "Available commands:"
@@ -38,6 +33,13 @@ help:
 	@echo "  validate-events - Validate event examples against the envelope schema (uses .venv)"
 	@echo "  py-venv - Create Python virtual environment at .venv (and upgrade pip)"
 	@echo "  rust-ensure - Install Rust via rustup if cargo is not present"
+
+build:
+	@cargo build --all
+
+build-release:
+	@cargo build --release --all
+
 
 setup: build
 	@echo "Setting up the project..."
