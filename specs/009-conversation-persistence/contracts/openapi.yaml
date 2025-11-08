@@ -1,0 +1,81 @@
+openapi: 3.0.3
+info:
+  title: Messaging Service Conversations API
+  version: "0.9.0"
+paths:
+  /api/conversations:
+    get:
+      summary: List conversations
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 1, default: 1 }
+        - in: query
+          name: per_page
+          schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Conversation'
+                  next_page:
+                    type: integer
+                    nullable: true
+  /api/conversations/{id}/messages:
+    get:
+      summary: List messages in a conversation
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 1, default: 1 }
+        - in: query
+          name: per_page
+          schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Message'
+                  next_page:
+                    type: integer
+                    nullable: true
+components:
+  schemas:
+    Conversation:
+      type: object
+      properties:
+        id: { type: integer }
+        channel: { type: string, enum: [email, sms, mms] }
+        participant_a: { type: string }
+        participant_b: { type: string }
+        key: { type: string }
+        message_count: { type: integer }
+        last_activity_at: { type: string, format: date-time }
+    Message:
+      type: object
+      properties:
+        id: { type: integer }
+        conversation_id: { type: integer }
+        direction: { type: string, enum: [Inbound, Outbound] }
+        from: { type: string }
+        to: { type: string }
+        snippet: { type: string, description: 'Truncated on UTF-8 boundaries; server-configurable length (default 64 chars)'}
+        created_at: { type: string, format: date-time }
