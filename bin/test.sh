@@ -75,6 +75,43 @@ wait_for_port() {
   return 1
 }
 
+# Optional: wait for a metrics counter to reach a minimum value (polls /metrics)
+# Usage: wait_for_metrics_counter field min timeout_ms interval_ms
+wait_for_metrics_counter() {
+  local field="$1" min="$2" timeout_ms="${3:-5000}" interval_ms="${4:-250}"
+  if ! command -v jq >/dev/null 2>&1; then
+    echo "jq not found; skipping metrics wait for '$field'" >&2
+    return 0
+  fi
+  local waited=0 url="$BASE_URL/metrics" tmp
+  tmp=$(mktemp 2>/dev/null || echo "/tmp/messaging_metrics_$$")
+  echo "Waiting for /metrics: .$field >= $min (timeout ${timeout_ms}ms)"
+  while [ "$waited" -lt "$timeout_ms" ]; do
+    # Ensure Accept header for JSON endpoints that enforce it
+    local code
+    code=$(curl -sS -H 'Accept: application/json' -o "$tmp" -w "%{http_code}" "$url" || echo 000)
+    if [ "$code" = "200" ] && jq -e . >/dev/null 2>&1 < "$tmp"; then
+      # Extract numeric field (default 0 if missing)
+      local val
+      val=$(jq -r ".${field} // 0 | tonumber" "$tmp" 2>/dev/null || echo 0)
+      if [ -n "$val" ] && [ "$val" -ge "$min" ]; then
+        rm -f "$tmp" 2>/dev/null || true
+        echo "Metrics condition met: $field=$val"
+        return 0
+      fi
+    fi
+    # sleep and retry
+    local sleep_s
+    sleep_s=$(awk -v ms="$interval_ms" 'BEGIN { printf "%.3f", ms/1000 }')
+    sleep "$sleep_s"
+    waited=$((waited+interval_ms))
+  done
+  # Best-effort: do not fail the test run, just report
+  echo "Timed out waiting for metrics '$field' >= $min; continuing tests" >&2
+  rm -f "$tmp" 2>/dev/null || true
+  return 0
+}
+
 cleanup_server() {
   if [ "$STARTED_SERVER" = "true" ] && [ -n "$SERVER_PID" ]; then
     if ps -p "$SERVER_PID" >/dev/null 2>&1; then
@@ -315,6 +352,13 @@ if [ "$USE_JSON_TESTS" = true ]; then
   assert_max_tries=$(jq -r '(.assert_max_tries // 1)' <<< "$test")
     # jq -c returns '""' for empty string; strip surrounding quotes to get empty
     if [ "$body_json" = '""' ]; then body_json=""; fi
+
+  # Optional readiness (default enabled): before listing conversations, wait for inbound worker metrics
+  if [ "${METRICS_WAIT:-1}" = "1" ] && [ "$name" = "List conversations" ]; then
+    # Default expectation: at least 1 processed event; override via METRICS_EXPECTED_WORKER_PROCESSED
+    wait_for_metrics_counter worker_processed "${METRICS_EXPECTED_WORKER_PROCESSED:-1}" \
+      "${METRICS_TIMEOUT_MS:-5000}" "${METRICS_POLL_MS:-250}"
+  fi
 
   if run_test "$INDEX" "$name" "$method" "$path" "$headers_joined" "$body_json" "$expect" "$assert_filter" "$delay_ms" "$assert_poll_ms" "$assert_max_tries"; then
       PASS_COUNT=$((PASS_COUNT+1))
