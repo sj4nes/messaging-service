@@ -4,6 +4,26 @@ This document explains how to package and distribute the messaging-service to ot
 
 ## For Distributors
 
+### Prerequisites for Creating Distribution
+
+Before creating an archive, ensure SQLx offline query cache is up-to-date:
+
+```bash
+# 1. Start database
+docker-compose up -d postgres
+
+# 2. Apply all migrations
+export DATABASE_URL="postgres://messaging_user:messaging_password@localhost:55432/messaging_service"
+cargo run -p db-migrate -- apply
+
+# 3. Generate SQLx offline data (required for Docker build without database)
+cargo sqlx prepare --workspace
+
+# 4. Commit .sqlx/ directory to version control
+git add .sqlx/
+git commit -m "Update SQLx offline query cache"
+```
+
 ### Creating an Archive
 
 ```bash
@@ -12,6 +32,8 @@ git archive --format=zip --output=messaging-service.zip HEAD
 # or with jj:
 jj git export && git archive --format=zip --output=messaging-service.zip HEAD
 ```
+
+**Important**: The archive must include the `.sqlx/` directory for Docker builds to work without a database connection during compilation.
 
 ### What's Included
 

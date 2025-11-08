@@ -1,6 +1,7 @@
 # Multi-stage build for messaging-service
 # Stage 1: Build the Rust binary
-FROM rust:1.75-slim AS builder
+# Use latest stable (1.83+) which supports edition2024 crates from crates.io
+FROM rust:slim AS builder
 
 WORKDIR /build
 
@@ -22,7 +23,11 @@ COPY crates/db-migrate/Cargo.toml ./crates/db-migrate/
 # Copy source code
 COPY crates/ ./crates/
 
-# Build the messaging-server binary in release mode
+# Copy SQLx offline query metadata for compile-time verification without database
+COPY .sqlx/ ./.sqlx/
+
+# Build the messaging-server binary in release mode with SQLx offline mode
+ENV SQLX_OFFLINE=true
 RUN cargo build --release --bin messaging-server
 
 # Stage 2: Create minimal runtime image

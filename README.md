@@ -13,10 +13,11 @@ Before running this project, ensure you have the following installed:
 - **Git** or **Jujutsu** (jj) for version control
 
 ### Optional (for local development without containers)
-- **Rust** 1.75 or higher ([Install via rustup](https://rustup.rs/))
+- **Rust** latest stable (1.83+) ([Install via rustup](https://rustup.rs/))
 - **cargo** (included with Rust installation)
+- **sqlx-cli** (for updating query cache): `cargo install sqlx-cli --no-default-features --features postgres`
 
-**Note**: The `bin/start.sh` script will automatically attempt to install Rust via `make rust-ensure` if not present. However, for containerized deployment via `docker-compose`, Rust is **not required** on the host machine.
+**Note**: The `bin/start.sh` script will automatically attempt to install Rust via `make rust-ensure` if not present. However, for containerized deployment via `docker-compose`, Rust is **not required** on the host machine. The Docker build uses latest stable Rust internally.
 
 ### First-Time Setup
 
@@ -264,6 +265,7 @@ docker-compose down            # Stop database
 - Changes to source code require rebuild: `make docker-up` (rebuilds automatically)
 - Database persists across restarts via Docker volume `postgres_data`
 - To reset database: `make db-reset` then restart services
+- **After modifying SQLx queries**: Run `cargo sqlx prepare --workspace` to update offline cache in `.sqlx/` directory (required for Docker builds)
 
 ### Contracts
 

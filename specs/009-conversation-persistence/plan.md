@@ -17,7 +17,7 @@ Implement a unified, durable conversation model ensuring every inbound/outbound 
   the iteration process.
 -->
 
-**Language/Version**: Rust 1.75 (stable toolchain)  
+**Language/Version**: Rust 1.82+ (stable toolchain)  
 **Primary Dependencies**: Axum (HTTP), Tokio (async), SQLx (PostgreSQL), Serde (serialization), Tracing (observability)  
 **Storage**: PostgreSQL (durable conversations/messages); in-memory only for fallback when DB unavailable  
 **Testing**: cargo test (unit/integration), potential cargo nextest (future), load tests via Tokio tasks  

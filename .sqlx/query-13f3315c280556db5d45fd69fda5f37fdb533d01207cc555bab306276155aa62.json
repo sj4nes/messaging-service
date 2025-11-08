@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE inbound_events SET status='processing', updated_at=now()\n                WHERE id = ANY($1)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8Array"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "13f3315c280556db5d45fd69fda5f37fdb533d01207cc555bab306276155aa62"
+}

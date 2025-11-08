@@ -1,0 +1,18 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE inbound_events SET status='pending', error_code=$2, error_message=$3, attempts=$4,\n                    available_at = (now() + make_interval(secs := $5::INT)), updated_at=now() WHERE id=$1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Text",
+        "Text",
+        "Int4",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "319eca37c90acf8ec5a5fc75b7219c12bb637dc9c805ae54d8cfd8f87053bc44"
+}

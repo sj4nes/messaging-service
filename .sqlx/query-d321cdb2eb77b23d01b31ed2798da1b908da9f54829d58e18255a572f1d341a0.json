@@ -1,0 +1,18 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO inbound_events (event_type, payload, available_at, status, channel, \"from\", \"to\", provider_message_id)\n            VALUES ($1, $2, now(), 'pending', $1, $3, $4, $5)\n            ON CONFLICT (channel, provider_message_id) WHERE provider_message_id IS NOT NULL DO NOTHING",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Jsonb",
+        "Text",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "d321cdb2eb77b23d01b31ed2798da1b908da9f54829d58e18255a572f1d341a0"
+}
