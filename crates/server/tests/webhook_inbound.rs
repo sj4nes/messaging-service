@@ -6,8 +6,14 @@ use tokio::time::{sleep, Duration};
 #[tokio::test]
 async fn webhook_sms_and_email_are_accepted() {
     // Start server on an ephemeral port
-    let cfg = Arc::new(Config { port: 0, health_path: "/health".to_string(), log_level: "info".to_string() });
-    let (handle, addr) = messaging_server::run_server(cfg).await.expect("server start");
+    let cfg = Arc::new(Config {
+        port: 0,
+        health_path: "/health".to_string(),
+        log_level: "info".to_string(),
+    });
+    let (handle, addr) = messaging_server::run_server(cfg)
+        .await
+        .expect("server start");
 
     let client = reqwest::Client::new();
     let base = format!("http://{}", addr);
@@ -38,7 +44,11 @@ async fn webhook_sms_and_email_are_accepted() {
         .send()
         .await
         .expect("sms webhook send");
-    assert!(sms_resp.status().is_success(), "expected 2xx for SMS webhook, got {}", sms_resp.status());
+    assert!(
+        sms_resp.status().is_success(),
+        "expected 2xx for SMS webhook, got {}",
+        sms_resp.status()
+    );
     let sms_json: serde_json::Value = sms_resp.json().await.expect("sms webhook json");
     assert_eq!(sms_json.get("status"), Some(&serde_json::json!("accepted")));
 
@@ -49,9 +59,16 @@ async fn webhook_sms_and_email_are_accepted() {
         .send()
         .await
         .expect("email webhook send");
-    assert!(email_resp.status().is_success(), "expected 2xx for Email webhook, got {}", email_resp.status());
+    assert!(
+        email_resp.status().is_success(),
+        "expected 2xx for Email webhook, got {}",
+        email_resp.status()
+    );
     let email_json: serde_json::Value = email_resp.json().await.expect("email webhook json");
-    assert_eq!(email_json.get("status"), Some(&serde_json::json!("accepted")));
+    assert_eq!(
+        email_json.get("status"),
+        Some(&serde_json::json!("accepted"))
+    );
 
     // Allow brief time for any async enqueue paths (in-memory) to complete without DB
     sleep(Duration::from_millis(50)).await;
