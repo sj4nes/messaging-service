@@ -5,7 +5,15 @@ use sqlx::{PgPool, Row};
 use tracing::{instrument, warn};
 use twox_hash::xxh3::hash64;
 
-use super::normalize::conversation_key;
+use super::normalize::conversation_key; // legacy helper (to be removed)
+use messaging_core::conversations::{
+    key::ChannelKind,
+    upsert::{upsert_conversation, UpsertOutcome},
+    metrics::metrics,
+    logging::log_upsert_outcome,
+};
+use tracing::info;
+use crate::logging::message_persisted;
 
 /// Persist an inbound message using simplified bootstrap rules:
 /// - Assumes a single bootstrap customer (id=1) and provider (id=1) already exist (future migration may ensure this)
@@ -20,9 +28,13 @@ pub async fn insert_from_inbound(
     attachments: &[String],
     timestamp: &str,
 ) -> Result<i64> {
-    let conv_key = conversation_key(channel, from, to);
-    // For now: ensure a conversation row exists (idempotent by topic conv_key) for bootstrap customer 1
-    let convo_id = ensure_conversation(pool, &conv_key).await?;
+    // Map channel string to ChannelKind
+    let channel_kind = match channel {
+        "email" => ChannelKind::Email,
+        "sms" => ChannelKind::Sms,
+        "mms" => ChannelKind::Mms,
+        other => return Err(anyhow::anyhow!(format!("unsupported channel: {other}"))),
+    };
     // Parse timestamp
     let ts: DateTime<Utc> = timestamp.parse().unwrap_or_else(|_| Utc::now());
     // Insert body row if present
@@ -38,28 +50,55 @@ pub async fn insert_from_inbound(
         .bind(body)
         .fetch_optional(pool)
         .await?;
-        if let Some(row) = inserted {
-            Some(row.get::<i64, _>("id"))
-        } else {
-            // Fetch existing id
+        if let Some(row) = inserted { Some(row.get("id")) } else {
             let existing = sqlx::query(r#"SELECT id FROM message_bodies WHERE body = $1 LIMIT 1"#)
                 .bind(body)
                 .fetch_one(pool)
                 .await?;
-            Some(existing.get::<i64, _>("id"))
+            Some(existing.get("id"))
         }
     };
+    // Upsert conversation using normalized endpoints
+    let upsert_outcome = upsert_conversation(pool, channel_kind.clone(), from, to, ts).await;
+    let (convo_id, conv_key_str) = match &upsert_outcome {
+        UpsertOutcome::Created(id, k) => { metrics().inc_created(); (*id, k.key.clone()) }
+        UpsertOutcome::Reused(id, k) => { metrics().inc_reused(); (*id, k.key.clone()) }
+        UpsertOutcome::Failed(err) => { metrics().inc_failures(); return Err(anyhow::anyhow!(err.clone())); }
+    };
+    // Idempotency: check for existing message with same convo + direction + sent_at + body_id
+    if let Some(row) = sqlx::query(
+        r#"SELECT id FROM messages WHERE conversation_id = $1 AND direction = 'inbound' AND sent_at = $2 AND body_id IS NOT DISTINCT FROM $3 LIMIT 1"#,
+    )
+    .bind(convo_id)
+    .bind(ts)
+    .bind(body_id)
+    .fetch_optional(pool)
+    .await? {
+        let existing_id: i64 = row.get("id");
+        log_upsert_outcome(&upsert_outcome, "inbound", existing_id);
+        return Ok(existing_id);
+    }
     // Insert message referencing body
-    let rec = sqlx::query!(
+    let rec = sqlx::query(
         r#"INSERT INTO messages (conversation_id, provider_id, direction, sent_at, received_at, body_id)
            VALUES ($1, 1, 'inbound', $2, $2, $3) RETURNING id"#,
-        convo_id,
-        ts,
-        body_id
     )
+    .bind(convo_id)
+    .bind(ts)
+    .bind(body_id)
     .fetch_one(pool)
     .await?;
-    let message_id = rec.id;
+    let message_id: i64 = rec.get("id");
+    // Increment message_count and update last_activity_at atomically post-insert
+    let _ = sqlx::query(
+        "UPDATE conversations SET message_count = message_count + 1, last_activity_at = GREATEST(last_activity_at, $2) WHERE id = $1",
+    )
+    .bind(convo_id)
+    .bind(ts)
+    .execute(pool)
+    .await;
+    log_upsert_outcome(&upsert_outcome, "inbound", message_id);
+    message_persisted("inbound_persisted", message_id, convo_id, &conv_key_str);
     // Persist attachments (URLs) if any
     for url in attachments {
         if let Err(e) = persist_attachment(pool, message_id, url).await {
@@ -84,8 +123,12 @@ pub async fn insert_outbound(
     attachments: &[String],
     timestamp: &str,
 ) -> Result<i64> {
-    let conv_key = conversation_key(channel, from, to);
-    let convo_id = ensure_conversation(pool, &conv_key).await?;
+    let channel_kind = match channel {
+        "email" => ChannelKind::Email,
+        "sms" => ChannelKind::Sms,
+        "mms" => ChannelKind::Mms,
+        other => return Err(anyhow::anyhow!(format!("unsupported channel: {other}"))),
+    };
     let ts: DateTime<Utc> = timestamp.parse().unwrap_or_else(|_| Utc::now());
     let body_id: Option<i64> = if body.is_empty() {
         None
@@ -97,26 +140,51 @@ pub async fn insert_outbound(
         .bind(body)
         .fetch_optional(pool)
         .await?;
-        if let Some(row) = inserted {
-            Some(row.get::<i64, _>("id"))
-        } else {
+        if let Some(row) = inserted { Some(row.get("id")) } else {
             let existing = sqlx::query(r#"SELECT id FROM message_bodies WHERE body = $1 LIMIT 1"#)
                 .bind(body)
                 .fetch_one(pool)
                 .await?;
-            Some(existing.get::<i64, _>("id"))
+            Some(existing.get("id"))
         }
     };
-    let rec = sqlx::query!(
+    let upsert_outcome = upsert_conversation(pool, channel_kind.clone(), from, to, ts).await;
+    let (convo_id, conv_key_str) = match &upsert_outcome {
+        UpsertOutcome::Created(id, k) => { metrics().inc_created(); (*id, k.key.clone()) }
+        UpsertOutcome::Reused(id, k) => { metrics().inc_reused(); (*id, k.key.clone()) }
+        UpsertOutcome::Failed(err) => { metrics().inc_failures(); return Err(anyhow::anyhow!(err.clone())); }
+    };
+    if let Some(row) = sqlx::query(
+        r#"SELECT id FROM messages WHERE conversation_id = $1 AND direction = 'outbound' AND sent_at = $2 AND body_id IS NOT DISTINCT FROM $3 LIMIT 1"#,
+    )
+    .bind(convo_id)
+    .bind(ts)
+    .bind(body_id)
+    .fetch_optional(pool)
+    .await? {
+        let existing_id: i64 = row.get("id");
+        log_upsert_outcome(&upsert_outcome, "outbound", existing_id);
+        return Ok(existing_id);
+    }
+    let rec = sqlx::query(
         r#"INSERT INTO messages (conversation_id, provider_id, direction, sent_at, received_at, body_id)
            VALUES ($1, 1, 'outbound', $2, $2, $3) RETURNING id"#,
-        convo_id,
-        ts,
-        body_id
     )
+    .bind(convo_id)
+    .bind(ts)
+    .bind(body_id)
     .fetch_one(pool)
     .await?;
-    let message_id = rec.id;
+    let message_id: i64 = rec.get("id");
+    let _ = sqlx::query(
+        "UPDATE conversations SET message_count = message_count + 1, last_activity_at = GREATEST(last_activity_at, $2) WHERE id = $1",
+    )
+    .bind(convo_id)
+    .bind(ts)
+    .execute(pool)
+    .await;
+    log_upsert_outcome(&upsert_outcome, "outbound", message_id);
+    message_persisted("outbound_persisted", message_id, convo_id, &conv_key_str);
     for url in attachments {
         if let Err(e) = persist_attachment(pool, message_id, url).await {
             warn!(target="server", event="attach_persist_fail", error=?e, message_id, url=%url, "failed to persist/link attachment (outbound); continuing");
@@ -125,25 +193,7 @@ pub async fn insert_outbound(
     Ok(message_id)
 }
 
-async fn ensure_conversation(pool: &PgPool, key: &str) -> Result<i64> {
-    // Use topic column as temporary key storage; prefer the lowest id if duplicates exist.
-    if let Some(existing) = sqlx::query!(
-        r#"SELECT id FROM conversations WHERE topic = $1 ORDER BY id ASC LIMIT 1"#,
-        key
-    )
-    .fetch_optional(pool)
-    .await?
-    {
-        return Ok(existing.id);
-    }
-    let rec = sqlx::query!(
-        r#"INSERT INTO conversations (customer_id, topic) VALUES (1, $1) RETURNING id"#,
-        key
-    )
-    .fetch_one(pool)
-    .await?;
-    Ok(rec.id)
-}
+// Legacy ensure_conversation removed; durable conversations now handled by messaging_core::conversations::upsert_conversation.
 
 // Runtime detection for attachment_urls schema variants
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]

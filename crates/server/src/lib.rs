@@ -17,6 +17,7 @@ use tokio::net::TcpListener;
 pub mod config;
 pub mod errors;
 pub mod metrics;
+pub mod logging;
 pub mod types;
 pub mod middleware {
     pub mod accept;

@@ -1,4 +1,4 @@
-use sqlx::{PgPool, Postgres, Transaction};
+use sqlx::{PgPool, Postgres, Transaction, Row};
 use crate::conversations::{key::derive_key, key::ChannelKind, ConversationKey};
 use tracing::{error, info, instrument};
 
@@ -25,58 +25,59 @@ pub async fn upsert_conversation(
         Err(e) => return UpsertOutcome::Failed(format!("tx begin error: {e}")),
     };
     // Attempt select first
-    let rec = sqlx::query!(
+    let rec = sqlx::query(
         r#"SELECT id, message_count, last_activity_at FROM conversations
             WHERE channel = $1 AND participant_a = $2 AND participant_b = $3"#,
-        k.channel,
-        k.participant_a,
-        k.participant_b
     )
+    .bind(&k.channel)
+    .bind(&k.participant_a)
+    .bind(&k.participant_b)
     .fetch_optional(&mut *tx)
     .await;
     match rec {
         Ok(Some(row)) => {
             // Update last activity only (message_count handled by caller after message insert)
-            if let Err(e) = sqlx::query!(
+            let existing_id: i64 = row.get("id");
+            if let Err(e) = sqlx::query(
                 "UPDATE conversations SET last_activity_at = GREATEST(last_activity_at, $1) WHERE id = $2",
-                activity_ts,
-                row.id
             )
+            .bind(activity_ts)
+            .bind(existing_id)
             .execute(&mut *tx)
-            .await
-            {
-                error!(conversation_id = row.id, err = %e, "failed to update last_activity_at");
+            .await {
+                error!(conversation_id = existing_id, err = %e, "failed to update last_activity_at");
                 let _ = tx.rollback().await;
                 return UpsertOutcome::Failed(format!("update last_activity error: {e}"));
             }
             if let Err(e) = tx.commit().await {
                 return UpsertOutcome::Failed(format!("commit error: {e}"));
             }
-            UpsertOutcome::Reused(row.id, k)
+            UpsertOutcome::Reused(existing_id, k)
         }
         Ok(None) => {
             // Insert new conversation
-            let ins = sqlx::query!(
+            let ins = sqlx::query(
                 r#"INSERT INTO conversations(channel, participant_a, participant_b, message_count, last_activity_at, key)
                    VALUES ($1,$2,$3,0,$4,$5)
                    ON CONFLICT (channel, participant_a, participant_b) DO UPDATE
                      SET last_activity_at = GREATEST(conversations.last_activity_at, EXCLUDED.last_activity_at)
                    RETURNING id"#,
-                k.channel,
-                k.participant_a,
-                k.participant_b,
-                activity_ts,
-                k.key
             )
+            .bind(&k.channel)
+            .bind(&k.participant_a)
+            .bind(&k.participant_b)
+            .bind(activity_ts)
+            .bind(&k.key)
             .fetch_one(&mut *tx)
             .await;
             match ins {
                 Ok(row) => {
+                    let new_id: i64 = row.get("id");
                     if let Err(e) = tx.commit().await {
                         return UpsertOutcome::Failed(format!("commit error: {e}"));
                     }
-                    info!(conversation_id = row.id, key = %k.key, "conversation created or reused via upsert");
-                    UpsertOutcome::Created(row.id, k)
+                    info!(conversation_id = new_id, key = %k.key, "conversation created or reused via upsert");
+                    UpsertOutcome::Created(new_id, k)
                 }
                 Err(e) => {
                     error!(key = %k.key, err = %e, "conversation upsert error");
