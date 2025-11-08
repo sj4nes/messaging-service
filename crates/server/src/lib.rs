@@ -104,6 +104,10 @@ impl AppState {
     pub(crate) fn snippet_len(&self) -> usize {
         self.snippet_length
     }
+
+    pub(crate) fn inmemory_fallback_enabled(&self) -> bool {
+        self.api.enable_inmemory_fallback
+    }
 }
 
 fn build_router(health_path: &str, state: AppState) -> Router {

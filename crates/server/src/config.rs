@@ -51,6 +51,8 @@ pub struct ApiConfig {
     pub worker_max_retries: u32,
     /// Worker: base backoff in milliseconds for exponential retry
     pub worker_backoff_base_ms: u64,
+    /// Feature 009: Enable legacy in-memory store fallback when database unavailable or empty
+    pub enable_inmemory_fallback: bool,
 }
 
 impl Default for ApiConfig {
@@ -78,6 +80,7 @@ impl Default for ApiConfig {
             worker_claim_timeout_secs: 60,
             worker_max_retries: 5,
             worker_backoff_base_ms: 500,
+            enable_inmemory_fallback: true, // Feature 009: Enabled by default for backward compatibility
         }
     }
 }
@@ -186,6 +189,10 @@ impl ApiConfig {
             "API_PROVIDER_EMAIL_RATELIMIT_PCT"
         );
         override_opt_u64!(provider_email_seed, "API_PROVIDER_EMAIL_SEED");
+        // Feature 009: Toggle for in-memory fallback
+        if let Ok(val) = std::env::var("API_ENABLE_INMEMORY_FALLBACK") {
+            cfg.enable_inmemory_fallback = val.to_lowercase() == "true" || val == "1";
+        }
         cfg
     }
 }

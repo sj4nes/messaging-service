@@ -60,6 +60,10 @@ pub struct MetricsSnapshot {
     pub worker_latency_avg_us: u64,
     pub worker_latency_max_us: u64,
     pub invalid_routing: u64,
+    // Feature 009: Conversation persistence metrics
+    pub conversations_created: u64,
+    pub conversations_reused: u64,
+    pub conversations_failures: u64,
 }
 
 pub fn record_rate_limited() {
@@ -155,6 +159,8 @@ pub fn snapshot() -> MetricsSnapshot {
         .duration_since(UNIX_EPOCH)
         .unwrap_or_default()
         .as_millis();
+    // Feature 009: Load conversation metrics from messaging-core
+    let conv_metrics = messaging_core::conversations::metrics::metrics();
     MetricsSnapshot {
         ts_unix_ms: now,
         rate_limited: TOTAL_RATE_LIMITED.load(Ordering::Relaxed),
@@ -185,6 +191,9 @@ pub fn snapshot() -> MetricsSnapshot {
         },
         worker_latency_max_us: WORKER_LATENCY_MAX_US.load(Ordering::Relaxed),
         invalid_routing: INVALID_ROUTING.load(Ordering::Relaxed),
+        conversations_created: conv_metrics.created.load(Ordering::Relaxed),
+        conversations_reused: conv_metrics.reused.load(Ordering::Relaxed),
+        conversations_failures: conv_metrics.failures.load(Ordering::Relaxed),
     }
 }
 

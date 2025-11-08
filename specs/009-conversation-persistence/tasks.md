@@ -130,12 +130,12 @@ description: "Tasks for Conversation Persistence & Unification"
 
 **Purpose**: Finalization tasks spanning multiple user stories
 
-- [ ] T035 [P] Backfill implementation: batch NULL conversation_id → upsert + set FK; aggregate recompute in crates/db-migrate/src/backfill_conversations.rs
-- [ ] T036 [P] Add verification query/report after backfill in crates/db-migrate/src/backfill_conversations.rs
+- [X] T035 [P] Backfill implementation: batch NULL conversation_id → upsert + set FK; aggregate recompute in crates/db-migrate/src/backfill_conversations.rs
+- [X] T036 [P] Add verification query/report after backfill in crates/db-migrate/src/backfill_conversations.rs
 - [X] T037 Documentation updates per quickstart and normalization rules in README.md and specs/009-conversation-persistence/quickstart.md
-- [ ] T038 Observability: ensure metrics exported and dashboards/alerts updated in docs/observability.md
-- [ ] T039 Feature toggle or gating for legacy in-memory store in crates/core/src/conversations/mod.rs
-- [ ] T040 Final load test sweep and latency report script in tests/integration/load_report.rs
+- [X] T038 Observability: ensure metrics exported and dashboards/alerts updated in docs/observability.md
+- [X] T039 Feature toggle or gating for legacy in-memory store in crates/core/src/conversations/mod.rs
+- [X] T040 Final load test sweep and latency report script in tests/integration/load_report.rs
 
 ---
 

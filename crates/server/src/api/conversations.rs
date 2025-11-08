@@ -58,9 +58,9 @@ pub(crate) async fn list_conversations(
                         Ok(c) => c as u64,
                         Err(_) => dtos.len() as u64,
                     };
-                // If DB is present but empty (fresh DB and worker hasnt persisted yet),
-                // fall back to in-memory store so tests still see activity.
-                if dtos.is_empty() {
+                // If DB is present but empty (fresh DB and worker hasnt persisted yet),
+                // fall back to in-memory store if toggle enabled so tests still see activity.
+                if dtos.is_empty() && state.inmemory_fallback_enabled() {
                     crate::store::conversations::list(page, page_size)
                 } else {
                     (dtos, total_count)
@@ -68,8 +68,10 @@ pub(crate) async fn list_conversations(
             }
             Err(_) => (Vec::new(), 0),
         }
-    } else {
+    } else if state.inmemory_fallback_enabled() {
         crate::store::conversations::list(page, page_size)
+    } else {
+        (Vec::new(), 0)
     };
     let resp = ListResponse {
         items,
@@ -171,27 +173,29 @@ pub(crate) async fn list_messages(
                             }
                         }
                     }
-                    // If DB has no conversations/messages yet, fall back to in-memory store
-                    let (items, _total) = crate::store::conversations::list(page, page_size);
-                    if let Some(first) = items.first() {
-                        let (msgs, t) = crate::store::conversations::list_messages(
-                            &first.id,
-                            page,
-                            page_size,
-                            snippet_len,
-                        );
-                        if !msgs.is_empty() {
-                            return (
-                                StatusCode::OK,
-                                Json(ListResponse {
-                                    items: msgs,
-                                    meta: PageMeta {
-                                        page,
-                                        page_size,
-                                        total: t,
-                                    },
-                                }),
+                    // If DB has no conversations/messages yet, fall back to in-memory store if toggle enabled
+                    if state.inmemory_fallback_enabled() {
+                        let (items, _total) = crate::store::conversations::list(page, page_size);
+                        if let Some(first) = items.first() {
+                            let (msgs, t) = crate::store::conversations::list_messages(
+                                &first.id,
+                                page,
+                                page_size,
+                                snippet_len,
                             );
+                            if !msgs.is_empty() {
+                                return (
+                                    StatusCode::OK,
+                                    Json(ListResponse {
+                                        items: msgs,
+                                        meta: PageMeta {
+                                            page,
+                                            page_size,
+                                            total: t,
+                                        },
+                                    }),
+                                );
+                            }
                         }
                     }
                 }
@@ -199,8 +203,10 @@ pub(crate) async fn list_messages(
             }
             Err(_) => (Vec::new(), 0),
         }
-    } else {
+    } else if state.inmemory_fallback_enabled() {
         crate::store::conversations::list_messages(&id, page, page_size, snippet_len)
+    } else {
+        (Vec::new(), 0)
     };
     let resp = ListResponse {
         items,
