@@ -45,6 +45,11 @@ description: "Tasks for Conversation Persistence & Unification"
 - [ ] T012 [P] Implement normalization: phone digits + optional leading plus in crates/core/src/conversations/normalize_phone.rs
 - [ ] T013 Implement canonical key + participant ordering in crates/core/src/conversations/key.rs
 - [ ] T014 Unit tests for normalization and key derivation in crates/core/src/conversations/tests.rs
+  
+- [x] T011 [P] Implement normalization: email lowercasing + plus-tag equivalence in crates/core/src/conversations/normalize_email.rs
+- [x] T012 [P] Implement normalization: phone digits + optional leading plus in crates/core/src/conversations/normalize_phone.rs
+- [x] T013 Implement canonical key + participant ordering in crates/core/src/conversations/key.rs
+- [x] T014 Unit tests for normalization and key derivation in crates/core/src/conversations/*
 
 **Checkpoint**: Foundation ready — migrations authored; normalization and key derivation implemented with tests
 
@@ -70,6 +75,9 @@ description: "Tasks for Conversation Persistence & Unification"
 - [ ] T021 [US1] Metrics counters: created/reused/failures in crates/core/src/conversations/metrics.rs
 - [ ] T022 [US1] Structured logging with message_id and conversation_key in crates/core/src/conversations/logging.rs
 - [ ] T023 [US1] Backfill utility skeleton in crates/db-migrate/src/backfill_conversations.rs
+  
+- [x] T017 [P] [US1] Conversation upsert function with INSERT .. ON CONFLICT in crates/core/src/conversations/upsert.rs
+- [x] T021 [US1] Metrics counters: created/reused/failures in crates/core/src/conversations/metrics.rs
 
 **Checkpoint**: US1 functional — one conversation per participant pair/channel, atomic counters, tests passing
 

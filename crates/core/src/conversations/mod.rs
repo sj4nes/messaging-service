@@ -3,6 +3,8 @@
 pub mod normalize_email;
 pub mod normalize_phone;
 pub mod key;
+pub mod upsert;
+pub mod metrics;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ConversationKey {
