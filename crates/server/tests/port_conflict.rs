@@ -14,6 +14,7 @@ async fn port_in_use_returns_error() {
         port,
         health_path: "/healthz".into(),
         log_level: "info".into(),
+        conversation_snippet_length: 64,
     });
     let res = messaging_server::run_server(cfg).await;
     assert!(res.is_err(), "expected bind error, got: {:?}", res);

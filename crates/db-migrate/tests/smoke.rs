@@ -1,7 +1,7 @@
 use std::process::Command;
 
 use anyhow::{Context, Result};
-use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
+use sqlx::{postgres::PgPoolOptions, Executor, Pool, Postgres};
 
 fn database_url() -> String {
     std::env::var("DATABASE_URL").unwrap_or_else(|_| {
@@ -125,6 +125,11 @@ async fn conversation_messages_body_text_is_populated() -> Result<()> {
             return Ok(());
         }
     };
+
+    // Ensure a clean slate so deterministic inserts below do not depend on prior runs.
+    pool.execute("TRUNCATE messages, conversations, providers, customers RESTART IDENTITY CASCADE")
+        .await?;
+    pool.execute("DELETE FROM email_bodies").await?;
 
     // Seed minimal data: customer, provider (email), conversation, message with email_bodies
     let mut tx = pool.begin().await?;

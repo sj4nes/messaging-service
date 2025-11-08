@@ -46,6 +46,7 @@ async fn seed_customer(pool: &PgPool) -> sqlx::Result<()> {
             "created demo customer"
         );
     }
+    realign_sequence(pool, "customers_id_seq", "customers").await?;
     Ok(())
 }
 
@@ -65,6 +66,7 @@ async fn seed_provider(pool: &PgPool) -> sqlx::Result<()> {
             "created demo provider"
         );
     }
+    realign_sequence(pool, "providers_id_seq", "providers").await?;
     Ok(())
 }
 
@@ -158,6 +160,7 @@ pub async fn seed_conversation_id1_for_tests(pool: &PgPool) -> sqlx::Result<()> 
             .await?;
         info!(target="server", event="seed_create", entity="conversation", id=1, topic=%topic, "created conversation id=1 for tests");
     }
+    realign_sequence(pool, "conversations_id_seq", "conversations").await?;
     Ok(())
 }
 
@@ -182,4 +185,10 @@ pub async fn seed_minimum_if_needed(pool: &PgPool) {
     {
         let _ = seed_conversation_id1_for_tests(pool).await;
     }
+}
+
+async fn realign_sequence(pool: &PgPool, sequence: &str, table: &str) -> sqlx::Result<()> {
+    let query =
+        format!("SELECT setval('{sequence}', COALESCE((SELECT MAX(id) FROM {table}), 0), true)");
+    sqlx::query(&query).execute(pool).await.map(|_| ())
 }

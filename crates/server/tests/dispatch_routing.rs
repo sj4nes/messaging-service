@@ -10,6 +10,7 @@ async fn sms_and_email_route_to_distinct_providers() {
         port: 0,
         health_path: "/health".to_string(),
         log_level: "info".to_string(),
+        conversation_snippet_length: 64,
     });
     let (handle, addr) = messaging_server::run_server(cfg.clone())
         .await

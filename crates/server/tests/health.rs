@@ -10,6 +10,7 @@ async fn health_ok() {
         port: 0,
         health_path: "/healthz".into(),
         log_level: "info".into(),
+        conversation_snippet_length: 64,
     };
     let cfg = Arc::new(cfg);
     let (handle, addr) = run_server(cfg).await.expect("server start");
@@ -67,6 +68,7 @@ async fn health_logs() {
         port: 0,
         health_path: "/healthz".into(),
         log_level: "info".into(),
+        conversation_snippet_length: 64,
     };
     let cfg = Arc::new(cfg);
     let (handle, addr) = run_server(cfg).await.expect("server start");

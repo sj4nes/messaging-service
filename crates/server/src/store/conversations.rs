@@ -94,7 +94,12 @@ pub fn list(page: u32, page_size: u32) -> (Vec<ConversationDto>, u64) {
     (dtos, total)
 }
 
-pub fn list_messages(conv_id: &str, page: u32, page_size: u32) -> (Vec<MessageDto>, u64) {
+pub fn list_messages(
+    conv_id: &str,
+    page: u32,
+    page_size: u32,
+    snippet_len: usize,
+) -> (Vec<MessageDto>, u64) {
     // For simplicity, derive messages by scanning the message store and selecting matching convo
     let all = crate::store::messages::all();
     // Filter by conversation id
@@ -130,7 +135,7 @@ pub fn list_messages(conv_id: &str, page: u32, page_size: u32) -> (Vec<MessageDt
                 Channel::Mms => "mms".into(),
                 Channel::Email => "email".into(),
             },
-            snippet: m.body.chars().take(64).collect(),
+            snippet: crate::snippet::make_snippet(Some(&m.body), snippet_len),
             timestamp: m.timestamp.clone(),
         })
         .collect();

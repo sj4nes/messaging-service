@@ -74,6 +74,7 @@ pub struct ConversationMessage {
     pub provider_id: i64,
     pub sent_at: DateTime<Utc>,
     pub received_at: Option<DateTime<Utc>>,
+    pub body: Option<String>,
 }
 
 pub async fn list_messages(
@@ -83,8 +84,9 @@ pub async fn list_messages(
     offset: i64,
 ) -> Result<Vec<ConversationMessage>> {
     let rows = sqlx::query(
-        r#"SELECT m.id, m.direction, m.provider_id, m.sent_at, m.received_at
+        r#"SELECT m.id, m.direction, m.provider_id, m.sent_at, m.received_at, b.body
             FROM messages m
+            LEFT JOIN message_bodies b ON m.body_id = b.id
             WHERE m.conversation_id = $1
             ORDER BY COALESCE(m.received_at, m.sent_at) DESC
             LIMIT $2 OFFSET $3"#,
@@ -102,6 +104,7 @@ pub async fn list_messages(
             provider_id: r.get("provider_id"),
             sent_at: r.get("sent_at"),
             received_at: r.get("received_at"),
+            body: r.get("body"),
         })
         .collect())
 }
@@ -115,12 +118,10 @@ pub async fn conversations_total(pool: &PgPool) -> Result<i64> {
 }
 
 pub async fn messages_total(pool: &PgPool, conversation_id: i64) -> Result<i64> {
-    let row = sqlx::query(
-        r#"SELECT COUNT(*) as count FROM messages WHERE conversation_id = $1"#,
-    )
-    .bind(conversation_id)
-    .fetch_one(pool)
-    .await?;
+    let row = sqlx::query(r#"SELECT COUNT(*) as count FROM messages WHERE conversation_id = $1"#)
+        .bind(conversation_id)
+        .fetch_one(pool)
+        .await?;
     let count: i64 = row.get::<Option<i64>, _>("count").unwrap_or(0);
     Ok(count)
 }

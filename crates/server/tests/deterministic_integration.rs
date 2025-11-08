@@ -21,6 +21,7 @@ async fn run_sequence_collect() -> Vec<String> {
         port: 0,
         health_path: "/health".to_string(),
         log_level: "info".to_string(),
+        conversation_snippet_length: 64,
     });
     let (handle, addr) = messaging_server::run_server(cfg.clone())
         .await

@@ -16,6 +16,7 @@ async fn sms_breaker_opens_while_email_remains_closed() {
         port: 0,
         health_path: "/health".to_string(),
         log_level: "info".to_string(),
+        conversation_snippet_length: 64,
     });
     let (handle, addr) = messaging_server::run_server(cfg.clone())
         .await

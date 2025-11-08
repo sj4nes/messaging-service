@@ -5,6 +5,7 @@ use axum::{
 };
 use serde::Deserialize;
 
+use crate::snippet::make_snippet;
 use crate::types::{ConversationDto, ListResponse, MessageDto, PageMeta};
 
 #[derive(Debug, Deserialize)]
@@ -85,6 +86,7 @@ pub(crate) async fn list_messages(
 ) -> (StatusCode, Json<ListResponse<MessageDto>>) {
     let page = paging.page.unwrap_or(1);
     let page_size = paging.page_size.unwrap_or(0);
+    let snippet_len = state.snippet_len();
     let (items, total) = if let Some(pool) = state.db() {
         crate::store_db::seed::seed_minimum_if_needed(&pool).await;
         let limit = if page_size == 0 {
@@ -112,7 +114,7 @@ pub(crate) async fn list_messages(
                             from: "".into(),
                             to: "".into(),
                             r#type: m.direction,
-                            snippet: "".into(),
+                            snippet: make_snippet(m.body.as_deref(), snippet_len),
                             timestamp: m.received_at.unwrap_or(m.sent_at).to_rfc3339(),
                         })
                         .collect();
@@ -143,7 +145,7 @@ pub(crate) async fn list_messages(
                                         from: "".into(),
                                         to: "".into(),
                                         r#type: m.direction,
-                                        snippet: "".into(),
+                                        snippet: make_snippet(m.body.as_deref(), snippet_len),
                                         timestamp: m.received_at.unwrap_or(m.sent_at).to_rfc3339(),
                                     })
                                     .collect();
@@ -169,8 +171,12 @@ pub(crate) async fn list_messages(
                     // If DB has no conversations/messages yet, fall back to in-memory store
                     let (items, _total) = crate::store::conversations::list(page, page_size);
                     if let Some(first) = items.first() {
-                        let (msgs, t) =
-                            crate::store::conversations::list_messages(&first.id, page, page_size);
+                        let (msgs, t) = crate::store::conversations::list_messages(
+                            &first.id,
+                            page,
+                            page_size,
+                            snippet_len,
+                        );
                         if !msgs.is_empty() {
                             return (
                                 StatusCode::OK,
@@ -191,7 +197,7 @@ pub(crate) async fn list_messages(
             Err(_) => (Vec::new(), 0),
         }
     } else {
-        crate::store::conversations::list_messages(&id, page, page_size)
+        crate::store::conversations::list_messages(&id, page, page_size, snippet_len)
     };
     let resp = ListResponse {
         items,

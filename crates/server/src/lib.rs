@@ -18,6 +18,7 @@ pub mod config;
 pub mod errors;
 pub mod logging;
 pub mod metrics;
+pub mod snippet;
 pub mod types;
 pub mod middleware {
     pub mod accept;
@@ -92,11 +93,16 @@ pub(crate) struct AppState {
     provider_registry: crate::providers::registry::ProviderRegistry,
     // Feature 008: per-provider circuit breakers
     provider_breakers: crate::state::breakers::ProviderBreakers,
+    snippet_length: usize,
 }
 
 impl AppState {
     pub(crate) fn db(&self) -> Option<sqlx::PgPool> {
         self.db.clone()
+    }
+
+    pub(crate) fn snippet_len(&self) -> usize {
+        self.snippet_length
     }
 }
 
@@ -230,6 +236,7 @@ pub async fn run_server(
             );
             crate::state::breakers::ProviderBreakers::new(map)
         },
+        snippet_length: config.conversation_snippet_length,
     };
     // Spawn outbound worker (mock provider)
     let worker_state = state.clone();
@@ -368,6 +375,7 @@ where
             );
             crate::state::breakers::ProviderBreakers::new(map)
         },
+        snippet_length: config.conversation_snippet_length,
     };
     // Spawn outbound worker with shutdown signal? For now, fire-and-forget; shutdown will drop rx
     let worker_state = state.clone();

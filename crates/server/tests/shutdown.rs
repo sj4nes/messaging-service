@@ -53,6 +53,7 @@ async fn graceful_shutdown_logs() {
         port: 0,
         health_path: "/healthz".into(),
         log_level: "info".into(),
+        conversation_snippet_length: 64,
     };
     let cfg = Arc::new(cfg);
     let (handle, _addr) = run_server_with_shutdown(cfg, shutdown)
