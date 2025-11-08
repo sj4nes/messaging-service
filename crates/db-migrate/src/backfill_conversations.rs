@@ -15,6 +15,7 @@ use tracing::{info, warn};
 /// # Returns
 /// * `Ok(())` on success
 /// * `Err(_)` if backfill encounters unrecoverable errors
+#[allow(dead_code)]
 pub async fn backfill_conversations(pool: &PgPool, batch_size: i64) -> Result<()> {
     info!(
         target = "backfill",
@@ -93,6 +94,7 @@ pub async fn backfill_conversations(pool: &PgPool, batch_size: i64) -> Result<()
 }
 
 /// Verify backfill completion and report statistics
+#[allow(dead_code)]
 pub async fn verify_backfill_completion(pool: &PgPool) -> Result<()> {
     info!(target = "backfill", "Verifying backfill completion");
 
@@ -139,6 +141,7 @@ pub async fn verify_backfill_completion(pool: &PgPool) -> Result<()> {
 ///
 /// This function recalculates message_count and last_activity_at for all conversations
 /// based on the actual messages in the database. Useful after manual data corrections.
+#[allow(dead_code)]
 pub async fn recompute_conversation_aggregates(pool: &PgPool) -> Result<()> {
     info!(target = "backfill", "Recomputing conversation aggregates");
 

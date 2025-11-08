@@ -2,9 +2,7 @@
 pub fn normalize_phone(raw: &str) -> String {
     let mut out = String::new();
     for (i, ch) in raw.chars().enumerate() {
-        if ch.is_ascii_digit() {
-            out.push(ch);
-        } else if ch == '+' && i == 0 {
+        if ch.is_ascii_digit() || (ch == '+' && i == 0) {
             out.push(ch);
         }
     }

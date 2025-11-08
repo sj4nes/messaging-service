@@ -9,11 +9,13 @@ use messaging_server::providers::mock::Outcome;
 #[test]
 fn sms_provider_deterministic_sequence_matches_prediction() {
     // Config: error 10%, rate limit 5%, timeout 0% to simplify
-    let mut cfg = ApiConfig::default();
-    cfg.provider_sms_error_pct = Some(10); // 10 errors
-    cfg.provider_sms_ratelimit_pct = Some(5); // 5 rate limits
-    cfg.provider_sms_timeout_pct = Some(0); // 0 timeouts
-    cfg.provider_sms_seed = Some(12345);
+    let cfg = ApiConfig {
+        provider_sms_error_pct: Some(10),
+        provider_sms_ratelimit_pct: Some(5),
+        provider_sms_timeout_pct: Some(0),
+        provider_sms_seed: Some(12345),
+        ..Default::default()
+    };
     init_rng_seeds(&cfg);
     seed_provider_rng("sms-mms", 12345);
 
