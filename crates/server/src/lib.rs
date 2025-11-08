@@ -16,8 +16,8 @@ use tokio::net::TcpListener;
 // Expose internal modules for middleware and types so they can be wired in later phases
 pub mod config;
 pub mod errors;
-pub mod metrics;
 pub mod logging;
+pub mod metrics;
 pub mod types;
 pub mod middleware {
     pub mod accept;

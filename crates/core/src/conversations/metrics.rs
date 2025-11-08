@@ -15,11 +15,19 @@ impl ConversationMetrics {
             failures: AtomicU64::new(0),
         }
     }
-    pub fn inc_created(&self) { self.created.fetch_add(1, Ordering::Relaxed); }
-    pub fn inc_reused(&self) { self.reused.fetch_add(1, Ordering::Relaxed); }
-    pub fn inc_failures(&self) { self.failures.fetch_add(1, Ordering::Relaxed); }
+    pub fn inc_created(&self) {
+        self.created.fetch_add(1, Ordering::Relaxed);
+    }
+    pub fn inc_reused(&self) {
+        self.reused.fetch_add(1, Ordering::Relaxed);
+    }
+    pub fn inc_failures(&self) {
+        self.failures.fetch_add(1, Ordering::Relaxed);
+    }
 }
 
 static METRICS: ConversationMetrics = ConversationMetrics::new();
 
-pub fn metrics() -> &'static ConversationMetrics { &METRICS }
+pub fn metrics() -> &'static ConversationMetrics {
+    &METRICS
+}

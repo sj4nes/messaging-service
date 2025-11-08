@@ -86,10 +86,11 @@ impl Config {
         let log_level = env::var("LOG_LEVEL").unwrap_or_else(|_| "info".to_string());
 
         // CONVERSATION_SNIPPET_LENGTH default 64 (must be >= 1 and <= 4096)
-        let snippet_len_str = env::var("CONVERSATION_SNIPPET_LENGTH").unwrap_or_else(|_| "64".to_string());
-        let conversation_snippet_length: usize = snippet_len_str
-            .parse()
-            .map_err(|_| format!("Invalid CONVERSATION_SNIPPET_LENGTH value: '{snippet_len_str}'"))?;
+        let snippet_len_str =
+            env::var("CONVERSATION_SNIPPET_LENGTH").unwrap_or_else(|_| "64".to_string());
+        let conversation_snippet_length: usize = snippet_len_str.parse().map_err(|_| {
+            format!("Invalid CONVERSATION_SNIPPET_LENGTH value: '{snippet_len_str}'")
+        })?;
         if !(1..=4096).contains(&conversation_snippet_length) {
             return Err("CONVERSATION_SNIPPET_LENGTH must be in 1..=4096".to_string());
         }
@@ -144,7 +145,12 @@ mod tests {
     #[rstest]
     fn defaults_when_unset() {
         let _lock = TEST_GUARD.get_or_init(|| Mutex::new(())).lock().unwrap();
-        let saved = save_and_clear(&["PORT", "HEALTH_PATH", "LOG_LEVEL", "CONVERSATION_SNIPPET_LENGTH"]);
+        let saved = save_and_clear(&[
+            "PORT",
+            "HEALTH_PATH",
+            "LOG_LEVEL",
+            "CONVERSATION_SNIPPET_LENGTH",
+        ]);
         let cfg = Config::load().expect("load defaults");
         assert_eq!(cfg.port, 8080);
         assert_eq!(cfg.health_path, "/healthz");
@@ -156,7 +162,12 @@ mod tests {
     #[rstest]
     fn env_precedence_and_validation() {
         let _lock = TEST_GUARD.get_or_init(|| Mutex::new(())).lock().unwrap();
-        let saved = save_and_clear(&["PORT", "HEALTH_PATH", "LOG_LEVEL", "CONVERSATION_SNIPPET_LENGTH"]);
+        let saved = save_and_clear(&[
+            "PORT",
+            "HEALTH_PATH",
+            "LOG_LEVEL",
+            "CONVERSATION_SNIPPET_LENGTH",
+        ]);
         std::env::set_var("PORT", "9090");
         std::env::set_var("HEALTH_PATH", "status");
         std::env::set_var("LOG_LEVEL", "debug");

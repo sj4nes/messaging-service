@@ -6,14 +6,14 @@ use tracing::{instrument, warn};
 use twox_hash::xxh3::hash64;
 
 use super::normalize::conversation_key; // legacy helper (to be removed)
+use crate::logging::message_persisted;
 use messaging_core::conversations::{
     key::ChannelKind,
-    upsert::{upsert_conversation, UpsertOutcome},
-    metrics::metrics,
     logging::log_upsert_outcome,
+    metrics::metrics,
+    upsert::{upsert_conversation, UpsertOutcome},
 };
 use tracing::info;
-use crate::logging::message_persisted;
 
 /// Persist an inbound message using simplified bootstrap rules:
 /// - Assumes a single bootstrap customer (id=1) and provider (id=1) already exist (future migration may ensure this)
@@ -50,7 +50,9 @@ pub async fn insert_from_inbound(
         .bind(body)
         .fetch_optional(pool)
         .await?;
-        if let Some(row) = inserted { Some(row.get("id")) } else {
+        if let Some(row) = inserted {
+            Some(row.get("id"))
+        } else {
             let existing = sqlx::query(r#"SELECT id FROM message_bodies WHERE body = $1 LIMIT 1"#)
                 .bind(body)
                 .fetch_one(pool)
@@ -61,9 +63,18 @@ pub async fn insert_from_inbound(
     // Upsert conversation using normalized endpoints
     let upsert_outcome = upsert_conversation(pool, channel_kind.clone(), from, to, ts).await;
     let (convo_id, conv_key_str) = match &upsert_outcome {
-        UpsertOutcome::Created(id, k) => { metrics().inc_created(); (*id, k.key.clone()) }
-        UpsertOutcome::Reused(id, k) => { metrics().inc_reused(); (*id, k.key.clone()) }
-        UpsertOutcome::Failed(err) => { metrics().inc_failures(); return Err(anyhow::anyhow!(err.clone())); }
+        UpsertOutcome::Created(id, k) => {
+            metrics().inc_created();
+            (*id, k.key.clone())
+        }
+        UpsertOutcome::Reused(id, k) => {
+            metrics().inc_reused();
+            (*id, k.key.clone())
+        }
+        UpsertOutcome::Failed(err) => {
+            metrics().inc_failures();
+            return Err(anyhow::anyhow!(err.clone()));
+        }
     };
     // Idempotency: check for existing message with same convo + direction + sent_at + body_id
     if let Some(row) = sqlx::query(
@@ -140,7 +151,9 @@ pub async fn insert_outbound(
         .bind(body)
         .fetch_optional(pool)
         .await?;
-        if let Some(row) = inserted { Some(row.get("id")) } else {
+        if let Some(row) = inserted {
+            Some(row.get("id"))
+        } else {
             let existing = sqlx::query(r#"SELECT id FROM message_bodies WHERE body = $1 LIMIT 1"#)
                 .bind(body)
                 .fetch_one(pool)
@@ -150,9 +163,18 @@ pub async fn insert_outbound(
     };
     let upsert_outcome = upsert_conversation(pool, channel_kind.clone(), from, to, ts).await;
     let (convo_id, conv_key_str) = match &upsert_outcome {
-        UpsertOutcome::Created(id, k) => { metrics().inc_created(); (*id, k.key.clone()) }
-        UpsertOutcome::Reused(id, k) => { metrics().inc_reused(); (*id, k.key.clone()) }
-        UpsertOutcome::Failed(err) => { metrics().inc_failures(); return Err(anyhow::anyhow!(err.clone())); }
+        UpsertOutcome::Created(id, k) => {
+            metrics().inc_created();
+            (*id, k.key.clone())
+        }
+        UpsertOutcome::Reused(id, k) => {
+            metrics().inc_reused();
+            (*id, k.key.clone())
+        }
+        UpsertOutcome::Failed(err) => {
+            metrics().inc_failures();
+            return Err(anyhow::anyhow!(err.clone()));
+        }
     };
     if let Some(row) = sqlx::query(
         r#"SELECT id FROM messages WHERE conversation_id = $1 AND direction = 'outbound' AND sent_at = $2 AND body_id IS NOT DISTINCT FROM $3 LIMIT 1"#,

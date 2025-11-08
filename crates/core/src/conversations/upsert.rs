@@ -1,5 +1,5 @@
-use sqlx::{PgPool, Postgres, Transaction, Row};
 use crate::conversations::{key::derive_key, key::ChannelKind, ConversationKey};
+use sqlx::{PgPool, Postgres, Row, Transaction};
 use tracing::{error, info, instrument};
 
 #[derive(Debug)]
@@ -103,9 +103,29 @@ mod tests {
     #[sqlx::test]
     async fn upsert_creates_then_reuses(pool: PgPool) {
         let ts = sqlx::types::chrono::Utc::now();
-        let first = upsert_conversation(&pool, ChannelKind::Email, "a@example.com", "b@example.com", ts).await;
-        match first { UpsertOutcome::Created(id, _) => assert!(id > 0), _ => panic!("expected create") }
-        let again = upsert_conversation(&pool, ChannelKind::Email, "b@example.com", "a@example.com", ts).await; // reversed order
-        match again { UpsertOutcome::Reused(id, _) => assert!(id > 0), _ => panic!("expected reuse") }
+        let first = upsert_conversation(
+            &pool,
+            ChannelKind::Email,
+            "a@example.com",
+            "b@example.com",
+            ts,
+        )
+        .await;
+        match first {
+            UpsertOutcome::Created(id, _) => assert!(id > 0),
+            _ => panic!("expected create"),
+        }
+        let again = upsert_conversation(
+            &pool,
+            ChannelKind::Email,
+            "b@example.com",
+            "a@example.com",
+            ts,
+        )
+        .await; // reversed order
+        match again {
+            UpsertOutcome::Reused(id, _) => assert!(id > 0),
+            _ => panic!("expected reuse"),
+        }
     }
 }

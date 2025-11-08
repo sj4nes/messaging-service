@@ -1,4 +1,4 @@
-use tracing::{info, warn, error};
+use tracing::{error, info, warn};
 
 use super::upsert::UpsertOutcome;
 
@@ -37,11 +37,16 @@ pub fn log_upsert_failure(context: &str, error: &str) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::conversations::{ConversationKey, upsert::UpsertOutcome};
+    use crate::conversations::{upsert::UpsertOutcome, ConversationKey};
 
     #[test]
     fn logs_created() {
-        let k = ConversationKey { channel: "email".into(), participant_a: "a".into(), participant_b: "b".into(), key: "email:a<->b".into() };
+        let k = ConversationKey {
+            channel: "email".into(),
+            participant_a: "a".into(),
+            participant_b: "b".into(),
+            key: "email:a<->b".into(),
+        };
         let outcome = UpsertOutcome::Created(42, k);
         log_upsert_outcome(&outcome, "inbound", 777); // Should not panic
     }
