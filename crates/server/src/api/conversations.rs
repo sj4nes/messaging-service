@@ -43,6 +43,9 @@ pub(crate) async fn list_conversations(
                     .map(|r| ConversationDto {
                         id: r.id.to_string(),
                         key: r.key,
+                        channel: r.channel,
+                        participant_a: r.participant_a,
+                        participant_b: r.participant_b,
                         message_count: r.message_count as u32,
                         last_activity_at: r
                             .last_activity_at

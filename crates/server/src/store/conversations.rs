@@ -87,6 +87,9 @@ pub fn list(page: u32, page_size: u32) -> (Vec<ConversationDto>, u64) {
         .map(|c| ConversationDto {
             id: c.id.clone(),
             key: c.key.clone(),
+            channel: None,
+            participant_a: None,
+            participant_b: None,
             message_count: c.message_count,
             last_activity_at: c.last_activity_at.clone(),
         })

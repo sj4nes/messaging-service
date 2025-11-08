@@ -7,6 +7,9 @@ use sqlx::{PgPool, Row};
 pub struct ConversationSummary {
     pub id: i64,
     pub key: String,
+    pub channel: Option<String>,
+    pub participant_a: Option<String>,
+    pub participant_b: Option<String>,
     pub message_count: i64,
     pub last_activity_at: Option<DateTime<Utc>>,
 }
@@ -20,9 +23,9 @@ pub async fn list_conversations(
 ) -> Result<Vec<ConversationSummary>> {
     // Try durable schema first
     match sqlx::query(
-        r#"SELECT id, key, message_count, last_activity_at
+        r#"SELECT id, key, channel, participant_a, participant_b, message_count, last_activity_at
            FROM conversations
-           ORDER BY last_activity_at DESC NULLS LAST, id ASC
+           ORDER BY last_activity_at DESC NULLS LAST, id DESC
            LIMIT $1 OFFSET $2"#,
     )
     .bind(limit)
@@ -35,6 +38,9 @@ pub async fn list_conversations(
             .map(|r| ConversationSummary {
                 id: r.get("id"),
                 key: r.get::<String, _>("key"),
+                channel: r.get::<Option<String>, _>("channel"),
+                participant_a: r.get::<Option<String>, _>("participant_a"),
+                participant_b: r.get::<Option<String>, _>("participant_b"),
                 message_count: r.get::<i64, _>("message_count"),
                 last_activity_at: r.get::<Option<DateTime<Utc>>, _>("last_activity_at"),
             })
@@ -59,6 +65,9 @@ pub async fn list_conversations(
                 .map(|r| ConversationSummary {
                     id: r.get("id"),
                     key: r.get::<Option<String>, _>("topic").unwrap_or_default(),
+                    channel: None,
+                    participant_a: None,
+                    participant_b: None,
                     message_count: r.get::<Option<i64>, _>("message_count").unwrap_or(0),
                     last_activity_at: r.get::<Option<DateTime<Utc>>, _>("last_message_at"),
                 })

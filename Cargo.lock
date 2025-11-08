@@ -279,8 +279,10 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "chrono",
+ "messaging-core",
  "sqlx",
  "tokio",
+ "tracing",
 ]
 
 [[package]]
@@ -1048,6 +1050,7 @@ dependencies = [
  "tempfile",
  "tracing",
  "tracing-subscriber",
+ "unicode-segmentation",
 ]
 
 [[package]]

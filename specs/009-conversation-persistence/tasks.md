@@ -63,18 +63,18 @@ description: "Tasks for Conversation Persistence & Unification"
 
 ### Tests for User Story 1
 
-- [ ] T015 [P] [US1] Deterministic fixture: outbound + inbound pair results in one conversation at tests/integration/conversation_flow.rs
-- [ ] T016 [P] [US1] Concurrency test: 100 inserts same key → 1 conversation, count=100 at tests/integration/concurrency_upsert.rs
+- [X] T015 [P] [US1] Deterministic fixture: outbound + inbound pair results in one conversation at tests/integration/conversation_flow.rs
+- [X] T016 [P] [US1] Concurrency test: 100 inserts same key → 1 conversation, count=100 at tests/integration/concurrency_upsert.rs
 
 ### Implementation for User Story 1
 
-- [ ] T017 [P] [US1] Conversation upsert function with INSERT .. ON CONFLICT in crates/core/src/conversations/upsert.rs
-- [ ] T018 [US1] Integrate upsert into message persistence path (inbound/outbound) in crates/core/src/messaging/mod.rs
-- [ ] T019 [US1] Ensure atomic update of message_count and last_activity with message insert in crates/core/src/conversations/upsert.rs
-- [ ] T020 [US1] Idempotency handling: do not inflate count on duplicate message in crates/core/src/messaging/mod.rs
-- [ ] T021 [US1] Metrics counters: created/reused/failures in crates/core/src/conversations/metrics.rs
-- [ ] T022 [US1] Structured logging with message_id and conversation_key in crates/core/src/conversations/logging.rs
-- [ ] T023 [US1] Backfill utility skeleton in crates/db-migrate/src/backfill_conversations.rs
+- [X] T017 [P] [US1] Conversation upsert function with INSERT .. ON CONFLICT in crates/core/src/conversations/upsert.rs
+- [X] T018 [US1] Integrate upsert into message persistence path (inbound/outbound) in crates/core/src/messaging/mod.rs
+- [X] T019 [US1] Ensure atomic update of message_count and last_activity with message insert in crates/core/src/conversations/upsert.rs
+- [X] T020 [US1] Idempotency handling: do not inflate count on duplicate message in crates/core/src/messaging/mod.rs
+- [X] T021 [US1] Metrics counters: created/reused/failures in crates/core/src/conversations/metrics.rs
+- [X] T022 [US1] Structured logging with message_id and conversation_key in crates/core/src/conversations/logging.rs
+- [X] T023 [US1] Backfill utility skeleton in crates/db-migrate/src/backfill_conversations.rs
   
 - [x] T017 [P] [US1] Conversation upsert function with INSERT .. ON CONFLICT in crates/core/src/conversations/upsert.rs
 - [x] T021 [US1] Metrics counters: created/reused/failures in crates/core/src/conversations/metrics.rs
@@ -95,8 +95,8 @@ description: "Tasks for Conversation Persistence & Unification"
 
 ### Implementation for User Story 2
 
-- [ ] T025 [P] [US2] Extend Conversation DTO to include participant_a, participant_b, key in crates/server/src/api/conversations.rs
-- [ ] T026 [US2] Implement DB-sourced listing ordered by last_activity_at DESC, id DESC in crates/server/src/api/conversations.rs
+- [X] T025 [P] [US2] Extend Conversation DTO to include participant_a, participant_b, key in crates/server/src/api/conversations.rs
+- [X] T026 [US2] Implement DB-sourced listing ordered by last_activity_at DESC, id DESC in crates/server/src/api/conversations.rs
 - [ ] T027 [US2] Remove in-memory fallback when DB is configured in crates/server/src/api/conversations.rs
 - [ ] T028 [US2] Add paging parameters validation and next_page computation in crates/server/src/api/conversations.rs
 
@@ -113,11 +113,11 @@ description: "Tasks for Conversation Persistence & Unification"
 ### Tests for User Story 3
 
 - [ ] T029 [P] [US3] Contract test for GET /api/conversations/{id}/messages in tests/contract/conversation_messages.rs
-- [ ] T030 [P] [US3] UTF-8 snippet boundary test in tests/unit/snippet_unicode.rs
+- [X] T030 [P] [US3] UTF-8 snippet boundary test in tests/unit/snippet_unicode.rs
 
 ### Implementation for User Story 3
 
-- [ ] T031 [P] [US3] Implement snippet utility with Unicode-safe truncation in crates/core/src/conversations/snippet.rs
+- [X] T031 [P] [US3] Implement snippet utility with Unicode-safe truncation in crates/core/src/conversations/snippet.rs
 - [ ] T032 [US3] Expose snippet length config and wire into handler in crates/server/src/config/mod.rs
 - [ ] T033 [US3] Update conversation messages handler to include from/to and snippet in crates/server/src/api/conversations.rs
 - [ ] T034 [US3] Ensure timestamp ordering uses received_at for inbound, sent_at for outbound in crates/server/src/api/conversations.rs

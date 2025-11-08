@@ -4,6 +4,8 @@ use anyhow::{bail, Context, Result};
 use chrono::Utc;
 use sqlx::{migrate::Migrator, postgres::PgPoolOptions, Row};
 
+mod backfill_conversations;
+
 // Point to the dedicated SQLx migrations directory that contains only .up/.down.sql files
 static MIGRATIONS: Migrator = sqlx::migrate!("./migrations_sqlx");
 

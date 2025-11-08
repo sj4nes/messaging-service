@@ -123,6 +123,12 @@ pub struct ListResponse<T> {
 pub struct ConversationDto {
     pub id: String,
     pub key: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub channel: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub participant_a: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub participant_b: Option<String>,
     pub message_count: u32,
     pub last_activity_at: String,
 }
