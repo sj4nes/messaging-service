@@ -5,7 +5,7 @@ use sqlx::{PgPool, Row};
 use tracing::{instrument, warn};
 use twox_hash::xxh3::hash64;
 
-use super::normalize::conversation_key; // legacy helper (to be removed)
+ // legacy helper (to be removed)
 use crate::logging::message_persisted;
 use messaging_core::conversations::{
     key::ChannelKind,
@@ -13,7 +13,6 @@ use messaging_core::conversations::{
     metrics::metrics,
     upsert::{upsert_conversation, UpsertOutcome},
 };
-use tracing::info;
 
 /// Persist an inbound message using simplified bootstrap rules:
 /// - Assumes a single bootstrap customer (id=1) and provider (id=1) already exist (future migration may ensure this)
