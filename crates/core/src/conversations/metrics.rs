@@ -7,6 +7,12 @@ pub struct ConversationMetrics {
     pub failures: AtomicU64,
 }
 
+impl Default for ConversationMetrics {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ConversationMetrics {
     pub const fn new() -> Self {
         Self {
