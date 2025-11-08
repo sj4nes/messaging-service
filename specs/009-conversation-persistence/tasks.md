@@ -35,12 +35,12 @@ description: "Tasks for Conversation Persistence & Unification"
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T005 Create SQL migration: conversations table and unique index in crates/db-migrate/migrations_sqlx/000X_add_conversations_table.up.sql
-- [ ] T006 Create SQL migration (down): drop conversations in crates/db-migrate/migrations_sqlx/000X_add_conversations_table.down.sql
-- [ ] T007 Create SQL migration: add messages.conversation_id (FK NOT NULL) and supporting index in crates/db-migrate/migrations_sqlx/000Y_add_message_conversation_fk.up.sql
-- [ ] T008 Create SQL migration (down): drop messages.conversation_id FK in crates/db-migrate/migrations_sqlx/000Y_add_message_conversation_fk.down.sql
-- [ ] T009 [P] Add timestamp index on conversations.last_activity_at in crates/db-migrate/migrations_sqlx/000Z_add_conversations_indexes.up.sql
-- [ ] T010 [P] Add direction CHECK (Inbound/Outbound) if missing in crates/db-migrate/migrations_sqlx/000Z_add_message_direction_check.up.sql
+- [x] T005 Create SQL migration: conversations table and unique index in crates/db-migrate/migrations_sqlx/0014_add_conversation_key_columns.up.sql
+- [x] T006 Create SQL migration (down): drop conversations in crates/db-migrate/migrations_sqlx/0014_add_conversation_key_columns.down.sql
+- [x] T007 Create SQL migration: add messages.conversation_id (FK NOT NULL) and supporting index in crates/db-migrate/migrations_sqlx/0015_add_messages_conversation_fk.up.sql
+- [x] T008 Create SQL migration (down): drop messages.conversation_id FK in crates/db-migrate/migrations_sqlx/0015_add_messages_conversation_fk.down.sql
+- [x] T009 [P] Add timestamp index on conversations.last_activity_at in crates/db-migrate/migrations_sqlx/0014_add_conversation_key_columns.up.sql
+- [x] T010 [P] Add direction CHECK (Inbound/Outbound) if missing in crates/db-migrate/migrations_sqlx/0016_add_message_direction_check.up.sql
 - [ ] T011 [P] Implement normalization: email lowercasing + plus-tag equivalence in crates/core/src/conversations/normalize_email.rs
 - [ ] T012 [P] Implement normalization: phone digits + optional leading plus in crates/core/src/conversations/normalize_phone.rs
 - [ ] T013 Implement canonical key + participant ordering in crates/core/src/conversations/key.rs
