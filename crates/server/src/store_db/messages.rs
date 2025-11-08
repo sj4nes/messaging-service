@@ -69,10 +69,66 @@ pub async fn insert_from_inbound(
     Ok(message_id)
 }
 
+/// Persist an outbound message (API initiated) using same rules as inbound for now.
+/// Differences:
+/// - direction = 'outbound'
+/// - provider_id currently hard-coded to 1 (bootstrap mock provider)
+/// - body stored/deduplicated identically via message_bodies table
+#[instrument(skip(pool, body, attachments))]
+pub async fn insert_outbound(
+    pool: &PgPool,
+    channel: &str,
+    from: &str,
+    to: &str,
+    body: &str,
+    attachments: &[String],
+    timestamp: &str,
+) -> Result<i64> {
+    let conv_key = conversation_key(channel, from, to);
+    let convo_id = ensure_conversation(pool, &conv_key).await?;
+    let ts: DateTime<Utc> = timestamp.parse().unwrap_or_else(|_| Utc::now());
+    let body_id: Option<i64> = if body.is_empty() {
+        None
+    } else {
+        let inserted = sqlx::query(
+            r#"INSERT INTO message_bodies (body) VALUES ($1)
+            ON CONFLICT (body) DO NOTHING RETURNING id"#,
+        )
+        .bind(body)
+        .fetch_optional(pool)
+        .await?;
+        if let Some(row) = inserted {
+            Some(row.get::<i64, _>("id"))
+        } else {
+            let existing = sqlx::query(r#"SELECT id FROM message_bodies WHERE body = $1 LIMIT 1"#)
+                .bind(body)
+                .fetch_one(pool)
+                .await?;
+            Some(existing.get::<i64, _>("id"))
+        }
+    };
+    let rec = sqlx::query!(
+        r#"INSERT INTO messages (conversation_id, provider_id, direction, sent_at, received_at, body_id)
+           VALUES ($1, 1, 'outbound', $2, $2, $3) RETURNING id"#,
+        convo_id,
+        ts,
+        body_id
+    )
+    .fetch_one(pool)
+    .await?;
+    let message_id = rec.id;
+    for url in attachments {
+        if let Err(e) = persist_attachment(pool, message_id, url).await {
+            warn!(target="server", event="attach_persist_fail", error=?e, message_id, url=%url, "failed to persist/link attachment (outbound); continuing");
+        }
+    }
+    Ok(message_id)
+}
+
 async fn ensure_conversation(pool: &PgPool, key: &str) -> Result<i64> {
-    // Use topic column as temporary key storage; fetch existing or create.
+    // Use topic column as temporary key storage; prefer the lowest id if duplicates exist.
     if let Some(existing) = sqlx::query!(
-        r#"SELECT id FROM conversations WHERE topic = $1 LIMIT 1"#,
+        r#"SELECT id FROM conversations WHERE topic = $1 ORDER BY id ASC LIMIT 1"#,
         key
     )
     .fetch_optional(pool)

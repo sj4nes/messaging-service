@@ -36,7 +36,7 @@ pub(crate) async fn post_sms(
         }
     }
 
-    // Persist outbound into in-memory store for conversations
+    // Persist outbound: always in-memory for conversation listing fallback; additionally into DB if available
     let msg_id = if body.r#type.eq_ignore_ascii_case("mms") {
         message_store::insert_outbound_mms(
             &body.from,
@@ -54,6 +54,29 @@ pub(crate) async fn post_sms(
             &body.timestamp,
         )
     };
+    if let Some(pool) = state.db() {
+        // Ensure identities and test mapping exist after potential DB reset without server restart
+        crate::store_db::seed::seed_minimum_if_needed(&pool).await;
+        // Best-effort DB persistence; ignore errors to keep API responsive
+        let channel = if body.r#type.eq_ignore_ascii_case("mms") {
+            "mms"
+        } else {
+            "sms"
+        };
+        if let Err(e) = crate::store_db::messages::insert_outbound(
+            &pool,
+            channel,
+            &body.from,
+            &body.to,
+            &body.body,
+            &body.attachments.clone().unwrap_or_default(),
+            &body.timestamp,
+        )
+        .await
+        {
+            tracing::warn!(target="server", event="db_outbound_persist_fail", error=%e, channel=%channel, "failed to persist outbound message to DB");
+        }
+    }
     let mut payload = serde_json::to_value(&body).unwrap_or_else(|_| json!({}));
     if let Some(obj) = payload.as_object_mut() {
         obj.insert("message_id".to_string(), json!(msg_id));
@@ -91,7 +114,7 @@ pub(crate) async fn post_email(
             return errors::bad_request("too many attachments").into_response();
         }
     }
-    // Persist outbound email
+    // Persist outbound email: in-memory + DB if available
     let msg_id = message_store::insert_outbound_email(
         &body.from,
         &body.to,
@@ -99,6 +122,22 @@ pub(crate) async fn post_email(
         &body.attachments,
         &body.timestamp,
     );
+    if let Some(pool) = state.db() {
+        crate::store_db::seed::seed_minimum_if_needed(&pool).await;
+        if let Err(e) = crate::store_db::messages::insert_outbound(
+            &pool,
+            "email",
+            &body.from,
+            &body.to,
+            &body.body,
+            &body.attachments.clone().unwrap_or_default(),
+            &body.timestamp,
+        )
+        .await
+        {
+            tracing::warn!(target="server", event="db_outbound_email_persist_fail", error=%e, "failed to persist outbound email to DB");
+        }
+    }
     let mut payload = serde_json::to_value(&body).unwrap_or_else(|_| json!({}));
     if let Some(obj) = payload.as_object_mut() {
         obj.insert("message_id".to_string(), json!(msg_id));
