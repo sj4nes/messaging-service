@@ -11,6 +11,7 @@ Auto-generated from all feature plans. Last updated: 2025-11-05
 - PostgreSQL (docker-compose; SQLx migrations) (007-wire-postgresql-store)
 - Rust 1.75 (stable toolchain) + Axum (HTTP), Tokio (async), SQLx (PostgreSQL), Serde (serialization), Tracing (observability) (009-conversation-persistence)
 - PostgreSQL (durable conversations/messages); in-memory only for fallback when DB unavailable (009-conversation-persistence)
+- Rust (stable, 1.83+ confirmed via rust:slim image) (010-owasp-hardening)
 
 - Bash (POSIX-compatible) + Jujutsu CLI (`jj`), Git CLI (`git`) (001-jujutsu-scm-support)
 
@@ -30,9 +31,9 @@ tests/
 Bash (POSIX-compatible): Follow standard conventions
 
 ## Recent Changes
+- 010-owasp-hardening: Added Rust (stable, 1.83+ confirmed via rust:slim image)
 - 009-conversation-persistence: Added Rust 1.75 (stable toolchain) + Axum (HTTP), Tokio (async), SQLx (PostgreSQL), Serde (serialization), Tracing (observability)
 - 008-provider-routing-by-channel: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
-- 007-wire-postgresql-store: Added Rust (stable; repo targets 1.75+) + Axum, Tokio, SQLx, Serde, Tracing
 
 
 <!-- MANUAL ADDITIONS START -->

@@ -1,0 +1,160 @@
+openapi: 3.0.3
+info:
+  title: Messaging Service Security API
+  version: 0.1.0
+  description: Endpoints supporting OWASP hardening, logging, scanning, and auth ops.
+servers:
+  - url: http://localhost:8080
+paths:
+  /security/vulnerabilities:
+    get:
+      tags: [security]
+      summary: List known vulnerabilities
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SecurityVulnerability'
+  /security/scans:
+    post:
+      tags: [security]
+      summary: Trigger a dependency/security scan (admin-only)
+      responses:
+        '202': { description: Accepted }
+        '403': { description: Forbidden }
+  /security/dependencies:
+    get:
+      tags: [security]
+      summary: List dependency manifest with vulnerabilities
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DependencyManifest'
+  /security/logs:
+    get:
+      tags: [security]
+      summary: Query security audit logs
+      parameters:
+        - in: query
+          name: event_type
+          schema: { type: string }
+        - in: query
+          name: since
+          schema: { type: string, format: date-time }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SecurityAuditLog'
+  /auth/login:
+    post:
+      tags: [auth]
+      summary: Log in
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username: { type: string }
+                password: { type: string }
+      responses:
+        '200': { description: OK }
+        '401': { description: Unauthorized }
+  /auth/logout:
+    post:
+      tags: [auth]
+      summary: Log out
+      responses:
+        '204': { description: No Content }
+        '401': { description: Unauthorized }
+  /auth/rotate-keys:
+    post:
+      tags: [auth]
+      summary: Rotate encryption keys (admin-only)
+      responses:
+        '202': { description: Accepted }
+        '403': { description: Forbidden }
+  /auth/rate-limit/status:
+    get:
+      tags: [auth]
+      summary: Get current rate limit status
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitSnapshot'
+  /security/health:
+    get:
+      tags: [security]
+      summary: Security posture summary
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  zero_criticals: { type: boolean }
+                  categories_covered: { type: boolean }
+                  last_scan: { type: string, format: date-time }
+components:
+  schemas:
+    SecurityVulnerability:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        cve: { type: string, nullable: true }
+        cvss_score: { type: number }
+        owasp_category: { type: string }
+        component: { type: string }
+        severity: { type: string, enum: [critical, high, medium, low] }
+        discovered_at: { type: string, format: date-time }
+        status: { type: string, enum: [open, in_progress, mitigated, resolved] }
+        remediation: { type: string }
+    SecurityAuditLog:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        event_type: { type: string }
+        user_id: { type: string, nullable: true }
+        source_ip: { type: string }
+        action: { type: string }
+        outcome: { type: string, enum: [allowed, denied, error] }
+        timestamp: { type: string, format: date-time }
+        metadata: { type: object, additionalProperties: true }
+    DependencyManifest:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        package: { type: string }
+        version: { type: string }
+        cves: { type: array, items: { type: string } }
+        severity_max: { type: string, enum: [critical, high, medium, low, none] }
+        scanned_at: { type: string, format: date-time }
+        approved: { type: boolean }
+    RateLimitSnapshot:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        captured_at: { type: string, format: date-time }
+        per_ip_limit: { type: integer }
+        per_sender_limit: { type: integer }
+        counters: { type: object, additionalProperties: true }
