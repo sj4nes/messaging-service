@@ -1,0 +1,6 @@
+# Ignore list for Trivy vulnerability IDs (CVE, GHSA)
+# Note: This file lists vulnerability IDs to ignore, not filesystem paths.
+# Keep this file empty by default. Add IDs here only with documented justification.
+
+# Example (remove or comment out once reviewed):
+# CVE-2021-12345

@@ -54,7 +54,22 @@ Check metrics endpoint (planned) for incremented `rate_limited` counts.
 ### 7. Key Rotation (Future)
 Placeholder endpoint: `POST /auth/rotate-keys` returns 202 when implemented.
 
-### 8. Review Security Posture
+### 8. Dev Secrets (Mock/Vault)
+For local development, you can mock secrets or run Vault in dev mode:
+
+```bash
+# Start Vault dev (example; do not use in production)
+docker run --rm -p 8200:8200 --cap-add=IPC_LOCK -e 'VAULT_DEV_ROOT_TOKEN_ID=dev-token' hashicorp/vault:latest
+
+# In another shell, set env and write a sample secret
+export VAULT_ADDR=http://localhost:8200
+export VAULT_TOKEN=dev-token
+vault kv put secret/messaging/db url=postgres://... password=changeme
+```
+
+Application should never read secrets from .env in production. For local only, `.env.example` shows non-sensitive toggles.
+
+### 9. Review Security Posture
 ```bash
 curl -s http://localhost:8080/security/health | jq
 ```
