@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net"
@@ -11,10 +12,11 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
 
+	"github.com/sj4nes/messaging-service/go/api"
 	"github.com/sj4nes/messaging-service/go/internal/config"
 	"github.com/sj4nes/messaging-service/go/internal/logging"
 	"github.com/sj4nes/messaging-service/go/internal/metrics"
-	"github.com/sj4nes/messaging-service/go/api"
+	"github.com/sj4nes/messaging-service/go/internal/db/migrate"
 	"github.com/sj4nes/messaging-service/go/internal/middleware"
 	"github.com/sj4nes/messaging-service/go/internal/server"
 )
@@ -38,6 +40,23 @@ func main() {
 	requests := prometheus.NewCounter(prometheus.CounterOpts{Name: "app_startups_total", Help: "Number of application startups"})
 	_ = reg.Register(requests)
 	requests.Inc()
+
+	// Optional migrations (dev/CI): RUN_DB_MIGRATIONS=true
+	if strings.EqualFold(os.Getenv("RUN_DB_MIGRATIONS"), "true") {
+		mdir := os.Getenv("MIGRATIONS_DIR")
+		if strings.TrimSpace(mdir) == "" {
+			mdir = "../crates/db-migrate/migrations_sqlx"
+		}
+		dbURL := os.Getenv("DATABASE_URL")
+		if strings.TrimSpace(dbURL) == "" {
+			log.Warn("RUN_DB_MIGRATIONS set but DATABASE_URL missing; skipping migrations")
+		} else {
+			log.Info("applying database migrations", zap.String("path", mdir))
+			if err := migrate.ApplyUp(context.Background(), mdir, dbURL); err != nil {
+				log.Warn("migration apply failed (continuing)", zap.Error(err))
+			}
+		}
+	}
 
 	r := server.New()
 	// Core middleware

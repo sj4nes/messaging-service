@@ -50,7 +50,7 @@ Purpose: Project initialization and basic structure.
 
 Purpose: Core infrastructure that MUST be complete before ANY user story can be implemented.
 
-- [ ] T009 Setup migrations integration in go/internal/db/migrate/migrate.go (invoke CLI on startup/CI)
+ - [X] T009 Setup migrations integration in go/internal/db/migrate/migrate.go (invoke CLI on startup/CI)
 - [ ] T010 [P] Implement configuration loader in go/internal/config/config.go (env→struct; rate limits, headers, SSRF allowlist)
 - [ ] T011 [P] Setup router structure in go/internal/server/router.go (chi + middleware pipeline)
 - [ ] T012 [P] Implement logging init in go/internal/logging/logging.go (zap + redaction)
@@ -59,7 +59,7 @@ Purpose: Core infrastructure that MUST be complete before ANY user story can be 
 - [ ] T015 [P] Implement rate limiter middleware in go/internal/middleware/rate_limit.go (x/time/rate)
 - [ ] T016 [P] Implement SSRF allowlist validator in go/internal/security/egress_validator.go
 - [ ] T017 [P] Define secrets abstraction in go/internal/secrets/secrets.go (interface)
-- [ ] T018 [P] Implement Vault client in go/internal/secrets/vault.go
+ - [X] T018 [P] Implement Vault client in go/internal/secrets/vault.go
 - [ ] T019 [P] Implement dev secrets stub in go/internal/secrets/dev.go (explicitly flagged)
 - [ ] T020 [P] Add circuit breaker wrapper in go/internal/resilience/breaker.go (sony/gobreaker)
 - [ ] T021 Add health and metrics endpoints in go/api/health.go and go/api/metrics.go
