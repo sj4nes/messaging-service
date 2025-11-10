@@ -21,7 +21,7 @@ echo
 # -----------------------------
 # Optional: start server in background
 # -----------------------------
-# By default, attempt to start the server with `make run-server` in the background
+# By default, attempt to start the Go server with `make go.run` in the background
 # if nothing is listening on the target port derived from BASE_URL. Disable with START_SERVER=false.
 START_SERVER="${START_SERVER:-true}"
 SERVER_LOG="${SERVER_LOG:-server.log}"
@@ -129,11 +129,11 @@ if [ "$START_SERVER" = "true" ]; then
   if is_listening "$BASE_PORT"; then
     echo "Server already listening on $BASE_HOST:$BASE_PORT — will not start a new one."
   else
-    echo "Starting server in background via 'make run-server' (log: $SERVER_LOG)"
+    echo "Starting Go server in background via 'make go.run' (log: $SERVER_LOG)"
     (
       cd "$REPO_ROOT" || exit 1
       # Ensure server uses the port implied by BASE_URL
-      PORT="$BASE_PORT" make run-server >"$SERVER_LOG" 2>&1
+      PORT="$BASE_PORT" make go.run >"$SERVER_LOG" 2>&1
     ) &
     SERVER_PID=$!
     STARTED_SERVER="true"
@@ -144,7 +144,7 @@ if [ "$START_SERVER" = "true" ]; then
     if wait_for_port "$BASE_PORT" "$START_TIMEOUT_MS" "$POLL_INTERVAL_MS"; then
       echo "Server is up on $BASE_HOST:$BASE_PORT"
     else
-      echo "Server failed to start within $START_TIMEOUT_MS ms. Tail of log:" >&2
+      echo "Go server failed to start within $START_TIMEOUT_MS ms. Tail of log:" >&2
       tail -n 100 "$SERVER_LOG" >&2 || true
       exit 1
     fi
