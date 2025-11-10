@@ -4,13 +4,14 @@
 FROM --platform=$BUILDPLATFORM golang:1.22-alpine AS build
 WORKDIR /src
 
-# Cache deps
-COPY go/go.mod ./go.mod
+## Cache deps
+# The build context is the 'go/' folder, so go.mod is at the root of the context.
+COPY go.mod ./go.mod
 RUN --mount=type=cache,target=/go/pkg/mod \
     go mod download
 
-# Copy source
-COPY go/ ./
+## Copy source (entire go/ context)
+COPY . ./
 
 # Build
 RUN --mount=type=cache,target=/go/pkg/mod \

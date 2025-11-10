@@ -116,7 +116,7 @@ Independent Test: Service runs under Compose; health/metrics/logs verified.
 
 ### Implementation for User Story 3
 
-- [ ] T036 [P] [US3] Add Go service stanza to docker-compose.yml (side-by-side with Rust service)
+- [X] T036 [P] [US3] Add Go service stanza to docker-compose.yml (side-by-side with Rust service)
 - [ ] T037 [P] [US3] Expose /healthz and /metrics in go/internal/server/router.go
 - [ ] T038 [US3] Ensure structured logs + redaction in go/internal/logging/logging.go
 - [ ] T039 [US3] Add optional pprof in go/internal/server/pprof.go (guarded by env)

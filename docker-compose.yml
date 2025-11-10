@@ -25,6 +25,25 @@ services:
       dockerfile: Dockerfile
     container_name: messaging-service-app
     ports:
+      - "8083:8080"
+    environment:
+      DATABASE_URL: postgres://messaging_user:messaging_password@postgres:5432/messaging_service
+      PORT: 8080
+      HEALTH_PATH: /healthz
+      LOG_LEVEL: info
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - messaging-net
+    restart: unless-stopped
+
+  messaging-go:
+    build:
+      context: go
+      dockerfile: Dockerfile
+    container_name: messaging-go-app
+    ports:
       - "8080:8080"
     environment:
       DATABASE_URL: postgres://messaging_user:messaging_password@postgres:5432/messaging_service
