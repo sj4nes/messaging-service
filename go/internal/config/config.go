@@ -15,16 +15,16 @@ type Config struct {
 	MetricsPath string
 
 	// Security / Auth
-	AuthEnabled          bool
-	AuthTokens           []string // static shared secrets (Bearer tokens) for parity baseline
+	AuthEnabled           bool
+	AuthTokens            []string // static shared secrets (Bearer tokens) for parity baseline
 	AuthSessionTTLSeconds int
 	AuthMaxFailures       int
 	AuthBackoffSeconds    int
 
 	// Rate limits (public vs protected)
-	PublicRPS     float64
-	PublicBurst   int
-	ProtectedRPS  float64
+	PublicRPS      float64
+	PublicBurst    int
+	ProtectedRPS   float64
 	ProtectedBurst int
 
 	// SSRF allowlist hosts
@@ -80,12 +80,12 @@ func Load() (*Config, error) {
 	}
 
 	cfg := &Config{
-		Port:        port,
-		HealthPath:  getenv("HEALTH_PATH", "/healthz"),
-		LogLevel:    getenv("LOG_LEVEL", "info"),
-		MetricsPath: getenv("METRICS_PATH", "/metrics"),
-		AuthEnabled: authEnabled,
-		AuthTokens:  tokens,
+		Port:                  port,
+		HealthPath:            getenv("HEALTH_PATH", "/healthz"),
+		LogLevel:              getenv("LOG_LEVEL", "info"),
+		MetricsPath:           getenv("METRICS_PATH", "/metrics"),
+		AuthEnabled:           authEnabled,
+		AuthTokens:            tokens,
 		AuthSessionTTLSeconds: ttlSeconds,
 		AuthMaxFailures:       maxFailures,
 		AuthBackoffSeconds:    backoffSeconds,
