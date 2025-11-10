@@ -24,6 +24,8 @@ echo
 # By default, attempt to start the Go server with `make go.run` in the background
 # if nothing is listening on the target port derived from BASE_URL. Disable with START_SERVER=false.
 START_SERVER="${START_SERVER:-true}"
+# If true, and a process is already listening on BASE_PORT, attempt to stop it before starting a new server
+FORCE_RESTART="${FORCE_RESTART:-false}"
 SERVER_LOG="${SERVER_LOG:-server.log}"
 
 # Derive host and port from BASE_URL (simple parsing sufficient for http(s)://host[:port])
@@ -59,6 +61,28 @@ is_listening() {
     # Last resort: try a quick HTTP request (may fail if non-HTTP listener)
     curl -sS --max-time 1 "$BASE_URL" >/dev/null 2>&1
     return $?
+  fi
+}
+
+# Try to terminate any process listening on the provided TCP port (best-effort)
+kill_port_listeners() {
+  local port="$1"
+  if command -v lsof >/dev/null 2>&1; then
+    local pids
+    pids=$(lsof -t -i TCP:"$port" -sTCP:LISTEN 2>/dev/null | tr '\n' ' ')
+    if [ -n "$pids" ]; then
+      echo "Attempting to stop processes on port $port: $pids"
+      kill $pids >/dev/null 2>&1 || true
+      sleep 0.5
+      # Force kill if still present
+      pids=$(lsof -t -i TCP:"$port" -sTCP:LISTEN 2>/dev/null | tr '\n' ' ')
+      if [ -n "$pids" ]; then
+        echo "Force killing processes on port $port: $pids"
+        kill -9 $pids >/dev/null 2>&1 || true
+      fi
+    fi
+  else
+    echo "lsof not available; cannot force-restart existing listener on port $port" >&2
   fi
 }
 
@@ -127,8 +151,19 @@ trap cleanup_server EXIT INT TERM
 
 if [ "$START_SERVER" = "true" ]; then
   if is_listening "$BASE_PORT"; then
-    echo "Server already listening on $BASE_HOST:$BASE_PORT — will not start a new one."
-  else
+    if [ "$FORCE_RESTART" = "true" ]; then
+      echo "Existing server detected on $BASE_HOST:$BASE_PORT — FORCE_RESTART=true, attempting to stop it."
+      kill_port_listeners "$BASE_PORT"
+      # Wait until the port is free
+      if is_listening "$BASE_PORT"; then
+        echo "Port $BASE_PORT still busy after kill attempts; aborting." >&2
+        exit 1
+      fi
+    else
+      echo "Server already listening on $BASE_HOST:$BASE_PORT — will not start a new one."
+    fi
+  fi
+  if ! is_listening "$BASE_PORT"; then
     echo "Starting Go server in background via 'make go.run' (log: $SERVER_LOG)"
     (
       cd "$REPO_ROOT" || exit 1

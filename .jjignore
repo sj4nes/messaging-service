@@ -44,3 +44,4 @@ go/**/coverage.out
 go/bin/
 go/pkg/
 go/build/
+go/server

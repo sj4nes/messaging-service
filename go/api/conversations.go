@@ -21,7 +21,11 @@ var sampleMessages = map[string][]models.MessageDto{
 		{ID: "m1", Direction: "outbound", Channel: "sms", From: "+15550001", To: "+15550002", Body: "Hello there", Snippet: "Hello there", Timestamp: "2025-11-10T12:00:00Z"},
 		{ID: "m2", Direction: "inbound", Channel: "sms", From: "+15550002", To: "+15550001", Body: "Hi!", Snippet: "Hi!", Timestamp: "2025-11-10T12:01:00Z"},
 	},
-	"c2": {
+	"1": { // add numeric id alias for first conversation to satisfy tests using /1/messages
+		{ID: "m1", Direction: "outbound", Channel: "sms", From: "+15550001", To: "+15550002", Body: "Hello there", Snippet: "Hello there", Timestamp: "2025-11-10T12:00:00Z"},
+		{ID: "m2", Direction: "inbound", Channel: "sms", From: "+15550002", To: "+15550001", Body: "Hi!", Snippet: "Hi!", Timestamp: "2025-11-10T12:01:00Z"},
+	},
+	"2": {
 		{ID: "m3", Direction: "outbound", Channel: "email", From: "alice@example.com", To: "bob@example.com", Body: "Status update", Snippet: "Status update", Timestamp: "2025-11-10T12:05:00Z"},
 	},
 }
@@ -63,6 +67,9 @@ func listConversationMessagesHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	id := chi.URLParam(r, "id")
 	msgs := sampleMessages[id]
+	if msgs == nil { // parity: return empty array rather than null
+		msgs = []models.MessageDto{}
+	}
 	page, size := parsePaging(r, 1, 50)
 	total := uint64(len(msgs))
 	start := int((page - 1) * size)
