@@ -11,6 +11,15 @@ async fn health_ok() {
         health_path: "/healthz".into(),
         log_level: "info".into(),
         conversation_snippet_length: 64,
+        auth_session_expiry_min: 30,
+        rate_limit_per_ip_per_min: 120,
+        rate_limit_per_sender_per_min: 60,
+        argon2_memory_mb: 64,
+        argon2_time_cost: 3,
+        argon2_parallelism: 1,
+        security_headers_enabled: true,
+        csp_default_src: "'self'".into(),
+        ssrf_allowlist: vec![],
     };
     let cfg = Arc::new(cfg);
     let (handle, addr) = run_server(cfg).await.expect("server start");
@@ -69,6 +78,15 @@ async fn health_logs() {
         health_path: "/healthz".into(),
         log_level: "info".into(),
         conversation_snippet_length: 64,
+        auth_session_expiry_min: 30,
+        rate_limit_per_ip_per_min: 120,
+        rate_limit_per_sender_per_min: 60,
+        argon2_memory_mb: 64,
+        argon2_time_cost: 3,
+        argon2_parallelism: 1,
+        security_headers_enabled: true,
+        csp_default_src: "'self'".into(),
+        ssrf_allowlist: vec![],
     };
     let cfg = Arc::new(cfg);
     let (handle, addr) = run_server(cfg).await.expect("server start");

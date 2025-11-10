@@ -24,6 +24,7 @@ pub mod middleware {
     pub mod accept;
     pub mod circuit_breaker;
     pub mod content_type;
+    pub mod headers;
     pub mod idempotency;
     pub mod limits;
     pub mod logging;
@@ -281,7 +282,14 @@ pub async fn run_server(
 
     // TODO (Feature 007): create PgPool and spawn inbound DB worker
 
-    let router = build_router(&config.health_path, state);
+    let router = build_router(&config.health_path, state)
+        // Security headers (Feature 010 T010)
+        .layer(axmw::from_fn(crate::middleware::headers::security_headers))
+        // Inject Arc<Config> into request extensions for middleware access (outermost)
+        .layer(axmw::from_fn_with_state(
+            config.clone(),
+            add_core_config_extension,
+        ));
 
     // Bind to 127.0.0.1 for tests; for production US1 scope, bind on 0.0.0.0
     let bind_addr: SocketAddr = ([0, 0, 0, 0], config.port).into();
@@ -418,7 +426,12 @@ where
         );
     }
 
-    let router = build_router(&config.health_path, state);
+    let router = build_router(&config.health_path, state)
+        .layer(axmw::from_fn(crate::middleware::headers::security_headers))
+        .layer(axmw::from_fn_with_state(
+            config.clone(),
+            add_core_config_extension,
+        ));
 
     let bind_addr: SocketAddr = ([0, 0, 0, 0], config.port).into();
     let listener = TcpListener::bind(bind_addr)
@@ -529,4 +542,14 @@ async fn circuit_breaker_layer(
 // Adapter to reuse existing idempotency extractor that doesn't take state
 async fn extract_idempotency_layer(req: Request<Body>, next: Next) -> Response {
     crate::middleware::idempotency::extract_idempotency_key(req, next).await
+}
+
+// Insert Arc<messaging_core::Config> into request extensions so middleware can read it
+async fn add_core_config_extension(
+    State(cfg): State<Arc<Config>>,
+    mut req: Request<Body>,
+    next: Next,
+) -> Response {
+    req.extensions_mut().insert(cfg);
+    next.run(req).await
 }

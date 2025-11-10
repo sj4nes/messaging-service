@@ -20,6 +20,16 @@ pub struct Config {
     pub health_path: String,
     pub log_level: String,
     pub conversation_snippet_length: usize,
+    // --- Security additions (Feature 010) ---
+    pub auth_session_expiry_min: u64,
+    pub rate_limit_per_ip_per_min: u32,
+    pub rate_limit_per_sender_per_min: u32,
+    pub argon2_memory_mb: u32,
+    pub argon2_time_cost: u32,
+    pub argon2_parallelism: u32,
+    pub security_headers_enabled: bool,
+    pub csp_default_src: String,
+    pub ssrf_allowlist: Vec<String>,
 }
 
 impl Config {
@@ -95,12 +105,82 @@ impl Config {
             return Err("CONVERSATION_SNIPPET_LENGTH must be in 1..=4096".to_string());
         }
 
+        // Security: AUTH_SESSION_EXPIRY_MIN default 30
+        let auth_session_expiry_min = env::var("AUTH_SESSION_EXPIRY_MIN")
+            .ok()
+            .and_then(|v| v.parse::<u64>().ok())
+            .unwrap_or(30);
+        if !(1..=1440).contains(&auth_session_expiry_min) {
+            return Err("AUTH_SESSION_EXPIRY_MIN must be in 1..=1440".to_string());
+        }
+
+        // Rate limits
+        let rate_limit_per_ip_per_min = env::var("API_RATE_LIMIT_PER_IP_PER_MIN")
+            .ok()
+            .and_then(|v| v.parse::<u32>().ok())
+            .unwrap_or(120);
+        let rate_limit_per_sender_per_min = env::var("API_RATE_LIMIT_PER_SENDER_PER_MIN")
+            .ok()
+            .and_then(|v| v.parse::<u32>().ok())
+            .unwrap_or(60);
+        if rate_limit_per_ip_per_min == 0 || rate_limit_per_sender_per_min == 0 {
+            return Err("Rate limits must be > 0".to_string());
+        }
+
+        // Argon2 parameters
+        let argon2_memory_mb = env::var("ARGON2_MEMORY_MB")
+            .ok()
+            .and_then(|v| v.parse::<u32>().ok())
+            .unwrap_or(64);
+        let argon2_time_cost = env::var("ARGON2_TIME_COST")
+            .ok()
+            .and_then(|v| v.parse::<u32>().ok())
+            .unwrap_or(3);
+        let argon2_parallelism = env::var("ARGON2_PARALLELISM")
+            .ok()
+            .and_then(|v| v.parse::<u32>().ok())
+            .unwrap_or(1);
+        if argon2_memory_mb < 8 || argon2_memory_mb > 1024 {
+            return Err("ARGON2_MEMORY_MB must be in 8..=1024".to_string());
+        }
+        if !(1..=10).contains(&argon2_time_cost) {
+            return Err("ARGON2_TIME_COST must be in 1..=10".to_string());
+        }
+        if !(1..=32).contains(&argon2_parallelism) {
+            return Err("ARGON2_PARALLELISM must be in 1..=32".to_string());
+        }
+
+        // Security headers enable flag
+        let security_headers_enabled = env::var("SECURITY_HEADERS_ENABLED")
+            .map(|v| matches!(v.as_str(), "1" | "true" | "TRUE" | "yes" | "YES"))
+            .unwrap_or(true);
+
+        // CSP default-src directive
+        let csp_default_src = env::var("CSP_DEFAULT_SRC").unwrap_or_else(|_| "'self'".to_string());
+
+        // SSRF allowlist: comma-separated hostnames
+        let ssrf_allowlist = env::var("SSRF_ALLOWLIST")
+            .unwrap_or_default()
+            .split(',')
+            .map(|s| s.trim().to_string())
+            .filter(|s| !s.is_empty())
+            .collect::<Vec<_>>();
+
         Ok((
             Config {
                 port,
                 health_path,
                 log_level,
                 conversation_snippet_length,
+                auth_session_expiry_min,
+                rate_limit_per_ip_per_min,
+                rate_limit_per_sender_per_min,
+                argon2_memory_mb,
+                argon2_time_cost,
+                argon2_parallelism,
+                security_headers_enabled,
+                csp_default_src,
+                ssrf_allowlist,
             },
             ConfigSources {
                 port: src_port,

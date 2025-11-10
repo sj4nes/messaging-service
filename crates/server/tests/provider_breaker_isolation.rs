@@ -17,6 +17,15 @@ async fn sms_breaker_opens_while_email_remains_closed() {
         health_path: "/health".to_string(),
         log_level: "info".to_string(),
         conversation_snippet_length: 64,
+        auth_session_expiry_min: 30,
+        rate_limit_per_ip_per_min: 120,
+        rate_limit_per_sender_per_min: 60,
+        argon2_memory_mb: 64,
+        argon2_time_cost: 3,
+        argon2_parallelism: 1,
+        security_headers_enabled: true,
+        csp_default_src: "'self'".into(),
+        ssrf_allowlist: vec![],
     });
     let (handle, addr) = messaging_server::run_server(cfg.clone())
         .await

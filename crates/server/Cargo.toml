@@ -28,3 +28,4 @@ unicode-segmentation = "1.11"
 [dev-dependencies]
 reqwest = { version = "0.12.24", features = ["json"] }
 tracing-subscriber = "0.3.20"
+tower = "0.5"

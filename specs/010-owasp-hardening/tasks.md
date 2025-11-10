@@ -16,9 +16,9 @@ Branch: `010-owasp-hardening` | Spec: `specs/010-owasp-hardening/spec.md` | Plan
 
 ## Phase 2 — Foundational
 
-- [ ] T008 Define security config structs in `crates/core/src/config.rs` (rate limits, headers, crypto)
+- [X] T008 Define security config structs in `crates/core/src/config.rs` (rate limits, headers, crypto)
 - [ ] T009 Implement redaction utilities in `crates/core/src/logging.rs` (tracing field redaction)
-- [ ] T010 Add security headers layer in `crates/server/src/middleware/headers.rs` and wire in router
+- [X] T010 Add security headers layer in `crates/server/src/middleware/headers.rs` and wire in router
 - [ ] T011 Add auth middleware skeleton in `crates/server/src/middleware/auth.rs` (token/key validation)
 - [ ] T012 Add SSRF allowlist validator `crates/server/src/middleware/egress.rs` for outbound requests
 - [ ] T013 Add audit log model + repo in `crates/server/src/security/audit.rs`
