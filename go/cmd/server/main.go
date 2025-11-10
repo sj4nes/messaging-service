@@ -14,9 +14,9 @@ import (
 
 	"github.com/sj4nes/messaging-service/go/api"
 	"github.com/sj4nes/messaging-service/go/internal/config"
+	"github.com/sj4nes/messaging-service/go/internal/db/migrate"
 	"github.com/sj4nes/messaging-service/go/internal/logging"
 	"github.com/sj4nes/messaging-service/go/internal/metrics"
-	"github.com/sj4nes/messaging-service/go/internal/db/migrate"
 	"github.com/sj4nes/messaging-service/go/internal/middleware"
 	"github.com/sj4nes/messaging-service/go/internal/server"
 )
@@ -66,6 +66,8 @@ func main() {
 	// Endpoints
 	r.Get(cfg.HealthPath, api.HealthHandler())
 	r.Handle(cfg.MetricsPath, api.MetricsHandler(reg))
+	// Messaging API routes (User Story 1 subset)
+	api.Routes(r)
 
 	addr := fmt.Sprintf(":%d", cfg.Port)
 	log.Info("starting server", zap.Int("port", cfg.Port), zap.String("health", cfg.HealthPath), zap.String("metrics", cfg.MetricsPath))
@@ -83,13 +85,7 @@ func main() {
 
 // defaultAddr returns the listen address, using PORT env var if set.
 // (Deprecated) defaultAddr retained for compatibility but unused after config loader integration.
-func defaultAddr() string {
-	port := os.Getenv("PORT")
-	if strings.TrimSpace(port) == "" {
-		return ":8080"
-	}
-	return ":" + port
-}
+// NOTE: legacy defaultAddr removed; config loader provides port.
 
 // isAddrInUse detects common 'address already in use' errors across platforms.
 func isAddrInUse(err error) bool {
