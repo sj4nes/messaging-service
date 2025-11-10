@@ -31,3 +31,16 @@ __pycache__/
 # Virtualenvs
 .venv/
 venv/
+
+# Go build artifacts
+go/**/.DS_Store
+go/**/.idea/
+go/**/.vscode/
+go/**/vendor/
+go/**/*.exe
+go/**/*.test
+go/**/*.out
+go/**/coverage.out
+go/bin/
+go/pkg/
+go/build/

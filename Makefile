@@ -2,6 +2,29 @@
 	dx-setup py-venv py-install-jsonschema validate-events rust-check rust-install rust-ensure rust-version \
 	docker-build docker-up docker-down docker-logs docker-restart
 
+# --- Go targets ---
+GO       ?= go
+GO_DIR   ?= go
+
+.PHONY: go.tidy
+go.tidy:
+	cd $(GO_DIR) && $(GO) mod tidy
+
+.PHONY: go.build
+go.build:
+	cd $(GO_DIR) && $(GO) build ./...
+
+.PHONY: go.test
+go.test:
+	cd $(GO_DIR) && $(GO) test ./...
+
+.PHONY: go.run
+go.run:
+	cd $(GO_DIR) && $(GO) run ./cmd/server
+
+.PHONY: go.docker-build
+go.docker-build:
+	docker build -f $(GO_DIR)/Dockerfile -t messaging-go:dev $(GO_DIR)
 # Load local env vars from .env if present (export to all recipes)
 ifneq (,$(wildcard .env))
 include .env

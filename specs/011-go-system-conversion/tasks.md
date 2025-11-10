@@ -35,14 +35,14 @@ go/
 
 Purpose: Project initialization and basic structure.
 
-- [ ] T001 Create Go module tree at go/ (cmd/server, internal, api)
-- [ ] T002 Initialize Go module in go/go.mod
-- [ ] T003 [P] Create entrypoint in go/cmd/server/main.go (chi router stub + /healthz)
-- [ ] T004 [P] Add container build file go/Dockerfile (multi-stage build)
-- [ ] T005 [P] Add Go targets to Makefile (build/test/lint/package)
-- [ ] T006 [P] Add CI workflow for Go in .github/workflows/go.yml (build/test)
-- [ ] T007 [P] Add migration helper script bin/migrate.sh (wrap golang-migrate CLI)
-- [ ] T008 [P] Add lint configuration .golangci.yml (go vet, staticcheck, fmt)
+ - [X] T001 Create Go module tree at go/ (cmd/server, internal, api)
+ - [X] T002 Initialize Go module in go/go.mod
+ - [X] T003 [P] Create entrypoint in go/cmd/server/main.go (chi router stub + /healthz)
+ - [X] T004 [P] Add container build file go/Dockerfile (multi-stage build)
+ - [X] T005 [P] Add Go targets to Makefile (build/test/lint/package)
+ - [X] T006 [P] Add CI workflow for Go in .github/workflows/go.yml (build/test)
+ - [X] T007 [P] Add migration helper script bin/migrate.sh (wrap golang-migrate CLI)
+ - [X] T008 [P] Add lint configuration .golangci.yml (go vet, staticcheck, fmt)
 
 ---
 

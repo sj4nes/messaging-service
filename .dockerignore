@@ -28,3 +28,13 @@ __pycache__/
 # Tests and coverage
 coverage/
 *.log
+
+# Go module (new)
+go/**/vendor/
+go/**/*.exe
+go/**/*.test
+go/**/*.out
+go/**/coverage.out
+go/bin/
+go/pkg/
+go/build/
