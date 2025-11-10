@@ -8,21 +8,41 @@ import (
 	"os"
 	"strings"
 
-	"github.com/go-chi/chi/v5"
+	"github.com/prometheus/client_golang/prometheus"
+	"go.uber.org/zap"
+
+	"github.com/sj4nes/messaging-service/go/internal/config"
+	"github.com/sj4nes/messaging-service/go/internal/logging"
+	"github.com/sj4nes/messaging-service/go/internal/metrics"
+	"github.com/sj4nes/messaging-service/go/internal/server"
 )
 
 func main() {
-	r := chi.NewRouter()
+	cfg, err := config.Load()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "configuration error: %v\n", err)
+		os.Exit(2)
+	}
 
-	// Basic health endpoint
-	r.Get("/healthz", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte("ok"))
-	})
+	log, err := logging.Init(cfg.LogLevel)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "logger init failed: %v\n", err)
+		os.Exit(2)
+	}
+	defer log.Sync() // flush
 
-	addr := defaultAddr()
-	fmt.Printf("starting server on %s (set PORT env to override)\n", addr)
+	reg := metrics.NewRegistry()
+	// Example custom metric placeholder
+	requests := prometheus.NewCounter(prometheus.CounterOpts{Name: "app_startups_total", Help: "Number of application startups"})
+	_ = reg.Register(requests)
+	requests.Inc()
+
+	r := server.New()
+	r.Get(cfg.HealthPath, server.HealthHandler())
+	r.Handle(cfg.MetricsPath, reg.Handler())
+
+	addr := fmt.Sprintf(":%d", cfg.Port)
+	log.Info("starting server", zap.Int("port", cfg.Port), zap.String("health", cfg.HealthPath), zap.String("metrics", cfg.MetricsPath))
 	if err := http.ListenAndServe(addr, r); err != nil {
 		if isAddrInUse(err) {
 			fmt.Fprintf(os.Stderr, "ERROR: address %s already in use. Suggestions:\n", addr)
@@ -36,12 +56,13 @@ func main() {
 }
 
 // defaultAddr returns the listen address, using PORT env var if set.
+// (Deprecated) defaultAddr retained for compatibility but unused after config loader integration.
 func defaultAddr() string {
-	port := os.Getenv("PORT")
-	if strings.TrimSpace(port) == "" {
-		return ":8080"
-	}
-	return ":" + port
+    port := os.Getenv("PORT")
+    if strings.TrimSpace(port) == "" {
+        return ":8080"
+    }
+    return ":" + port
 }
 
 // isAddrInUse detects common 'address already in use' errors across platforms.
