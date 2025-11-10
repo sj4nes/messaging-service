@@ -8,8 +8,10 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 
 	"github.com/sj4nes/messaging-service/go/api"
@@ -59,18 +61,28 @@ func main() {
 	}
 
 	r := server.New()
-	// Core middleware
+	// Public middleware (applies to all requests before protected grouping)
 	r.Use(middleware.SecurityHeaders)
-	r.Use(middleware.RateLimit(middleware.RateLimiterConfig{RequestsPerSecond: 5, Burst: 10}))
+	r.Use(middleware.RateLimit(middleware.RateLimiterConfig{RequestsPerSecond: cfg.PublicRPS, Burst: cfg.PublicBurst}))
 
-	// Endpoints
+	// Public endpoints: health & metrics remain unauthenticated for operability
 	r.Get(cfg.HealthPath, api.HealthHandler())
 	r.Handle(cfg.MetricsPath, api.MetricsHandler(reg))
-	// Messaging API routes (User Story 1 subset)
-	api.Routes(r)
+
+	// Protected endpoints grouping (messages, conversations, webhooks)
+	server.WithProtected(r, middleware.AuthConfig{
+		Enabled:     cfg.AuthEnabled,
+		Tokens:      cfg.AuthTokens,
+		SessionTTL:  time.Duration(cfg.AuthSessionTTLSeconds) * time.Second,
+		MaxFailures: cfg.AuthMaxFailures,
+		Backoff:     time.Duration(cfg.AuthBackoffSeconds) * time.Second,
+	}, middleware.RateLimiterConfig{RequestsPerSecond: cfg.ProtectedRPS, Burst: cfg.ProtectedBurst}, func(gr chi.Router) {
+		// Messaging API routes (User Story 1 subset) - protected when auth enabled
+		api.Routes(gr)
+	})
 
 	addr := fmt.Sprintf(":%d", cfg.Port)
-	log.Info("starting server", zap.Int("port", cfg.Port), zap.String("health", cfg.HealthPath), zap.String("metrics", cfg.MetricsPath))
+	log.Info("starting server", zap.Int("port", cfg.Port), zap.String("health", cfg.HealthPath), zap.String("metrics", cfg.MetricsPath), zap.Bool("auth_enabled", cfg.AuthEnabled))
 	if err := http.ListenAndServe(addr, r); err != nil {
 		if isAddrInUse(err) {
 			fmt.Fprintf(os.Stderr, "ERROR: address %s already in use. Suggestions:\n", addr)

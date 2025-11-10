@@ -13,6 +13,22 @@ type Config struct {
 	HealthPath  string
 	LogLevel    string
 	MetricsPath string
+
+	// Security / Auth
+	AuthEnabled          bool
+	AuthTokens           []string // static shared secrets (Bearer tokens) for parity baseline
+	AuthSessionTTLSeconds int
+	AuthMaxFailures       int
+	AuthBackoffSeconds    int
+
+	// Rate limits (public vs protected)
+	PublicRPS     float64
+	PublicBurst   int
+	ProtectedRPS  float64
+	ProtectedBurst int
+
+	// SSRF allowlist hosts
+	SSRFAllowlist []string
 }
 
 func getenv(key, def string) string {
@@ -29,11 +45,69 @@ func Load() (*Config, error) {
 	if err != nil || port <= 0 {
 		return nil, fmt.Errorf("invalid PORT: %q", portStr)
 	}
+	// Auth & security
+	authEnabled := strings.EqualFold(getenv("AUTH_ENABLED", "false"), "true")
+	tokensCSV := getenv("AUTH_TOKENS", "")
+	var tokens []string
+	if tokensCSV != "" {
+		for _, t := range strings.Split(tokensCSV, ",") {
+			tt := strings.TrimSpace(t)
+			if tt != "" {
+				tokens = append(tokens, tt)
+			}
+		}
+	}
+	ttlSeconds := atoiDefault(getenv("AUTH_SESSION_TTL_SECONDS", "3600"), 3600)
+	maxFailures := atoiDefault(getenv("AUTH_MAX_FAILURES", "5"), 5)
+	backoffSeconds := atoiDefault(getenv("AUTH_BACKOFF_SECONDS", "2"), 2)
+
+	// Rate limits
+	publicRPS := atofDefault(getenv("RATE_LIMIT_PUBLIC_RPS", "5"), 5)
+	publicBurst := atoiDefault(getenv("RATE_LIMIT_PUBLIC_BURST", "10"), 10)
+	protectedRPS := atofDefault(getenv("RATE_LIMIT_PROTECTED_RPS", "2"), 2)
+	protectedBurst := atoiDefault(getenv("RATE_LIMIT_PROTECTED_BURST", "5"), 5)
+
+	// SSRF allowlist
+	allowCSV := getenv("SSRF_ALLOWLIST", "example.com")
+	var allowlist []string
+	if allowCSV != "" {
+		for _, h := range strings.Split(allowCSV, ",") {
+			hh := strings.TrimSpace(h)
+			if hh != "" {
+				allowlist = append(allowlist, hh)
+			}
+		}
+	}
+
 	cfg := &Config{
 		Port:        port,
 		HealthPath:  getenv("HEALTH_PATH", "/healthz"),
 		LogLevel:    getenv("LOG_LEVEL", "info"),
 		MetricsPath: getenv("METRICS_PATH", "/metrics"),
+		AuthEnabled: authEnabled,
+		AuthTokens:  tokens,
+		AuthSessionTTLSeconds: ttlSeconds,
+		AuthMaxFailures:       maxFailures,
+		AuthBackoffSeconds:    backoffSeconds,
+		PublicRPS:             publicRPS,
+		PublicBurst:           publicBurst,
+		ProtectedRPS:          protectedRPS,
+		ProtectedBurst:        protectedBurst,
+		SSRFAllowlist:         allowlist,
 	}
 	return cfg, nil
+}
+
+func atoiDefault(raw string, def int) int {
+	if v, err := strconv.Atoi(strings.TrimSpace(raw)); err == nil && v > 0 {
+		return v
+	}
+	return def
+}
+
+func atofDefault(raw string, def float64) float64 {
+	if v, err := strconv.ParseFloat(strings.TrimSpace(raw), 64); err == nil && v > 0 {
+		return v
+	}
+	return def
 }
