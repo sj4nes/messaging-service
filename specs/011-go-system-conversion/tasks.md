@@ -64,6 +64,18 @@ Purpose: Core infrastructure that MUST be complete before ANY user story can be 
 - [ ] T020 [P] Add circuit breaker wrapper in go/internal/resilience/breaker.go (sony/gobreaker)
 - [ ] T021 Add health and metrics endpoints in go/api/health.go and go/api/metrics.go
 - [ ] T022 Wire startup in go/cmd/server/main.go (config/logging/metrics/router/migrations)
+ - [X] T010 [P] Implement configuration loader in go/internal/config/config.go (env→struct; rate limits, headers, SSRF allowlist)
+ - [X] T011 [P] Setup router structure in go/internal/server/router.go (chi + middleware pipeline)
+ - [X] T012 [P] Implement logging init in go/internal/logging/logging.go (zap + redaction)
+ - [X] T013 [P] Implement metrics init in go/internal/metrics/metrics.go (Prometheus registry + /metrics)
+ - [X] T014 [P] Implement security headers middleware in go/internal/middleware/security_headers.go
+ - [X] T015 [P] Implement rate limiter middleware in go/internal/middleware/rate_limit.go (x/time/rate)
+ - [X] T016 [P] Implement SSRF allowlist validator in go/internal/security/egress_validator.go
+ - [X] T017 [P] Define secrets abstraction in go/internal/secrets/secrets.go (interface)
+ - [X] T019 [P] Implement dev secrets stub in go/internal/secrets/dev.go (explicitly flagged)
+ - [X] T020 [P] Add circuit breaker wrapper in go/internal/resilience/breaker.go (sony/gobreaker)
+ - [X] T021 Add health and metrics endpoints in go/api/health.go and go/api/metrics.go
+ - [X] T022 Wire startup in go/cmd/server/main.go (config/logging/metrics/router/migrations)
 
 Checkpoint: Foundation ready - user story implementation can now begin in parallel
 
