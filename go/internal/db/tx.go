@@ -7,7 +7,7 @@ type TxFunc func(ctx context.Context) error
 
 // TxManager abstracts transaction handling for repositories.
 type TxManager interface {
-    WithTx(ctx context.Context, fn TxFunc) error
+	WithTx(ctx context.Context, fn TxFunc) error
 }
 
 // NoopTxManager implements TxManager without starting a real transaction.
@@ -15,6 +15,5 @@ type TxManager interface {
 type NoopTxManager struct{}
 
 func (NoopTxManager) WithTx(ctx context.Context, fn TxFunc) error {
-    return fn(ctx)
+	return fn(ctx)
 }
- 

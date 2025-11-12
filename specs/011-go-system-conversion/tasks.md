@@ -134,13 +134,13 @@ Independent Test: Read/write flows produce identical results in controlled scena
 
 ### Implementation for User Story 4
 
-- [X] T041 [P] [US4] Add SQLC config in go/sqlc.yaml (pgx driver)
-- [X] T042 [P] [US4] Place SQL queries in go/queries/*.sql (mirror existing SQL where applicable)
-- [ ] T043 [US4] Generate SQLC code into go/internal/db/generated/
-- [ ] T044 [US4] Implement messages repository in go/internal/db/repository/messages_repository.go
-- [ ] T045 [US4] Implement conversations repository in go/internal/db/repository/conversations_repository.go
-- [ ] T046 [US4] Implement transaction helpers in go/internal/db/tx.go (semantic parity)
-- [ ] T047 [US4] Integrate repositories with handlers in go/api/messages.go and go/api/conversations.go
+ - [X] T041 [P] [US4] Add SQLC config in go/sqlc.yaml (pgx driver)
+ - [X] T042 [P] [US4] Place SQL queries in go/queries/*.sql (mirror existing SQL where applicable)
+ - [X] T043 [US4] Generate SQLC code into go/internal/db/generated/
+ - [X] T044 [US4] Implement messages repository in go/internal/db/repository/messages_repository.go
+ - [X] T045 [US4] Implement conversations repository in go/internal/db/repository/conversations_repository.go
+ - [X] T046 [US4] Implement transaction helpers in go/internal/db/tx.go (semantic parity)
+ - [X] T047 [US4] Integrate repositories with handlers in go/api/messages.go and go/api/conversations.go
 
 Checkpoint: All user stories now independently functional
 
