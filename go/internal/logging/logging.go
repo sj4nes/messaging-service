@@ -11,8 +11,8 @@ import (
 
 // Init creates a zap.Logger honoring the provided level (info, debug, warn, error)
 // and applies optional redaction controlled via env:
-//  - LOG_REDACT=true to enable redaction
-//  - LOG_REDACT_PATTERNS=regex1,regex2 to mask matches with "***"
+//   - LOG_REDACT=true to enable redaction
+//   - LOG_REDACT_PATTERNS=regex1,regex2 to mask matches with "***"
 func Init(level string) (*zap.Logger, error) {
 	lvl := strings.ToLower(strings.TrimSpace(level))
 	cfg := zap.NewProductionConfig()
@@ -52,8 +52,12 @@ func compilePatterns(csv string) []*regexp.Regexp {
 	res := make([]*regexp.Regexp, 0, len(ps))
 	for _, p := range ps {
 		p = strings.TrimSpace(p)
-		if p == "" { continue }
-		if r, err := regexp.Compile(p); err == nil { res = append(res, r) }
+		if p == "" {
+			continue
+		}
+		if r, err := regexp.Compile(p); err == nil {
+			res = append(res, r)
+		}
 	}
 	return res
 }
@@ -83,14 +87,20 @@ func (c *redactingCore) Write(ent zapcore.Entry, fields []zapcore.Field) error {
 }
 
 func (c *redactingCore) redactString(s string) string {
-	if s == "" || len(c.patterns) == 0 { return s }
+	if s == "" || len(c.patterns) == 0 {
+		return s
+	}
 	out := s
-	for _, r := range c.patterns { out = r.ReplaceAllString(out, "***") }
+	for _, r := range c.patterns {
+		out = r.ReplaceAllString(out, "***")
+	}
 	return out
 }
 
 func (c *redactingCore) redactFields(fields []zapcore.Field) []zapcore.Field {
-	if len(fields) == 0 || len(c.patterns) == 0 { return fields }
+	if len(fields) == 0 || len(c.patterns) == 0 {
+		return fields
+	}
 	redacted := make([]zapcore.Field, 0, len(fields))
 	for _, f := range fields {
 		switch f.Type {
