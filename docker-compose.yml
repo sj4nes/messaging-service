@@ -50,6 +50,7 @@ services:
       PORT: 8080
       HEALTH_PATH: /healthz
       LOG_LEVEL: info
+      INMEMORY_FALLBACK: "true"
     depends_on:
       postgres:
         condition: service_healthy

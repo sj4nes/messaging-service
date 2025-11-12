@@ -1,28 +1,28 @@
 package main
 
 import (
-	"context"
-	"errors"
-	"fmt"
-	"net"
-	"net/http"
-	"os"
-	"strings"
-	"time"
+    "context"
+    "errors"
+    "fmt"
+    "net"
+    "net/http"
+    "os"
+    "strings"
+    "time"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/prometheus/client_golang/prometheus"
-	"go.uber.org/zap"
+    "github.com/go-chi/chi/v5"
+    "github.com/jackc/pgx/v5/pgxpool"
+    "github.com/prometheus/client_golang/prometheus"
+    "go.uber.org/zap"
 
-	"github.com/sj4nes/messaging-service/go/api"
-	"github.com/sj4nes/messaging-service/go/internal/config"
-	"github.com/sj4nes/messaging-service/go/internal/db/migrate"
-	dbstore "github.com/sj4nes/messaging-service/go/internal/db/store"
-	"github.com/sj4nes/messaging-service/go/internal/logging"
-	"github.com/sj4nes/messaging-service/go/internal/metrics"
-	"github.com/sj4nes/messaging-service/go/internal/middleware"
-	"github.com/sj4nes/messaging-service/go/internal/server"
+    "github.com/sj4nes/messaging-service/go/api"
+    "github.com/sj4nes/messaging-service/go/internal/config"
+    "github.com/sj4nes/messaging-service/go/internal/db/migrate"
+    dbstore "github.com/sj4nes/messaging-service/go/internal/db/store"
+    "github.com/sj4nes/messaging-service/go/internal/logging"
+    "github.com/sj4nes/messaging-service/go/internal/metrics"
+    "github.com/sj4nes/messaging-service/go/internal/middleware"
+    "github.com/sj4nes/messaging-service/go/internal/server"
 )
 
 func main() {
@@ -40,10 +40,10 @@ func main() {
 	defer log.Sync() // flush
 
 	reg := metrics.NewRegistry()
-	// Example custom metric placeholder
-	requests := prometheus.NewCounter(prometheus.CounterOpts{Name: "app_startups_total", Help: "Number of application startups"})
-	_ = reg.Register(requests)
-	requests.Inc()
+	// Retain startup metric for observability (optional)
+	startups := prometheus.NewCounter(prometheus.CounterOpts{Name: "app_startups_total", Help: "Number of application startups"})
+	_ = reg.Register(startups)
+	startups.Inc()
 
 	// Optional migrations (dev/CI): RUN_DB_MIGRATIONS=true
 	if strings.EqualFold(os.Getenv("RUN_DB_MIGRATIONS"), "true") {
@@ -78,7 +78,7 @@ func main() {
 			log.Warn("db pool init failed; using in-memory store", zap.Error(err))
 		} else {
 			api.SetStore(dbstore.New(pool))
-			log.Info("db store enabled for conversations")
+			log.Info("db-backed store enabled", zap.Bool("messages", true), zap.Bool("conversations", true))
 			defer pool.Close()
 		}
 	}

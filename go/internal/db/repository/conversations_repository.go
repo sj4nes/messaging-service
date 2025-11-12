@@ -7,20 +7,27 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/sj4nes/messaging-service/go/api/models"
+	"github.com/sj4nes/messaging-service/go/internal/db/generated"
+	dbutil "github.com/sj4nes/messaging-service/go/internal/db/util"
 )
 
 // ConversationsRepository provides DB access for conversations.
 type ConversationsRepository struct {
 	pool *pgxpool.Pool
+	q    *generated.Queries
 }
 
 func NewConversationsRepository(pool *pgxpool.Pool) *ConversationsRepository {
-	return &ConversationsRepository{pool: pool}
+	var q *generated.Queries
+	if pool != nil {
+		q = generated.New(pool)
+	}
+	return &ConversationsRepository{pool: pool, q: q}
 }
 
 // List returns a page of conversations ordered by last activity desc.
 func (r *ConversationsRepository) List(ctx context.Context, page, size int) ([]models.ConversationDto, uint64, error) {
-	if r.pool == nil {
+	if r.pool == nil || r.q == nil {
 		return nil, 0, errors.New("pool nil")
 	}
 	if size <= 0 {
@@ -29,19 +36,23 @@ func (r *ConversationsRepository) List(ctx context.Context, page, size int) ([]m
 	if page <= 0 {
 		page = 1
 	}
-	offset := (page - 1) * size
-	rows, err := r.pool.Query(ctx, `SELECT id, key, channel, participant_a, participant_b, message_count, last_activity_at FROM conversations ORDER BY last_activity_at DESC LIMIT $1 OFFSET $2`, size, offset)
+	offset := int32((page - 1) * size)
+	limit := int32(size)
+	rows, err := r.q.ListConversations(ctx, generated.ListConversationsParams{Limit: limit, Offset: offset})
 	if err != nil {
 		return nil, 0, fmt.Errorf("query conversations: %w", err)
 	}
-	defer rows.Close()
-	var list []models.ConversationDto
-	for rows.Next() {
-		var c models.ConversationDto
-		if err := rows.Scan(&c.ID, &c.Key, &c.Channel, &c.ParticipantA, &c.ParticipantB, &c.MessageCount, &c.LastActivity); err != nil {
-			return nil, 0, fmt.Errorf("scan conversation: %w", err)
+	list := make([]models.ConversationDto, 0, len(rows))
+	for _, row := range rows {
+		c := models.ConversationDto{
+			ID:           row.ID,
+			Key:          dbutil.TextToString(row.Key),
+			Channel:      dbutil.TextToString(row.Channel),
+			ParticipantA: dbutil.TextToString(row.ParticipantA),
+			ParticipantB: dbutil.TextToString(row.ParticipantB),
+			MessageCount: uint32(row.MessageCount),
+			LastActivity: dbutil.TimeToRFC3339(row.LastActivityAt),
 		}
-		c.ID = fmt.Sprintf("%v", c.ID) // ensure string formatting if numeric
 		list = append(list, c)
 	}
 	// total count (approx) - separate query; optimize later

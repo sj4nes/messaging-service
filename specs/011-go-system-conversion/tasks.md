@@ -156,6 +156,8 @@ Purpose: Improvements that affect multiple user stories
 - [ ] T051 [P] Add metrics mapping doc in specs/011-go-system-conversion/contracts/metrics-mapping.md
 - [ ] T052 Code cleanup and refactoring across go/
 - [ ] T053 [P] Validate quickstart.md end-to-end in specs/011-go-system-conversion/quickstart.md
+ - [X] T052 Code cleanup and refactoring across go/
+ - [X] T053 [P] Validate quickstart.md end-to-end in specs/011-go-system-conversion/quickstart.md
 
 ---
 

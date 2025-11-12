@@ -158,3 +158,14 @@ FORCE_RESTART=true ./bin/test.sh
 - Address in use: set PORT to a free port (`PORT=8081 make go.run`).
 - Missing jq: install via Homebrew (`brew install jq`) or skip JSON formatting in tests.
 - Auth 401: ensure `AUTH_ENABLED=true` and `Authorization: Bearer <token>` header present.
+
+- Compose port conflict on 8080: If `make docker-up` fails to start the Go container with "address already in use", a local process is listening on 8080. Either stop the process or free the port:
+
+  ```bash
+  lsof -iTCP:8080 -sTCP:LISTEN -n -P
+  kill <PID>
+  # then re-run
+  make docker-up
+  ```
+
+  Alternatively, edit `docker-compose.yml` to map a different host port for `messaging-go` (e.g., `8081:8080`).
