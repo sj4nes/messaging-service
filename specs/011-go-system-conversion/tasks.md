@@ -134,8 +134,8 @@ Independent Test: Read/write flows produce identical results in controlled scena
 
 ### Implementation for User Story 4
 
-- [ ] T041 [P] [US4] Add SQLC config in go/sqlc.yaml (pgx driver)
-- [ ] T042 [P] [US4] Place SQL queries in go/queries/*.sql (mirror existing SQL where applicable)
+- [X] T041 [P] [US4] Add SQLC config in go/sqlc.yaml (pgx driver)
+- [X] T042 [P] [US4] Place SQL queries in go/queries/*.sql (mirror existing SQL where applicable)
 - [ ] T043 [US4] Generate SQLC code into go/internal/db/generated/
 - [ ] T044 [US4] Implement messages repository in go/internal/db/repository/messages_repository.go
 - [ ] T045 [US4] Implement conversations repository in go/internal/db/repository/conversations_repository.go

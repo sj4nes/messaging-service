@@ -1,0 +1,18 @@
+version: "2"
+sql:
+  - engine: postgresql
+    schema:
+      - ../crates/db-migrate/migrations_sqlx/0001_create_core_tables.up.sql
+      - ../crates/db-migrate/migrations_sqlx/0014_add_conversation_key_columns.up.sql
+      - ../crates/db-migrate/migrations_sqlx/0015_add_messages_conversation_fk.up.sql
+    queries:
+      - queries
+    gen:
+      go:
+        package: generated
+        out: internal/db/generated
+        sql_package: pgx/v5
+        emit_json_tags: true
+        emit_prepared_queries: false
+        emit_interface: true
+        overrides: []
