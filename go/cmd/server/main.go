@@ -81,6 +81,12 @@ func main() {
 		api.Routes(gr)
 	})
 
+	// Optional pprof endpoints (operability)
+	if cfg.PprofEnabled {
+		server.MountPprof(r, cfg.PprofPath)
+		log.Info("pprof enabled", zap.String("path", cfg.PprofPath))
+	}
+
 	addr := fmt.Sprintf(":%d", cfg.Port)
 	log.Info("starting server", zap.Int("port", cfg.Port), zap.String("health", cfg.HealthPath), zap.String("metrics", cfg.MetricsPath), zap.Bool("auth_enabled", cfg.AuthEnabled))
 	if err := http.ListenAndServe(addr, r); err != nil {

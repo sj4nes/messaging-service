@@ -29,6 +29,9 @@ type Config struct {
 
 	// SSRF allowlist hosts
 	SSRFAllowlist []string
+	// Debug / profiling
+	PprofEnabled bool
+	PprofPath    string
 }
 
 func getenv(key, def string) string {
@@ -94,6 +97,8 @@ func Load() (*Config, error) {
 		ProtectedRPS:          protectedRPS,
 		ProtectedBurst:        protectedBurst,
 		SSRFAllowlist:         allowlist,
+		PprofEnabled:          strings.EqualFold(getenv("PPROF_ENABLED", "false"), "true"),
+		PprofPath:             getenv("PPROF_PATH", "/debug/pprof"),
 	}
 	return cfg, nil
 }
