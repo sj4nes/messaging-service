@@ -11,12 +11,14 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
 
 	"github.com/sj4nes/messaging-service/go/api"
 	"github.com/sj4nes/messaging-service/go/internal/config"
 	"github.com/sj4nes/messaging-service/go/internal/db/migrate"
+	dbstore "github.com/sj4nes/messaging-service/go/internal/db/store"
 	"github.com/sj4nes/messaging-service/go/internal/logging"
 	"github.com/sj4nes/messaging-service/go/internal/metrics"
 	"github.com/sj4nes/messaging-service/go/internal/middleware"
@@ -68,6 +70,18 @@ func main() {
 	// Public endpoints: health & metrics remain unauthenticated for operability
 	r.Get(cfg.HealthPath, api.HealthHandler())
 	r.Handle(cfg.MetricsPath, api.MetricsHandler(reg))
+
+	// Optional: if DATABASE_URL is provided, initialize DB store (conversations backed by Postgres)
+	if dbURL := strings.TrimSpace(os.Getenv("DATABASE_URL")); dbURL != "" {
+		pool, err := pgxpool.New(context.Background(), dbURL)
+		if err != nil {
+			log.Warn("db pool init failed; using in-memory store", zap.Error(err))
+		} else {
+			api.SetStore(dbstore.New(pool))
+			log.Info("db store enabled for conversations")
+			defer pool.Close()
+		}
+	}
 
 	// Protected endpoints grouping (messages, conversations, webhooks)
 	server.WithProtected(r, middleware.AuthConfig{

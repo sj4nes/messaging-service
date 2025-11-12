@@ -25,6 +25,11 @@ go.run:
 .PHONY: go.docker-build
 go.docker-build:
 	docker build -f $(GO_DIR)/Dockerfile -t messaging-go:dev $(GO_DIR)
+
+.PHONY: go.sqlc
+go.sqlc:
+	@command -v sqlc >/dev/null 2>&1 || { echo "sqlc not found. Install from https://docs.sqlc.dev/" >&2; exit 1; }
+	cd $(GO_DIR) && sqlc generate
 # Load local env vars from .env if present (export to all recipes)
 ifneq (,$(wildcard .env))
 include .env

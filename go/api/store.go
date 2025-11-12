@@ -1,15 +1,15 @@
 package api
 
 import (
-    "context"
+	"context"
 
-    "github.com/sj4nes/messaging-service/go/api/models"
+	"github.com/sj4nes/messaging-service/go/api/models"
 )
 
 // StoreInterface defines minimal data access used by API handlers.
 type StoreInterface interface {
-    ListConversations(ctx context.Context, page, size int) ([]models.ConversationDto, uint64, error)
-    ListMessages(ctx context.Context, conversationID string, page, size int) ([]models.MessageDto, uint64, error)
+	ListConversations(ctx context.Context, page, size int) ([]models.ConversationDto, uint64, error)
+	ListMessages(ctx context.Context, conversationID string, page, size int) ([]models.MessageDto, uint64, error)
 }
 
 // Store is the global store used by handlers. Defaults to in-memory.
