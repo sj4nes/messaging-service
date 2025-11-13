@@ -46,14 +46,14 @@ func (r *MessagesRepository) ListByConversation(ctx context.Context, conversatio
 	if err := r.pool.QueryRow(ctx, `SELECT COUNT(*) FROM messages WHERE conversation_id=$1`, convID).Scan(&total); err != nil {
 		return nil, 0, fmt.Errorf("count messages: %w", err)
 	}
-	var offset, limit int32
-	if size == 0 {
-		offset = 0
-		limit = int32(1<<31 - 1)
-	} else {
-		offset = int32((page - 1) * size)
-		limit = int32(size)
+	if size <= 0 {
+		size = 50
 	}
+	if page <= 0 {
+		page = 1
+	}
+	offset := int32((page - 1) * size)
+	limit := int32(size)
 	rows, err := r.q.ListMessagesForConversation(ctx, generated.ListMessagesForConversationParams{ID: convID, Limit: limit, Offset: offset})
 	if err != nil {
 		return nil, 0, fmt.Errorf("query messages: %w", err)

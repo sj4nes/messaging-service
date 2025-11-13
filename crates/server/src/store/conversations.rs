@@ -71,16 +71,9 @@ pub fn list(page: u32, page_size: u32) -> (Vec<ConversationDto>, u64) {
     // Sort by last_activity_at desc
     items.sort_by(|a, b| b.last_activity_at.cmp(&a.last_activity_at));
     let total = items.len() as u64;
-    let start = if page_size == 0 {
-        0
-    } else {
-        ((page.max(1) - 1) * page_size) as usize
-    };
-    let end = if page_size == 0 {
-        items.len()
-    } else {
-        (start + page_size as usize).min(items.len())
-    };
+    let ps = if page_size == 0 { 50 } else { page_size.min(50) } as usize;
+    let start = ((page.max(1) - 1) * ps as u32) as usize;
+    let end = (start + ps).min(items.len());
     let slice = if start < end { &items[start..end] } else { &[] };
     let dtos = slice
         .iter()
@@ -116,16 +109,9 @@ pub fn list_messages(
     // Sort by timestamp asc
     msgs.sort_by(|a, b| a.timestamp.cmp(&b.timestamp));
     let total = msgs.len() as u64;
-    let start = if page_size == 0 {
-        0
-    } else {
-        ((page.max(1) - 1) * page_size) as usize
-    };
-    let end = if page_size == 0 {
-        msgs.len()
-    } else {
-        (start + page_size as usize).min(msgs.len())
-    };
+    let ps = if page_size == 0 { 50 } else { page_size.min(50) } as usize;
+    let start = ((page.max(1) - 1) * ps as u32) as usize;
+    let end = (start + ps).min(msgs.len());
     let slice = if start < end { &msgs[start..end] } else { &[] };
     let dtos = slice
         .iter()

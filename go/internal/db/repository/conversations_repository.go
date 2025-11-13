@@ -33,20 +33,19 @@ func (r *ConversationsRepository) List(ctx context.Context, page, size int) ([]m
 	if page <= 0 {
 		page = 1
 	}
-	// compute total first so we can emulate "unbounded" when size==0
+	// compute total first
 	var total uint64
 	if err := r.pool.QueryRow(ctx, `SELECT COUNT(*) FROM conversations`).Scan(&total); err != nil {
 		return nil, 0, fmt.Errorf("count conversations: %w", err)
 	}
-	var offset, limit int32
-	if size == 0 {
-		// Unbounded: ignore page and return all items; use a very large LIMIT to avoid special SQL variants
-		offset = 0
-		limit = int32(1<<31 - 1) // effectively no limit for int32
-	} else {
-		offset = int32((page - 1) * size)
-		limit = int32(size)
+	if size <= 0 {
+		size = 50
 	}
+	if page <= 0 {
+		page = 1
+	}
+	offset := int32((page - 1) * size)
+	limit := int32(size)
 	rows, err := r.q.ListConversations(ctx, generated.ListConversationsParams{Limit: limit, Offset: offset})
 	if err != nil {
 		return nil, 0, fmt.Errorf("query conversations: %w", err)

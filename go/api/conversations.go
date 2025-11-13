@@ -56,23 +56,30 @@ func parsePaging(r *http.Request, defaultPage, defaultSize int) (int, int) {
 		}
 	}
 	// Support both snake_case (page_size) and camelCase (pageSize) for consumers
+	// Policy: page size default 50; clamp to [1,50]; values <=0 become 50; values >50 become 50.
+	const maxSize = 50
 	if v := q.Get("page_size"); v != "" {
 		if n, err := strconv.Atoi(v); err == nil {
-			// Accept 0 (unbounded) or a positive value up to a sane cap
-			if n == 0 {
-				size = 0
-			} else if n > 0 && n <= 250 {
+			if n <= 0 {
+				size = maxSize
+			} else if n > maxSize {
+				size = maxSize
+			} else {
 				size = n
 			}
 		}
 	} else if v := q.Get("pageSize"); v != "" { // alias
 		if n, err := strconv.Atoi(v); err == nil {
-			if n == 0 {
-				size = 0
-			} else if n > 0 && n <= 250 {
+			if n <= 0 {
+				size = maxSize
+			} else if n > maxSize {
+				size = maxSize
+			} else {
 				size = n
 			}
 		}
+	} else {
+		size = maxSize
 	}
 	return page, size
 }

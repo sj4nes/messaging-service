@@ -21,21 +21,20 @@ pub(crate) async fn list_conversations(
     Query(paging): Query<PagingQuery>,
 ) -> (StatusCode, Json<ListResponse<ConversationDto>>) {
     let page = paging.page.unwrap_or(1);
-    let page_size = paging.page_size.unwrap_or(0);
+    // Policy: default 50, clamp to [1,50]; 0 => 50
+    let mut page_size = paging.page_size.unwrap_or(50);
+    if page_size == 0 {
+        page_size = 50;
+    }
+    if page_size > 50 {
+        page_size = 50;
+    }
     // If DB is available, read from database; else fallback to in-memory store
     let (items, total) = if let Some(pool) = state.db() {
         // Ensure base rows exist (handles fresh DB after server already running)
         crate::store_db::seed::seed_minimum_if_needed(&pool).await;
-        let limit = if page_size == 0 {
-            100
-        } else {
-            page_size as i64
-        };
-        let offset = if page_size == 0 {
-            0
-        } else {
-            ((page.max(1) - 1) * page_size) as i64
-        };
+        let limit = page_size as i64;
+        let offset = ((page.max(1) - 1) * page_size) as i64;
         match crate::store_db::conversations::list_conversations(&pool, limit, offset).await {
             Ok(rows) => {
                 let dtos: Vec<ConversationDto> = rows
@@ -90,20 +89,18 @@ pub(crate) async fn list_messages(
     Query(paging): Query<PagingQuery>,
 ) -> (StatusCode, Json<ListResponse<MessageDto>>) {
     let page = paging.page.unwrap_or(1);
-    let page_size = paging.page_size.unwrap_or(0);
+    let mut page_size = paging.page_size.unwrap_or(50);
+    if page_size == 0 {
+        page_size = 50;
+    }
+    if page_size > 50 {
+        page_size = 50;
+    }
     let snippet_len = state.snippet_len();
     let (items, total) = if let Some(pool) = state.db() {
         crate::store_db::seed::seed_minimum_if_needed(&pool).await;
-        let limit = if page_size == 0 {
-            100
-        } else {
-            page_size as i64
-        };
-        let offset = if page_size == 0 {
-            0
-        } else {
-            ((page.max(1) - 1) * page_size) as i64
-        };
+        let limit = page_size as i64;
+        let offset = ((page.max(1) - 1) * page_size) as i64;
         match id.parse::<i64>() {
             Ok(conv_id) => {
                 let mut dtos: Vec<MessageDto> = Vec::new();

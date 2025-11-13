@@ -137,13 +137,13 @@
     "assert": ".meta.page_size == 10"
   },
   {
-    "name": "Conversations pagination: pageSize=0 is unbounded in meta",
+    "name": "Conversations pagination: pageSize=0 defaults to 50",
     "method": "GET",
     "path": "/api/conversations?page=1&pageSize=0",
     "headers": [],
     "body": null,
     "expect": 200,
-    "assert": ".meta.page_size == 0"
+    "assert": ".meta.page_size == 50"
   },
   {
     "name": "List messages for conversation",

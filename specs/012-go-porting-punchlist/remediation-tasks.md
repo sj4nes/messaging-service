@@ -9,7 +9,7 @@ Generated: 2025-11-13
 | TASK-002 | GAP-002 | Decide and apply seeding strategy (eager or documented lazy) | P3 | 2h | TASK-001 (optional) | README + research updated; seed timing stable; first list call deterministic | If eager chosen, ensure idempotency guard prevents duplicates |
 | TASK-003 | GAP-003 | Provide JSON metrics shim endpoint mirroring snapshot | P3 | 3h | TASK-001 | /metrics.json returns JSON fields listed in metrics-parity.md; documented in quickstart | Avoid breaking existing Prometheus text endpoint |
 | TASK-004 | GAP-004 | Add provider breaker transition increments | P3 | 3h | - | provider_*_breaker_transitions counters increase after forced error + recovery scenario | Include test harness snippet or manual steps |
-| TASK-005 | GAP-005 | Honor pageSize query parameter & align default semantics | P2 | 5h | - | Responses reflect requested pageSize (bounded) when >0; pageSize=0 behaves as unbounded per spec; docs updated | Add regression test asserting meta.page_size equals requested value |
+| TASK-005 | GAP-005 | Honor pageSize query parameter & align default semantics | P2 | 5h | - | Responses clamp pageSize to 50; pageSize<=0 defaults to 50; docs updated | Add regression tests asserting meta.page_size reflects clamped value |
 | TASK-006 | GAP-006 | (Closed) Verification regression test for legacy id=1 fallback | P4 | 1h | - | Test proves fallback works after DB seed (non-critical) | Optional hardening task |
 
 ## Dependency Graph
@@ -35,7 +35,7 @@ Completion % = Closed / Total.
 
 ## Next Steps
 1. Confirm strategy for GAP-001 (implement vs document). Set TASK-001 status accordingly.
-2. (Done) TASK-005 executed — pagination divergence removed; tests added and passing.
+2. (Done) TASK-005 executed — pagination aligned to new policy (cap 50, 0→50); tests added and passing.
 3. Introduce `/metrics.json` (TASK-003) if JSON parity required by external tooling.
 4. Update progress dashboard after each completion.
 
