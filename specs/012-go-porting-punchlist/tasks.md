@@ -6,11 +6,11 @@
 ## Phase 1: Setup (Shared Infrastructure)
 **Purpose**: Ensure environment & baseline docs for audit exist.
 
-- [ ] T001 Create gap-inventory placeholder file specs/012-go-porting-punchlist/gap-inventory.md
-- [ ] T002 [P] Add README section referencing parity audit README.md
-- [ ] T003 [P] Verify seed initialization call exists in go/internal/db/seed/seed.go (no code change yet, inspection task)
-- [ ] T004 [P] Confirm list endpoints current serialization behavior in go/api/messages.go and go/internal/db/store/store.go
-- [ ] T005 Establish audit working notes file specs/012-go-porting-punchlist/notes.md
+- [X] T001 Create gap-inventory placeholder file specs/012-go-porting-punchlist/gap-inventory.md
+- [X] T002 [P] Add README section referencing parity audit README.md
+- [X] T003 [P] Verify seed initialization call exists in go/internal/db/seed/seed.go (no code change yet, inspection task)
+- [X] T004 [P] Confirm list endpoints current serialization behavior in go/api/messages.go and go/internal/db/store/store.go
+- [X] T005 Establish audit working notes file specs/012-go-porting-punchlist/notes.md
 
 ---
 
@@ -18,11 +18,11 @@
 **Purpose**: Baseline normalization + metrics visibility required before gap enumeration.
 
 - [ ] T006 Normalize list responses to empty arrays in go/internal/db/store/store.go
-- [ ] T007 [P] Add test assertion for empty array vs null in tests/http/tests.json
-- [ ] T008 [P] Document current metrics counters in specs/012-go-porting-punchlist/metrics-parity.md
-- [ ] T009 Add script snippet to quickstart for metrics curl specs/012-go-porting-punchlist/quickstart.md
-- [ ] T010 [P] Verify worker_processed handling and add comment clarifying simulation go/internal/metrics/metrics.go
-- [ ] T011 Confirm deterministic seed content (IDs/messages) and record in research.md (append update) specs/012-go-porting-punchlist/research.md
+- [X] T007 [P] Add test assertion for empty array vs null in tests/http/tests.json
+- [X] T008 [P] Document current metrics counters in specs/012-go-porting-punchlist/metrics-parity.md
+- [X] T009 Add script snippet to quickstart for metrics curl specs/012-go-porting-punchlist/quickstart.md
+- [X] T010 [P] Verify worker_processed handling and add comment clarifying simulation go/internal/metrics/metrics.go
+- [X] T011 Confirm deterministic seed content (IDs/messages) and record in research.md (append update) specs/012-go-porting-punchlist/research.md
 
 **Checkpoint**: Foundational parity prerequisites complete; gap audit can begin.
 

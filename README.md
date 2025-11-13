@@ -359,6 +359,29 @@ Tracing logs clearly mark provider mocking so you can distinguish real vs simula
 - `mock_config_get` / `mock_config_put` when reading/updating mock behavior
 - `mock_dispatch_attempt`, `mock_dispatch_outcome`, and `mock_breaker_transition` in the background dispatch worker
 
+### Parity Audit (Feature 012)
+
+The Go Porting Punchlist audit documents behavioral gaps between the Rust reference implementation and the Go port.
+
+Artifacts (specs/012-go-porting-punchlist/):
+- `spec.md` – feature specification
+- `plan.md` – implementation plan & phases
+- `gap-inventory.md` / `gap-inventory.json` – enumerated gaps
+- `remediation-tasks.md` – mapping (to be generated)
+- `parity-report.json` / `parity-report.md` – closure verification (post‑remediation)
+
+MVP Completion Criteria:
+1. Foundational normalization (empty array responses, seed determinism) complete.
+2. Gap inventory lists all critical & high gaps with priorities and acceptance criteria.
+
+Audit workflow example:
+```bash
+bin/test.sh                # run contract tests
+cat specs/012-go-porting-punchlist/gap-inventory.md
+```
+
+Metrics parity note: `worker_processed` counter currently provisional until async worker implemented.
+
 ## Tests
 
 Run HTTP tests:

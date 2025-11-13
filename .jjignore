@@ -45,3 +45,8 @@ go/bin/
 go/pkg/
 go/build/
 go/server
+go/.cache/
+go/**/tmp/
+go/**/testdata/
+*.bench
+*.trace

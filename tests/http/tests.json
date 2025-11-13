@@ -119,6 +119,15 @@
     "assert_max_tries": 8
   },
   {
+    "name": "List conversations returns array type",
+    "method": "GET",
+    "path": "/api/conversations",
+    "headers": [],
+    "body": null,
+    "expect": 200,
+    "assert": ".items | type == \"array\""
+  },
+  {
     "name": "List messages for conversation",
     "method": "GET",
     "path": "/api/conversations/1/messages",
@@ -128,6 +137,15 @@
     "assert": ".items | length > 0",
     "assert_poll_ms": 250,
     "assert_max_tries": 8
+  },
+  {
+    "name": "List messages returns array type",
+    "method": "GET",
+    "path": "/api/conversations/1/messages",
+    "headers": [],
+    "body": null,
+    "expect": 200,
+    "assert": ".items | type == \"array\""
   },
   {
     "name": "Idempotent SMS (first)",

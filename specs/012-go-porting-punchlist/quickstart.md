@@ -24,6 +24,26 @@ Confirm 0 failures after remediation; if list endpoints still fail, verify empty
 ### 3. Verify Metrics Parity
 Curl metrics endpoint (Go vs Rust) and confirm presence of counters (startup, worker_processed or documented absence).
 
+Example (macOS/Linux, requires jq):
+
+```
+BASE_URL=${BASE_URL:-http://localhost:8080}
+curl -sS -H 'Accept: application/json' "$BASE_URL/metrics" | jq '{
+	ts_unix_ms,
+	rate_limited,
+	breaker_open,
+	dispatch_attempts,
+	dispatch_success,
+	provider_sms_mms_attempts,
+	provider_email_attempts,
+	worker_processed
+}'
+```
+
+Notes:
+- If `worker_processed` remains 0 locally, that likely means the inbound DB worker is disabled (no DATABASE_URL). This is expected; the test runner treats the wait as best-effort.
+- If the Go port exposes Prometheus text instead of JSON, use `curl .../metrics | grep` to spot counters or provide a JSON shim for the audit.
+
 ### 4. Generate Closure Report
 Create JSON matching `parity-report.schema.json` with counts; criticalRemaining must be 0.
 
