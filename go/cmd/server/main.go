@@ -1,28 +1,28 @@
 package main
 
 import (
-    "context"
-    "errors"
-    "fmt"
-    "net"
-    "net/http"
-    "os"
-    "strings"
-    "time"
+	"context"
+	"errors"
+	"fmt"
+	"net"
+	"net/http"
+	"os"
+	"strings"
+	"time"
 
-    "github.com/go-chi/chi/v5"
-    "github.com/jackc/pgx/v5/pgxpool"
-    "github.com/prometheus/client_golang/prometheus"
-    "go.uber.org/zap"
+	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/prometheus/client_golang/prometheus"
+	"go.uber.org/zap"
 
-    "github.com/sj4nes/messaging-service/go/api"
-    "github.com/sj4nes/messaging-service/go/internal/config"
-    "github.com/sj4nes/messaging-service/go/internal/db/migrate"
-    dbstore "github.com/sj4nes/messaging-service/go/internal/db/store"
-    "github.com/sj4nes/messaging-service/go/internal/logging"
-    "github.com/sj4nes/messaging-service/go/internal/metrics"
-    "github.com/sj4nes/messaging-service/go/internal/middleware"
-    "github.com/sj4nes/messaging-service/go/internal/server"
+	"github.com/sj4nes/messaging-service/go/api"
+	"github.com/sj4nes/messaging-service/go/internal/config"
+	"github.com/sj4nes/messaging-service/go/internal/db/migrate"
+	dbstore "github.com/sj4nes/messaging-service/go/internal/db/store"
+	"github.com/sj4nes/messaging-service/go/internal/logging"
+	"github.com/sj4nes/messaging-service/go/internal/metrics"
+	"github.com/sj4nes/messaging-service/go/internal/middleware"
+	"github.com/sj4nes/messaging-service/go/internal/server"
 )
 
 func main() {

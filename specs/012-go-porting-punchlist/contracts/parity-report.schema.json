@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "parity-report.schema.json",
+  "title": "ParityReport",
+  "type": "object",
+  "properties": {
+    "id": { "type": "string", "pattern": "^REPORT-[0-9]{8}$" },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "totalGaps": { "type": "integer", "minimum": 0 },
+    "closedGaps": { "type": "integer", "minimum": 0 },
+    "openGaps": { "type": "integer", "minimum": 0 },
+    "deferredGaps": { "type": "integer", "minimum": 0 },
+    "criticalRemaining": { "type": "integer", "minimum": 0 },
+    "summary": { "type": "string" },
+    "notes": { "type": "string" }
+  },
+  "required": ["id", "generatedAt", "totalGaps", "closedGaps", "openGaps", "deferredGaps", "criticalRemaining"],
+  "additionalProperties": false
+}

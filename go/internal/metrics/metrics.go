@@ -10,9 +10,9 @@ import (
 
 // Registry exposes a prometheus registry for custom metric registration.
 type Registry struct {
-	reg *prometheus.Registry
+	reg             *prometheus.Registry
 	workerProcessed prometheus.Counter
-	started int64 // gauge-like via atomic load for quick introspection if needed
+	started         int64 // gauge-like via atomic load for quick introspection if needed
 }
 
 func NewRegistry() *Registry {
@@ -36,4 +36,3 @@ func (r *Registry) Register(c prometheus.Collector) error {
 
 // IncWorkerProcessed increments the worker_processed counter.
 func (r *Registry) IncWorkerProcessed() { r.workerProcessed.Inc() }
-

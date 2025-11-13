@@ -12,6 +12,8 @@ Auto-generated from all feature plans. Last updated: 2025-11-05
 - Rust 1.75 (stable toolchain) + Axum (HTTP), Tokio (async), SQLx (PostgreSQL), Serde (serialization), Tracing (observability) (009-conversation-persistence)
 - PostgreSQL (durable conversations/messages); in-memory only for fallback when DB unavailable (009-conversation-persistence)
 - Rust (stable, 1.83+ confirmed via rust:slim image) (010-owasp-hardening)
+- Go 1.22+ (port) & Rust 1.83 (reference) – audit spans both, deliverables in Go docs/specs. + Go: chi (HTTP), pgx/sqlc (DB), zap (logging), Prometheus client (metrics); Rust: Axum, SQLx, Tracing (reference only). (012-go-porting-punchlist)
+- PostgreSQL primary (persistence), in-memory fallback (Go) for empty/failed cases; seed logic ensures baseline data. (012-go-porting-punchlist)
 
 - Bash (POSIX-compatible) + Jujutsu CLI (`jj`), Git CLI (`git`) (001-jujutsu-scm-support)
 
@@ -31,9 +33,9 @@ tests/
 Bash (POSIX-compatible): Follow standard conventions
 
 ## Recent Changes
+- 012-go-porting-punchlist: Added Go 1.22+ (port) & Rust 1.83 (reference) – audit spans both, deliverables in Go docs/specs. + Go: chi (HTTP), pgx/sqlc (DB), zap (logging), Prometheus client (metrics); Rust: Axum, SQLx, Tracing (reference only).
 - 010-owasp-hardening: Added Rust (stable, 1.83+ confirmed via rust:slim image)
 - 009-conversation-persistence: Added Rust 1.75 (stable toolchain) + Axum (HTTP), Tokio (async), SQLx (PostgreSQL), Serde (serialization), Tracing (observability)
-- 008-provider-routing-by-channel: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
 
 
 <!-- MANUAL ADDITIONS START -->

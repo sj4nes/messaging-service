@@ -13,17 +13,19 @@ import (
 
 // Store implements api.StoreInterface backed by PostgreSQL repositories.
 type Store struct {
-	pool           *pgxpool.Pool
-	conv           *repository.ConversationsRepository
-	msgs           *repository.MessagesRepository
+	pool            *pgxpool.Pool
+	conv            *repository.ConversationsRepository
+	msgs            *repository.MessagesRepository
 	fallbackEnabled bool
-	mem            api.StoreInterface // in-memory fallback
+	mem             api.StoreInterface // in-memory fallback
 }
 
 func New(pool *pgxpool.Pool) *Store {
 	fb := false
 	if v := os.Getenv("INMEMORY_FALLBACK"); v != "" {
-		if v == "1" || v == "true" || v == "TRUE" { fb = true }
+		if v == "1" || v == "true" || v == "TRUE" {
+			fb = true
+		}
 	}
 	return &Store{
 		pool:            pool,
@@ -67,10 +69,14 @@ func (s *Store) ListMessages(ctx context.Context, conversationID string, page, s
 	}
 	if (err != nil || len(msgs) == 0) && s.fallbackEnabled {
 		fbMsgs, fbTotal, fbErr := s.mem.ListMessages(ctx, conversationID, page, size)
-		if fbMsgs == nil { fbMsgs = []models.MessageDto{} }
+		if fbMsgs == nil {
+			fbMsgs = []models.MessageDto{}
+		}
 		return fbMsgs, fbTotal, fbErr
 	}
-	if msgs == nil { msgs = []models.MessageDto{} }
+	if msgs == nil {
+		msgs = []models.MessageDto{}
+	}
 	return msgs, total, err
 }
 

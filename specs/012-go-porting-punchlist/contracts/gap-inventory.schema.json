@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "gap-inventory.schema.json",
+  "title": "GapInventory",
+  "type": "object",
+  "properties": {
+    "gaps": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/GapItem" }
+    },
+    "generatedAt": { "type": "string", "format": "date-time" }
+  },
+  "required": ["gaps", "generatedAt"],
+  "definitions": {
+    "GapItem": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^GAP-[0-9]{3}$" },
+        "category": { "type": "string", "enum": ["Functional", "Data", "Observability", "Operability"] },
+        "priority": { "type": "string", "enum": ["Critical", "High", "Medium", "Low"] },
+        "expectedBehavior": { "type": "string" },
+        "actualBehavior": { "type": "string" },
+        "reproductionSteps": { "type": "string" },
+        "acceptanceCriteria": { "type": "string" },
+        "status": { "type": "string", "enum": ["Open", "InProgress", "Closed", "Deferred"] },
+        "tasks": { "type": "array", "items": { "type": "string", "pattern": "^TASK-[0-9]{3}$" } },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "category", "priority", "expectedBehavior", "actualBehavior", "status"],
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

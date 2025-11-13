@@ -1,11 +1,11 @@
 package api
 
 import (
-    "encoding/json"
-    "net/http"
-    "strings"
+	"encoding/json"
+	"net/http"
+	"strings"
 
-    "github.com/sj4nes/messaging-service/go/api/models"
+	"github.com/sj4nes/messaging-service/go/api/models"
 )
 
 func webhookSmsHandler(w http.ResponseWriter, r *http.Request) {
@@ -32,7 +32,9 @@ func webhookSmsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
 	_ = json.NewEncoder(w).Encode(models.Accepted{Status: "accepted"})
-	if reg := metricsFromContext(r); reg != nil { reg.IncWorkerProcessed() }
+	if reg := metricsFromContext(r); reg != nil {
+		reg.IncWorkerProcessed()
+	}
 }
 
 func webhookEmailHandler(w http.ResponseWriter, r *http.Request) {
@@ -52,5 +54,7 @@ func webhookEmailHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
 	_ = json.NewEncoder(w).Encode(models.Accepted{Status: "accepted"})
-	if reg := metricsFromContext(r); reg != nil { reg.IncWorkerProcessed() }
+	if reg := metricsFromContext(r); reg != nil {
+		reg.IncWorkerProcessed()
+	}
 }
