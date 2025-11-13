@@ -233,13 +233,94 @@ get_next_number_for_short_name() {
     echo $((max_num + 1))
 }
 
-# Determine branch number
+get_next_global_number() {
+    # Returns next global feature number ignoring short name.
+    local max_num=0
+
+    # JJ bookmarks
+    if [ "$HAS_JJ" = true ]; then
+        local jj_list
+        if jj bookmark list -T '{name}\n' >/dev/null 2>&1; then
+            jj_list=$(jj bookmark list -T '{name}\n' 2>/dev/null)
+        else
+            jj_list=$(jj bookmark list 2>/dev/null | awk '{print $1}')
+        fi
+        while IFS= read -r line; do
+            local num
+            num=$(echo "$line" | grep -E '^[0-9]{3}-' | sed 's/-.*//') || true
+            if [ -n "$num" ] && [ "$num" -gt "$max_num" ]; then max_num=$num; fi
+        done <<<"$jj_list"
+    fi
+
+    # Git remote branches
+    if [ "$HAS_GIT" = true ]; then
+        local remote
+        remote=$(git ls-remote --heads origin 2>/dev/null | grep -E 'refs/heads/[0-9]{3}-' | sed 's#.*/##') || true
+        while IFS= read -r line; do
+            local num
+            num=$(echo "$line" | sed 's/-.*//' )
+            if [ -n "$num" ] && [ "$num" -gt "$max_num" ]; then max_num=$num; fi
+        done <<<"$remote"
+
+        # Git local branches
+        local localb
+        localb=$(git branch 2>/dev/null | sed 's/^[* ]*//' | grep -E '^[0-9]{3}-') || true
+        while IFS= read -r line; do
+            local num
+            num=$(echo "$line" | sed 's/-.*//')
+            if [ -n "$num" ] && [ "$num" -gt "$max_num" ]; then max_num=$num; fi
+        done <<<"$localb"
+    fi
+
+    # Specs directories
+    if [ -d "$SPECS_DIR" ]; then
+        local specs
+        specs=$(find "$SPECS_DIR" -maxdepth 1 -type d -name '[0-9][0-9][0-9]-*' -exec basename {} \; 2>/dev/null) || true
+        while IFS= read -r line; do
+            local num
+            num=$(echo "$line" | sed 's/-.*//')
+            if [ -n "$num" ] && [ "$num" -gt "$max_num" ]; then max_num=$num; fi
+        done <<<"$specs"
+    fi
+
+    echo $((max_num + 1))
+}
+
+# Determine branch number (global, ignores short name)
 if [ -z "$BRANCH_NUMBER" ]; then
-    BRANCH_NUMBER=$(get_next_number_for_short_name "$BRANCH_SUFFIX")
+    BRANCH_NUMBER=$(get_next_global_number)
 fi
 
 FEATURE_NUM=$(printf "%03d" "$BRANCH_NUMBER")
 BRANCH_NAME="${FEATURE_NUM}-${BRANCH_SUFFIX}"
+
+# Safety: auto-increment if branch/bookmark/spec directory already exists.
+collision_exists() {
+    local name="$1"
+    # JJ bookmark
+    if [ "$HAS_JJ" = true ] && jj bookmark list 2>/dev/null | awk '{print $1}' | grep -q "^${name}$"; then return 0; fi
+    # Git local branch
+    if [ "$HAS_GIT" = true ] && git branch 2>/dev/null | sed 's/^[* ]*//' | grep -q "^${name}$"; then return 0; fi
+    # Git remote branch
+    if [ "$HAS_GIT" = true ] && git ls-remote --heads origin 2>/dev/null | awk '{print $2}' | sed 's#refs/heads/##' | grep -q "^${name}$"; then return 0; fi
+    # Spec directory
+    if [ -d "$SPECS_DIR/${name}" ]; then return 0; fi
+    return 1
+}
+
+loop_guard=0
+while ! collision_exists "$BRANCH_NAME"; do
+    break # no collision, exit loop
+done
+while collision_exists "$BRANCH_NAME"; do
+    loop_guard=$((loop_guard+1))
+    if [ $loop_guard -gt 50 ]; then
+        >&2 echo "[specify] ERROR: collision avoidance exceeded 50 iterations; aborting."; exit 1
+    fi
+    BRANCH_NUMBER=$((BRANCH_NUMBER+1))
+    FEATURE_NUM=$(printf "%03d" "$BRANCH_NUMBER")
+    BRANCH_NAME="${FEATURE_NUM}-${BRANCH_SUFFIX}"
+done
 
 # GitHub enforces a 244-byte limit on branch names
 # Validate and truncate if necessary
