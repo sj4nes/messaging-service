@@ -32,9 +32,6 @@ func (r *MessagesRepository) ListByConversation(ctx context.Context, conversatio
 	if r.pool == nil || r.q == nil {
 		return nil, 0, errors.New("pool nil")
 	}
-	if size <= 0 {
-		size = 50
-	}
 	if page <= 0 {
 		page = 1
 	}
@@ -44,8 +41,19 @@ func (r *MessagesRepository) ListByConversation(ctx context.Context, conversatio
 		// Non-numeric IDs unsupported in DB mode; return empty without error for parity.
 		return []models.MessageDto{}, 0, nil
 	}
-	offset := int32((page - 1) * size)
-	limit := int32(size)
+	// total count
+	var total uint64
+	if err := r.pool.QueryRow(ctx, `SELECT COUNT(*) FROM messages WHERE conversation_id=$1`, convID).Scan(&total); err != nil {
+		return nil, 0, fmt.Errorf("count messages: %w", err)
+	}
+	var offset, limit int32
+	if size == 0 {
+		offset = 0
+		limit = int32(1<<31 - 1)
+	} else {
+		offset = int32((page - 1) * size)
+		limit = int32(size)
+	}
 	rows, err := r.q.ListMessagesForConversation(ctx, generated.ListMessagesForConversationParams{ID: convID, Limit: limit, Offset: offset})
 	if err != nil {
 		return nil, 0, fmt.Errorf("query messages: %w", err)
@@ -63,11 +71,6 @@ func (r *MessagesRepository) ListByConversation(ctx context.Context, conversatio
 			Timestamp: dbutil.TimeToRFC3339(row.Timestamp),
 		}
 		msgs = append(msgs, m)
-	}
-	// total count
-	var total uint64
-	if err := r.pool.QueryRow(ctx, `SELECT COUNT(*) FROM messages WHERE conversation_id=$1`, convID).Scan(&total); err != nil {
-		return nil, 0, fmt.Errorf("count messages: %w", err)
 	}
 	return msgs, total, nil
 }

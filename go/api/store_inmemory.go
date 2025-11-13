@@ -32,6 +32,10 @@ var (
 
 func (s *InMemoryStore) ListConversations(ctx context.Context, page, size int) ([]models.ConversationDto, uint64, error) {
 	total := uint64(len(imConversations))
+	// pageSize=0 means unbounded (return all)
+	if size == 0 {
+		return imConversations, total, nil
+	}
 	start := (page - 1) * size
 	if start > len(imConversations) {
 		start = len(imConversations)
@@ -49,6 +53,9 @@ func (s *InMemoryStore) ListMessages(ctx context.Context, conversationID string,
 		msgs = []models.MessageDto{}
 	}
 	total := uint64(len(msgs))
+	if size == 0 {
+		return msgs, total, nil
+	}
 	start := (page - 1) * size
 	if start > len(msgs) {
 		start = len(msgs)

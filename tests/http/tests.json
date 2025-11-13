@@ -128,6 +128,24 @@
     "assert": ".items | type == \"array\""
   },
   {
+    "name": "Conversations pagination: pageSize reflects in meta (bounded)",
+    "method": "GET",
+    "path": "/api/conversations?page=1&pageSize=10",
+    "headers": [],
+    "body": null,
+    "expect": 200,
+    "assert": ".meta.page_size == 10"
+  },
+  {
+    "name": "Conversations pagination: pageSize=0 is unbounded in meta",
+    "method": "GET",
+    "path": "/api/conversations?page=1&pageSize=0",
+    "headers": [],
+    "body": null,
+    "expect": 200,
+    "assert": ".meta.page_size == 0"
+  },
+  {
     "name": "List messages for conversation",
     "method": "GET",
     "path": "/api/conversations/1/messages",

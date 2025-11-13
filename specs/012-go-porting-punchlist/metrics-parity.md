@@ -2,9 +2,10 @@
 
 This document tracks current metrics fields exposed by the Rust reference server and the expected status for the Go port.
 
-Endpoint: GET /metrics (JSON)
+Endpoint: GET /metrics
 
-- Note: The test runner polls /metrics and attempts to parse JSON. If the Go port uses Prometheus text format, document that and provide a separate JSON shim or adjust the test harness accordingly.
+- Rust: JSON snapshot endpoint used by tests and docs.
+- Go: Prometheus text exposition (observed headers: `Content-Type: text/plain; version=0.0.4; ...`). Provide a JSON shim or update docs/tests when consuming.
 
 ## Fields (Rust reference)
 
@@ -22,10 +23,10 @@ Endpoint: GET /metrics (JSON)
 
 ## Go Port Status (initial)
 
-- Format: If Go uses Prometheus client, either:
-  - provide a JSON endpoint mirroring these fields for tests, or
-  - adapt the test harness to parse text exposition and extract counters.
-- worker_processed: If no inbound DB worker is implemented yet in Go, keep counter at 0 and document absence. Don’t simulate increments to avoid misleading observability.
+- Format: Prometheus text exposition present. Options:
+  - Provide a parallel JSON endpoint mirroring these fields for compatibility with JSON-based tooling; or
+  - Adapt consumers to parse Prometheus text when hitting the Go service.
+- worker_processed: Currently simulated in Go by incrementing within synchronous sms/email handlers. This is provisional; update to real async worker increments or remove simulation before parity closure.
 - conversations_*: If Go uses an in-memory fallback initially, expose zeros and document parity plan for DB-backed metrics.
 
 ## Parity Guidance

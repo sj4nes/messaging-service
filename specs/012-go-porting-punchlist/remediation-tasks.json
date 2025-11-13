@@ -1,0 +1,65 @@
+{
+  "generatedAt": "2025-11-13T00:00:00Z",
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "gap": "GAP-001",
+      "title": "Document simulated worker_processed increments and add TODO for real worker",
+      "priority": "P2",
+      "estimateHours": 1,
+      "dependencies": [],
+      "acceptance": "Gap inventory & metrics-parity updated with explicit note; status Closed",
+      "status": "Closed"
+    },
+    {
+      "id": "TASK-002",
+      "gap": "GAP-002",
+      "title": "Decide and apply seeding strategy (eager or documented lazy)",
+      "priority": "P3",
+      "estimateHours": 2,
+      "dependencies": ["TASK-001"],
+      "acceptance": "README + research updated; first list deterministic",
+      "status": "Open"
+    },
+    {
+      "id": "TASK-003",
+      "gap": "GAP-003",
+      "title": "Provide JSON metrics shim endpoint",
+      "priority": "P3",
+      "estimateHours": 3,
+      "dependencies": ["TASK-001"],
+      "acceptance": "JSON endpoint returns parity fields; existing Prometheus text retained",
+      "status": "Open"
+    },
+    {
+      "id": "TASK-004",
+      "gap": "GAP-004",
+      "title": "Add provider breaker transition increments",
+      "priority": "P3",
+      "estimateHours": 3,
+      "dependencies": [],
+      "acceptance": "provider_*_breaker_transitions counters increment on forced open/close",
+      "status": "Open"
+    },
+    {
+      "id": "TASK-005",
+      "gap": "GAP-005",
+      "title": "Honor pageSize query parameter & align defaults",
+      "priority": "P2",
+      "estimateHours": 5,
+      "dependencies": [],
+      "acceptance": "meta.page_size reflects query; pageSize=0 unbounded; regression tests added",
+      "status": "Open"
+    },
+    {
+      "id": "TASK-006",
+      "gap": "GAP-006",
+      "title": "Legacy id=1 fallback regression test (optional hardening)",
+      "priority": "P4",
+      "estimateHours": 1,
+      "dependencies": [],
+      "acceptance": "Test demonstrates fallback operates after DB seed",
+      "status": "Closed"
+    }
+  ]
+}

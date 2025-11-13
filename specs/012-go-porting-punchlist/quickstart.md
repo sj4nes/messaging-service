@@ -59,3 +59,18 @@ Share report in PR; obtain approvals referencing Constitution gates.
 
 ## Next Steps
 Proceed to `/speckit.tasks` to create actionable remediation tasks.
+
+## Validation Utilities
+
+- Validate gap inventory JSON against schema:
+
+```
+make py-install-jsonschema
+python specs/012-go-porting-punchlist/contracts/validate_gap_inventory.py
+```
+
+- Optional: Re-run API contract tests (Go app via Docker on :8080):
+
+```
+METRICS_WAIT=0 START_SERVER=false ./bin/test.sh
+```

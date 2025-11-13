@@ -33,15 +33,15 @@
 **Independent Test**: gap-inventory.md lists categorized gaps with unique IDs and required fields; reviewable without implementing fixes.
 
 ### Implementation
-- [ ] T012 [P] [US1] Enumerate functional gaps (API responses) in specs/012-go-porting-punchlist/gap-inventory.md
-- [ ] T013 [P] [US1] Enumerate data gaps (seeding/persistence) in specs/012-go-porting-punchlist/gap-inventory.md
-- [ ] T014 [P] [US1] Enumerate observability gaps (metrics/logs) in specs/012-go-porting-punchlist/gap-inventory.md
-- [ ] T015 [P] [US1] Enumerate operability gaps (startup, fallback flags) in specs/012-go-porting-punchlist/gap-inventory.md
-- [ ] T016 [US1] Assign priority & impact category to each gap specs/012-go-porting-punchlist/gap-inventory.md
-- [ ] T017 [US1] Add reproduction steps & expected vs actual behavior specs/012-go-porting-punchlist/gap-inventory.md
-- [ ] T018 [US1] Create JSON export matching gap-inventory.schema.json specs/012-go-porting-punchlist/gap-inventory.json
-- [ ] T019 [US1] Validate JSON against schema using local validator script (add instructions) specs/012-go-porting-punchlist/quickstart.md
-- [ ] T020 [US1] Add acceptance criteria per gap specs/012-go-porting-punchlist/gap-inventory.md
+- [X] T012 [P] [US1] Enumerate functional gaps (API responses) in specs/012-go-porting-punchlist/gap-inventory.md
+- [X] T013 [P] [US1] Enumerate data gaps (seeding/persistence) in specs/012-go-porting-punchlist/gap-inventory.md
+- [X] T014 [P] [US1] Enumerate observability gaps (metrics/logs) in specs/012-go-porting-punchlist/gap-inventory.md
+- [X] T015 [P] [US1] Enumerate operability gaps (startup, fallback flags) in specs/012-go-porting-punchlist/gap-inventory.md
+- [X] T016 [US1] Assign priority & impact category to each gap specs/012-go-porting-punchlist/gap-inventory.md
+- [X] T017 [US1] Add reproduction steps & expected vs actual behavior specs/012-go-porting-punchlist/gap-inventory.md
+- [X] T018 [US1] Create JSON export matching gap-inventory.schema.json specs/012-go-porting-punchlist/gap-inventory.json
+- [X] T019 [US1] Validate JSON against schema using local validator script (add instructions) specs/012-go-porting-punchlist/quickstart.md
+- [X] T020 [US1] Add acceptance criteria per gap specs/012-go-porting-punchlist/gap-inventory.md
 
 **Checkpoint**: gap-inventory artifacts ready (markdown + JSON).
 
@@ -52,13 +52,13 @@
 **Independent Test**: tasks mapping file exists with one TASK per gap and acceptance criteria; independent of fixes.
 
 ### Implementation
-- [ ] T021 [P] [US2] Create remediation mapping file specs/012-go-porting-punchlist/remediation-tasks.md
-- [ ] T022 [P] [US2] Generate TASK-### IDs aligned to GAP-### items specs/012-go-porting-punchlist/remediation-tasks.md
-- [ ] T023 [US2] Add estimates and priority alignment specs/012-go-porting-punchlist/remediation-tasks.md
-- [ ] T024 [US2] Define dependency graph (which tasks can run parallel) specs/012-go-porting-punchlist/remediation-tasks.md
-- [ ] T025 [US2] Link acceptance criteria from gaps to tasks specs/012-go-porting-punchlist/remediation-tasks.md
-- [ ] T026 [US2] Produce progress dashboard snippet (counts, percentages) specs/012-go-porting-punchlist/remediation-tasks.md
-- [ ] T027 [P] [US2] Export tasks to JSON for tooling specs/012-go-porting-punchlist/remediation-tasks.json
+- [X] T021 [P] [US2] Create remediation mapping file specs/012-go-porting-punchlist/remediation-tasks.md
+- [X] T022 [P] [US2] Generate TASK-### IDs aligned to GAP-### items specs/012-go-porting-punchlist/remediation-tasks.md
+- [X] T023 [US2] Add estimates and priority alignment specs/012-go-porting-punchlist/remediation-tasks.md
+- [X] T024 [US2] Define dependency graph (which tasks can run parallel) specs/012-go-porting-punchlist/remediation-tasks.md
+- [X] T025 [US2] Link acceptance criteria from gaps to tasks specs/012-go-porting-punchlist/remediation-tasks.md
+- [X] T026 [US2] Produce progress dashboard snippet (counts, percentages) specs/012-go-porting-punchlist/remediation-tasks.md
+- [X] T027 [P] [US2] Export tasks to JSON for tooling specs/012-go-porting-punchlist/remediation-tasks.json
 
 **Checkpoint**: Remediation tasks fully defined.
 
