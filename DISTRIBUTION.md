@@ -72,7 +72,7 @@ curl http://localhost:8080/healthz
 # Expected: {"status":"healthy"}
 
 # 5. Run tests
-docker-compose exec messaging-server cargo test
+docker-compose exec messaging-rust cargo test
 ```
 
 That's it! The system is now running with:
@@ -117,10 +117,10 @@ docker-compose down -v
 docker-compose up --build
 
 # Run HTTP tests
-docker-compose exec messaging-server /bin/bash -c "cd /build && ./bin/test.sh"
+docker-compose exec messaging-rust /bin/bash -c "cd /build && ./bin/test.sh"
 
 # Check migration status
-docker-compose exec messaging-server cargo run -p db-migrate -- status
+docker-compose exec messaging-rust cargo run -p db-migrate -- status
 ```
 
 ### Architecture Overview
@@ -136,7 +136,7 @@ messaging-service/
 │   ├── contract/       # API contract tests
 │   └── unit/           # Unit tests
 ├── Dockerfile          # Multi-stage Rust build
-└── docker-compose.yml  # PostgreSQL + messaging-server
+└── docker-compose.yml  # PostgreSQL + messaging-rust
 ```
 
 ### Environment Variables
@@ -166,7 +166,7 @@ A: This should not happen in containerized mode. If using local development, ins
 
 **Q: Tests fail with "database does not exist"**  
 A: Migrations may not have run. Apply manually:  
-`docker-compose exec messaging-server cargo run -p db-migrate -- apply`
+`docker-compose exec messaging-rust cargo run -p db-migrate -- apply`
 
 **Q: How do I see what migrations have been applied?**  
 A: `docker-compose exec postgres psql -U messaging_user -d messaging_service -c "SELECT * FROM _sqlx_migrations;"`
@@ -180,7 +180,7 @@ Expected performance (local development MacBook Pro M1):
 
 Run load tests:
 ```bash
-docker-compose exec messaging-server cargo test --test load_report -- --nocapture
+docker-compose exec messaging-rust cargo test --test load_report -- --nocapture
 ```
 
 ### Support

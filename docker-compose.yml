@@ -19,11 +19,11 @@ services:
     networks:
       - messaging-net
 
-  messaging-server:
+  messaging-rust:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: messaging-service-app
+    container_name: messaging-rust-app
     ports:
       - "8083:8080"
     environment:

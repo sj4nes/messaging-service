@@ -61,7 +61,7 @@ Before running this project, ensure you have the following installed:
    ```bash
    make test
    # or for containerized:
-   docker-compose exec messaging-server cargo test
+    docker-compose exec messaging-rust cargo test
    ```
 
 ## Guidelines
