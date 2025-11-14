@@ -8,15 +8,15 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/sj4nes/messaging-service/go/internal/config"
 	"github.com/sj4nes/messaging-service/go/internal/db/repository"
 	"github.com/sj4nes/messaging-service/go/internal/metrics"
-	"github.com/sj4nes/messaging-service/go/internal/config"
 	"github.com/sj4nes/messaging-service/go/internal/providers"
 	mockprov "github.com/sj4nes/messaging-service/go/internal/providers/mock"
 	"github.com/sj4nes/messaging-service/go/internal/queue"
 	qmemory "github.com/sj4nes/messaging-service/go/internal/queue/memory"
-	"github.com/sj4nes/messaging-service/go/internal/state"
 	"github.com/sj4nes/messaging-service/go/internal/resilience"
+	"github.com/sj4nes/messaging-service/go/internal/state"
 	"github.com/sj4nes/messaging-service/go/internal/worker"
 )
 

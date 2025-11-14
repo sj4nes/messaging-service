@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/sj4nes/messaging-service/go/internal/providers"
 	"github.com/sj4nes/messaging-service/go/internal/config"
+	"github.com/sj4nes/messaging-service/go/internal/providers"
 )
 
 type SmsMmsProvider struct{ cfg *config.Config }

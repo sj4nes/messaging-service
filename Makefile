@@ -1,5 +1,6 @@
 .PHONY: setup run test clean help db-up db-down db-logs db-shell build db-reset migrate-status migrate-reset-history \
 	dx-setup py-venv py-install-jsonschema validate-events rust-check rust-install rust-ensure rust-version \
+	prereqs-check prereqs-install \
 	docker-build docker-up docker-down docker-logs docker-restart go.tidy go.build go.test go.run go.docker-build go.sqlc lint lint-shell update-agent-context
 
 .DEFAULT_GOAL := help
@@ -71,6 +72,8 @@ help:
 	@echo "  validate-events      - Validate event examples against the envelope schema (uses .venv)"
 	@echo "  py-venv              - Create Python virtual environment at .venv (and upgrade pip)"
 	@echo "  py-install-jsonschema- Install/upgrade jsonschema in the .venv"
+	@echo "  prereqs-check        - Check required developer tools are installed"
+	@echo "  prereqs-install      - Install developer tools (macOS/Homebrew)"
 	@echo "  rust-check           - Check that cargo is installed and print cargo version"
 	@echo "  rust-install         - Install Rust toolchain via rustup (non-interactive)"
 	@echo "  rust-ensure          - Ensure Rust toolchain is available (installs if missing)"
@@ -135,9 +138,9 @@ lint:
 
 .PHONY: migrate-apply migrate-new
 migrate-apply:
-	@echo "Applying migrations..."
+	@echo "Applying migrations via Go migrate helper..."
 	@[ -n "$$DATABASE_URL" ] || { echo "DATABASE_URL not set (hint: copy .env.example to .env or set it inline)" >&2; exit 1; }
-	@cargo run -p db-migrate -- apply
+	@cd $(GO_DIR) && MIGRATIONS_DIR="../crates/db-migrate/migrations_sqlx" DATABASE_URL="$$DATABASE_URL" $(GO) run ./cmd/migrate
 
 # Usage: make migrate-new NAME=add_customers_table
 migrate-new:
@@ -214,11 +217,40 @@ py-venv:
 	@.venv/bin/python -m pip install --upgrade pip >/dev/null
 	@echo "Python venv ready: .venv"
 
+
+.PHONY: prereqs-check prereqs-install FORCE
+prereqs-check: FORCE
+		@echo "Checking common developer prerequisites..."
+		@missing=0; \
+		command -v docker >/dev/null 2>&1 || { echo "  docker: NOT FOUND"; missing=1; }; \
+		command -v docker-compose >/dev/null 2>&1 || { echo "  docker-compose: NOT FOUND"; missing=1; }; \
+		command -v cargo >/dev/null 2>&1 || { echo "  cargo (Rust): NOT FOUND (run make rust-install)"; missing=1; }; \
+		command -v go >/dev/null 2>&1 || { echo "  go: NOT FOUND (install Go from https://go.dev/dl/)"; missing=1; }; \
+		command -v sqlc >/dev/null 2>&1 || { echo "  sqlc: NOT FOUND (see https://docs.sqlc.dev/)"; missing=1; }; \
+		command -v migrate >/dev/null 2>&1 || { echo "  migrate: NOT FOUND (install golang-migrate: brew install golang-migrate)"; missing=1; }; \
+		command -v jq >/dev/null 2>&1 || { echo "  jq: NOT FOUND (used by tests)"; missing=1; }; \
+		command -v shellcheck >/dev/null 2>&1 || { echo "  shellcheck: NOT FOUND (used by lint-shell)"; missing=1; }; \
+		command -v python3 >/dev/null 2>&1 || { echo "  python3: NOT FOUND"; missing=1; }; \
+		if [ $$missing -eq 1 ]; then echo "Some dependencies are missing. Run 'make prereqs-install' (macOS) or install manually." >&2; exit 1; fi; \
+		echo "All prerequisites appear to be present."
+
+
+prereqs-install: FORCE
+		@echo "Attempting to install basic prerequisites (macOS/Homebrew)"
+		@command -v brew >/dev/null 2>&1 || { echo "Homebrew not found; please install it from https://brew.sh/" >&2; exit 1; }
+		@brew install sqlc golang-migrate jq shellcheck || true
+		@$(MAKE) py-install-jsonschema || true
+		@$(MAKE) rust-ensure || true
+		@echo "Prereqs install attempted. Verify with 'make prereqs-check'."
+
 .PHONY: py-install-jsonschema
 py-install-jsonschema: py-venv
 	@echo "Installing/refreshing jsonschema in .venv..."
 	@.venv/bin/pip install -q --upgrade jsonschema
 	@echo "jsonschema ready."
+
+
+FORCE:
 
 .PHONY: validate-events
 validate-events: py-install-jsonschema

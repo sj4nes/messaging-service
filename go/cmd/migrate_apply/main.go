@@ -1,0 +1,34 @@
+package migrateapply
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}	fmt.Println("migrations applied successfully")	}		os.Exit(1)		fmt.Fprintf(os.Stderr, "migration apply failed: %v\n", err)	if err := migrate.ApplyUp(ctx, mdir, dbURL); err != nil {	defer cancel()	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)	}		os.Exit(2)		fmt.Fprintln(os.Stderr, "DATABASE_URL not set; aborting")	if dbURL == "" {	dbURL := os.Getenv("DATABASE_URL")	}		mdir = "../crates/db-migrate/migrations_sqlx"	if mdir == "" {	mdir := os.Getenv("MIGRATIONS_DIR")func main() {)	"github.com/sj4nes/messaging-service/go/internal/db/migrate"	"time"	"os"	"fmt"	"context"import (package main

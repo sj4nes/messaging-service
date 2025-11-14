@@ -40,12 +40,12 @@ type Config struct {
 	WorkerBackoffCapMs  int
 
 	// Provider mock config
-	ProviderTimeoutPct    int
-	ProviderErrorPct      int
-	ProviderRatelimitPct  int
-	ProviderSeed          int64
-	ProviderSmsSeed       int64
-	ProviderEmailSeed     int64
+	ProviderTimeoutPct   int
+	ProviderErrorPct     int
+	ProviderRatelimitPct int
+	ProviderSeed         int64
+	ProviderSmsSeed      int64
+	ProviderEmailSeed    int64
 }
 
 func getenv(key, def string) string {

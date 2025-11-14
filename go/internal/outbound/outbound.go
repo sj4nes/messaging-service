@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log"
+
 	"github.com/sony/gobreaker"
 
 	"github.com/sj4nes/messaging-service/go/internal/metrics"
@@ -57,7 +58,9 @@ func DispatchHandler(pr *providers.ProviderRegistry, breakers *state.ProviderBre
 		if br, ok := breakers.Get(provider.Name()); ok {
 			// If breaker already open, short-circuit
 			if br.State() == gobreaker.StateOpen {
-				if m != nil { m.RecordProviderBreakerOpen(provider.Name()) }
+				if m != nil {
+					m.RecordProviderBreakerOpen(provider.Name())
+				}
 				log.Printf("provider breaker open; short-circuiting: %s", provider.Name())
 				return nil
 			}
@@ -78,7 +81,9 @@ func DispatchHandler(pr *providers.ProviderRegistry, breakers *state.ProviderBre
 			}
 			after := br.State()
 			if before != after {
-				if m != nil { m.RecordProviderBreakerTransition(provider.Name()) }
+				if m != nil {
+					m.RecordProviderBreakerTransition(provider.Name())
+				}
 			}
 		} else {
 			// no breaker configured for provider

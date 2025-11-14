@@ -19,14 +19,14 @@ type Registry struct {
 	retryTotal      prometheus.Counter
 	dlqTotal        prometheus.Counter
 	// Provider metrics
-	providerAttempts      *prometheus.CounterVec
-	providerSuccess       *prometheus.CounterVec
-	providerRateLimited   *prometheus.CounterVec
-	providerError         *prometheus.CounterVec
-	invalidRouting           prometheus.Counter
+	providerAttempts          *prometheus.CounterVec
+	providerSuccess           *prometheus.CounterVec
+	providerRateLimited       *prometheus.CounterVec
+	providerError             *prometheus.CounterVec
+	invalidRouting            prometheus.Counter
 	providerBreakerTransition prometheus.Counter
 	providerBreakerOpen       prometheus.Counter
-	started                  int64 // gauge-like via atomic load for quick introspection if needed
+	started                   int64 // gauge-like via atomic load for quick introspection if needed
 }
 
 func NewRegistry() *Registry {
