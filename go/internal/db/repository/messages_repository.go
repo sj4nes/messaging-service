@@ -105,5 +105,23 @@ func (r *MessagesRepository) ListByConversation(ctx context.Context, conversatio
 	return msgs, total, nil
 }
 
+// SetOutboundProvider sets the provider_id for a given message by provider name.
+// Best-effort: if the provider name can't be resolved, the update is a no-op and returns false.
+func (r *MessagesRepository) SetOutboundProvider(ctx context.Context, messageID string, providerName string) (bool, error) {
+	if r.pool == nil || r.q == nil {
+		return false, errors.New("pool nil")
+	}
+	// Find provider id by name
+	var pid int64
+	if err := r.pool.QueryRow(ctx, `SELECT id FROM providers WHERE name=$1 LIMIT 1`, providerName).Scan(&pid); err != nil {
+		return false, err
+	}
+	// Update messages with provider id
+	if _, err := r.pool.Exec(ctx, `UPDATE messages SET provider_id = $1 WHERE id::text = $2`, pid, messageID); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 // Note: body and snippet fields are placeholders until message
 // content storage and redaction policy are finalized.

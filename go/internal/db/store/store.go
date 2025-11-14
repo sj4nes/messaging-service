@@ -65,6 +65,15 @@ func (s *Store) CreateSmsMessage(ctx context.Context, req *models.SmsRequest) er
 			evt.SentAt = &t
 		}
 	}
+	// Persist outbound message to DB via repository (best effort; return error on failure)
+	if s.msgs != nil {
+		if id, err := s.msgs.InsertOutbound(ctx, string(typ), req.From, req.To, req.Body, req.Timestamp); err == nil {
+			if evt.Metadata == nil {
+				evt.Metadata = map[string]any{}
+			}
+			evt.Metadata["message_id"] = id
+		}
+	}
 	_, err := s.q.Publish(ctx, evt)
 	return err
 }
@@ -86,6 +95,14 @@ func (s *Store) CreateEmailMessage(ctx context.Context, req *models.EmailRequest
 	if ts := strings.TrimSpace(req.Timestamp); ts != "" {
 		if t, err := time.Parse(time.RFC3339, ts); err == nil {
 			evt.SentAt = &t
+		}
+	}
+	if s.msgs != nil {
+		if id, err := s.msgs.InsertOutbound(ctx, string(queue.ChannelEmail), req.From, req.To, req.Body, req.Timestamp); err == nil {
+			if evt.Metadata == nil {
+				evt.Metadata = map[string]any{}
+			}
+			evt.Metadata["message_id"] = id
 		}
 	}
 	_, err := s.q.Publish(ctx, evt)

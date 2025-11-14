@@ -23,6 +23,11 @@ import (
 	"github.com/sj4nes/messaging-service/go/internal/logging"
 	"github.com/sj4nes/messaging-service/go/internal/metrics"
 	"github.com/sj4nes/messaging-service/go/internal/middleware"
+	"github.com/sj4nes/messaging-service/go/internal/providers"
+	mock "github.com/sj4nes/messaging-service/go/internal/providers/mock"
+	"github.com/sj4nes/messaging-service/go/internal/outbound"
+	"github.com/sj4nes/messaging-service/go/internal/state"
+	"github.com/sj4nes/messaging-service/go/internal/resilience"
 	qmemory "github.com/sj4nes/messaging-service/go/internal/queue/memory"
 	"github.com/sj4nes/messaging-service/go/internal/server"
 	"github.com/sj4nes/messaging-service/go/internal/worker"
@@ -93,6 +98,20 @@ func main() {
 			}
 			w := worker.NewWithOptions(mq, worker.PersistHandler(msgRepo), wOpts, reg)
 			go w.Start(context.Background())
+			// Provider registry & per-provider breakers (Feature 008 parity with Rust)
+			provReg := providers.NewRegistry()
+			provReg.Insert(providers.ChannelSms, mock.NewSmsMmsProvider())
+			provReg.Insert(providers.ChannelMms, mock.NewSmsMmsProvider())
+			provReg.Insert(providers.ChannelEmail, mock.NewEmailProvider())
+
+			pb := state.NewProviderBreakers()
+			pb.Insert("sms-mms", resilience.New("sms-mms"))
+			pb.Insert("email", resilience.New("email"))
+
+			// Start an outbound worker that routes to providers and simulates dispatch
+			outboundHandler := outbound.DispatchHandler(provReg, pb, msgRepo, reg)
+			w2 := worker.New(mq, outboundHandler)
+			go w2.Start(context.Background())
 			log.Info("db-backed store enabled", zap.Bool("messages", true), zap.Bool("conversations", true))
 			defer pool.Close()
 		}
