@@ -32,6 +32,12 @@ type Config struct {
 	// Debug / profiling
 	PprofEnabled bool
 	PprofPath    string
+
+	// Worker / Queue reliability options
+	WorkerMaxAttempts   int
+	WorkerMaxAgeHours   int
+	WorkerBackoffBaseMs int
+	WorkerBackoffCapMs  int
 }
 
 func getenv(key, def string) string {
@@ -99,6 +105,10 @@ func Load() (*Config, error) {
 		SSRFAllowlist:         allowlist,
 		PprofEnabled:          strings.EqualFold(getenv("PPROF_ENABLED", "false"), "true"),
 		PprofPath:             getenv("PPROF_PATH", "/debug/pprof"),
+		WorkerMaxAttempts:     atoiDefault(getenv("WORKER_MAX_ATTEMPTS", "10"), 10),
+		WorkerMaxAgeHours:     atoiDefault(getenv("WORKER_MAX_AGE_HOURS", "72"), 72),
+		WorkerBackoffBaseMs:   atoiDefault(getenv("WORKER_BACKOFF_BASE_MS", "200"), 200),
+		WorkerBackoffCapMs:    atoiDefault(getenv("WORKER_BACKOFF_CAP_MS", "5000"), 5000),
 	}
 	return cfg, nil
 }

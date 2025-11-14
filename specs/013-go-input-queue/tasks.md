@@ -16,7 +16,7 @@ This plan is organized per speckit.tasks rules. Tasks are grouped by phases and 
 - [X] T007 [P] Implement in-memory queue backend in go/internal/queue/memory/memory.go (bounded buffer, blocking semantics)
 - [X] T008 Add event DTO definition (OutboundMessageEvent) in go/internal/queue/queue.go with schema_version=1
 - [X] T009 Add worker skeleton in go/internal/worker/worker.go (constructor, Start/Stop, handler func injection)
-- [ ] T010 [P] Add metrics counters/gauges for enqueue/dequeue/processed/failed/backlog in go/internal/metrics/queue.go (or extend existing metrics package)
+ - [X] T010 [P] Add metrics counters/gauges for enqueue/dequeue/processed/failed/backlog in go/internal/metrics/queue.go (or extend existing metrics package)
 - [ ] T011 [P] Add HTTP test utilities to seed customers and reset DB in go/api/testutil_db.go
  - [X] T012 Reintroduce or expose repository method for idempotent insert in go/internal/db/repository/messages_repository.go (InsertOutbound)
  - [X] T013 [P] Ensure DB-backed store has read methods and optionally thin write wrappers in go/internal/db/store/store.go
@@ -30,7 +30,7 @@ Goal: Handlers validate and enqueue; return 202. Independent tests use in-memory
  - [X] T016 [P] [US1] Wire queue producer into Email handler in go/api/messages.go (replace direct persistence)
  - [X] T017 [US1] On success, return {"status":"accepted"} (and optional idempotencyKey) in go/api/messages.go
  - [X] T018 [US1] Validate inputs (non-empty body, valid addresses) and ensure no enqueue on 4xx in go/api/messages.go
- - [ ] T019 [US1] Add metric increments for enqueue attempts/success/failure in go/api/messages.go
+ - [X] T019 [US1] Add metric increments for enqueue attempts/success/failure in go/api/messages.go
 
 Independent Test Criteria (US1):
 - POST valid SMS/Email → 202 + exactly one event in queue.
@@ -40,12 +40,12 @@ Independent Test Criteria (US1):
 
 Goal: Worker consumes events, performs durable persistence, idempotent, updates conversation counters.
 
-- [ ] T020 [US2] Implement event-to-persistence mapping in go/internal/worker/worker.go using repository.InsertOutbound
+- [X] T020 [US2] Implement event-to-persistence mapping in go/internal/worker/worker.go using repository.InsertOutbound
 - [ ] T021 [P] [US2] Implement idempotency key derivation (if absent) and timestamp normalization in go/internal/worker/worker.go
 - [ ] T022 [P] [US2] Add retry with capped exponential backoff and attempt tracking in go/internal/worker/worker.go
 - [ ] T023 [US2] Implement DLQ behavior (in-memory) and retention hooks in go/internal/worker/worker.go
-- [ ] T024 [P] [US2] Add worker integration tests that seed events and assert DB state in go/internal/worker/worker_test.go
-- [ ] T025 [US2] Ensure duplicate events (same idempotency key) do not create duplicates in go/internal/worker/worker_test.go
+- [X] T024 [P] [US2] Add worker integration tests that seed events and assert DB state in go/internal/worker/worker_test.go
+- [X] T025 [US2] Ensure duplicate events (same idempotency key) do not create duplicates in go/internal/worker/worker_test.go
 
 Independent Test Criteria (US2):
 - Given a valid event, one message + conversation persisted; reprocessing same event is idempotent.

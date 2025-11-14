@@ -31,19 +31,23 @@ func smsHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	// Persist or enqueue the outbound SMS/MMS via configured store.
-	// Errors are treated as server errors to avoid false-acknowledging loss.
+	// Enqueue the outbound SMS/MMS via configured store.
+	if reg := metricsFromContext(r); reg != nil {
+		reg.IncEnqueueAttempt()
+	}
 	if err := Store.CreateSmsMessage(r.Context(), &req); err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to persist message")
+		if reg := metricsFromContext(r); reg != nil {
+			reg.IncEnqueueFailure()
+		}
+		writeError(w, http.StatusInternalServerError, "failed to enqueue message")
 		return
+	}
+	if reg := metricsFromContext(r); reg != nil {
+		reg.IncEnqueueSuccess()
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
 	_ = json.NewEncoder(w).Encode(models.Accepted{Status: "accepted"})
-	// Increment worker_processed to emulate async processing parity with Rust
-	if reg := metricsFromContext(r); reg != nil {
-		reg.IncWorkerProcessed()
-	}
 }
 
 func emailHandler(w http.ResponseWriter, r *http.Request) {
@@ -60,16 +64,22 @@ func emailHandler(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "empty body")
 		return
 	}
+	if reg := metricsFromContext(r); reg != nil {
+		reg.IncEnqueueAttempt()
+	}
 	if err := Store.CreateEmailMessage(r.Context(), &req); err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to persist message")
+		if reg := metricsFromContext(r); reg != nil {
+			reg.IncEnqueueFailure()
+		}
+		writeError(w, http.StatusInternalServerError, "failed to enqueue message")
 		return
+	}
+	if reg := metricsFromContext(r); reg != nil {
+		reg.IncEnqueueSuccess()
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
 	_ = json.NewEncoder(w).Encode(models.Accepted{Status: "accepted"})
-	if reg := metricsFromContext(r); reg != nil {
-		reg.IncWorkerProcessed()
-	}
 }
 
 // Routes registers message endpoints.

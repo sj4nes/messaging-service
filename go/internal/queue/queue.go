@@ -15,17 +15,17 @@ const (
 
 // OutboundMessageEvent is the normalized event enqueued by HTTP handlers.
 type OutboundMessageEvent struct {
-	SchemaVersion  int                    `json:"schema_version"`
-	Channel        Channel                `json:"channel"`
-	CustomerID     string                 `json:"customer_id"`
-	From           string                 `json:"from"`
-	To             string                 `json:"to"`
-	Subject        *string                `json:"subject,omitempty"`
-	Body           string                 `json:"body"`
-	BodyHash       *string                `json:"body_hash,omitempty"`
-	SentAt         *time.Time             `json:"sent_at,omitempty"`
-	IdempotencyKey *string                `json:"idempotency_key,omitempty"`
-	Metadata       map[string]any         `json:"metadata,omitempty"`
+	SchemaVersion  int            `json:"schema_version"`
+	Channel        Channel        `json:"channel"`
+	CustomerID     string         `json:"customer_id"`
+	From           string         `json:"from"`
+	To             string         `json:"to"`
+	Subject        *string        `json:"subject,omitempty"`
+	Body           string         `json:"body"`
+	BodyHash       *string        `json:"body_hash,omitempty"`
+	SentAt         *time.Time     `json:"sent_at,omitempty"`
+	IdempotencyKey *string        `json:"idempotency_key,omitempty"`
+	Metadata       map[string]any `json:"metadata,omitempty"`
 }
 
 // Delivery wraps an event with ack/nack signaling for the queue implementation.
@@ -36,10 +36,18 @@ type Delivery struct {
 }
 
 // Ack marks the delivery as successfully processed.
-func (d Delivery) Ack() { if d.ack != nil { d.ack() } }
+func (d Delivery) Ack() {
+	if d.ack != nil {
+		d.ack()
+	}
+}
 
 // Nack marks the delivery as failed and eligible for retry.
-func (d Delivery) Nack(err error) { if d.nack != nil { d.nack(err) } }
+func (d Delivery) Nack(err error) {
+	if d.nack != nil {
+		d.nack(err)
+	}
+}
 
 // NewDelivery constructs a Delivery with provided ack/nack callbacks.
 func NewDelivery(evt OutboundMessageEvent, ack func(), nack func(error)) Delivery {

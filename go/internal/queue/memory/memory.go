@@ -12,9 +12,9 @@ var ErrClosed = errors.New("memory queue closed")
 
 // MemoryQueue is a simple in-memory, bounded queue for development and tests.
 type MemoryQueue struct {
-	ch       chan queue.OutboundMessageEvent
-	closed   bool
-	mu       sync.RWMutex
+	ch     chan queue.OutboundMessageEvent
+	closed bool
+	mu     sync.RWMutex
 }
 
 // New creates a MemoryQueue with the provided capacity.
@@ -53,7 +53,7 @@ func (m *MemoryQueue) Receive(ctx context.Context) (queue.Delivery, error) {
 		if !ok {
 			return queue.Delivery{}, ErrClosed
 		}
-		return queue.NewDelivery(evt, func(){}, func(error){}), nil
+		return queue.NewDelivery(evt, func() {}, func(error) {}), nil
 	}
 }
 

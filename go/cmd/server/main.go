@@ -18,12 +18,14 @@ import (
 	"github.com/sj4nes/messaging-service/go/api"
 	"github.com/sj4nes/messaging-service/go/internal/config"
 	"github.com/sj4nes/messaging-service/go/internal/db/migrate"
+	"github.com/sj4nes/messaging-service/go/internal/db/repository"
 	dbstore "github.com/sj4nes/messaging-service/go/internal/db/store"
 	"github.com/sj4nes/messaging-service/go/internal/logging"
 	"github.com/sj4nes/messaging-service/go/internal/metrics"
-	qmemory "github.com/sj4nes/messaging-service/go/internal/queue/memory"
 	"github.com/sj4nes/messaging-service/go/internal/middleware"
+	qmemory "github.com/sj4nes/messaging-service/go/internal/queue/memory"
 	"github.com/sj4nes/messaging-service/go/internal/server"
+	"github.com/sj4nes/messaging-service/go/internal/worker"
 )
 
 func main() {
@@ -81,6 +83,16 @@ func main() {
 			// Initialize in-memory queue for enqueueing (US1). Worker wiring is added later.
 			mq := qmemory.New(1024)
 			api.SetStore(dbstore.NewWithQueue(pool, mq))
+			// Start worker with persistence handler and configured options.
+			msgRepo := repository.NewMessagesRepository(pool)
+			wOpts := worker.Options{
+				MaxAttempts: cfg.WorkerMaxAttempts,
+				MaxAge:      time.Duration(cfg.WorkerMaxAgeHours) * time.Hour,
+				BackoffBase: time.Duration(cfg.WorkerBackoffBaseMs) * time.Millisecond,
+				BackoffCap:  time.Duration(cfg.WorkerBackoffCapMs) * time.Millisecond,
+			}
+			w := worker.NewWithOptions(mq, worker.PersistHandler(msgRepo), wOpts, reg)
+			go w.Start(context.Background())
 			log.Info("db-backed store enabled", zap.Bool("messages", true), zap.Bool("conversations", true))
 			defer pool.Close()
 		}
