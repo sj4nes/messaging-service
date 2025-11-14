@@ -14,6 +14,8 @@ Auto-generated from all feature plans. Last updated: 2025-11-05
 - Rust (stable, 1.83+ confirmed via rust:slim image) (010-owasp-hardening)
 - Go 1.22+ (port) & Rust 1.83 (reference) – audit spans both, deliverables in Go docs/specs. + Go: chi (HTTP), pgx/sqlc (DB), zap (logging), Prometheus client (metrics); Rust: Axum, SQLx, Tracing (reference only). (012-go-porting-punchlist)
 - PostgreSQL primary (persistence), in-memory fallback (Go) for empty/failed cases; seed logic ensures baseline data. (012-go-porting-punchlist)
+- Go 1.22+ (Rust remains the reference implementation) + chi (HTTP), pgx/sqlc (DB), zap (logging), Prometheus client (metrics); new internal queue abstraction (013-go-input-queue)
+- PostgreSQL (primary). In-memory acceptable for queue backend initially (dev/test). (013-go-input-queue)
 
 - Bash (POSIX-compatible) + Jujutsu CLI (`jj`), Git CLI (`git`) (001-jujutsu-scm-support)
 
@@ -33,9 +35,9 @@ tests/
 Bash (POSIX-compatible): Follow standard conventions
 
 ## Recent Changes
+- 013-go-input-queue: Added Go 1.22+ (Rust remains the reference implementation) + chi (HTTP), pgx/sqlc (DB), zap (logging), Prometheus client (metrics); new internal queue abstraction
 - 012-go-porting-punchlist: Added Go 1.22+ (port) & Rust 1.83 (reference) – audit spans both, deliverables in Go docs/specs. + Go: chi (HTTP), pgx/sqlc (DB), zap (logging), Prometheus client (metrics); Rust: Axum, SQLx, Tracing (reference only).
 - 010-owasp-hardening: Added Rust (stable, 1.83+ confirmed via rust:slim image)
-- 009-conversation-persistence: Added Rust 1.75 (stable toolchain) + Axum (HTTP), Tokio (async), SQLx (PostgreSQL), Serde (serialization), Tracing (observability)
 
 
 <!-- MANUAL ADDITIONS START -->

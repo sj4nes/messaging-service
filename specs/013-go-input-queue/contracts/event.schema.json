@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "http://example.com/schemas/outbound-message-event.schema.json",
+  "title": "OutboundMessageEvent",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "channel",
+    "customer_id",
+    "from",
+    "to",
+    "body"
+  ],
+  "properties": {
+    "schema_version": { "type": "integer", "minimum": 1 },
+    "channel": { "type": "string", "enum": ["sms", "email"] },
+    "customer_id": { "type": "string", "format": "uuid" },
+    "from": { "type": "string" },
+    "to": { "type": "string" },
+    "subject": { "type": ["string", "null"] },
+    "body": { "type": "string", "minLength": 1 },
+    "body_hash": { "type": ["string", "null"], "description": "hex-encoded sha256; computed if absent" },
+    "sent_at": { "type": ["string", "null"], "format": "date-time" },
+    "idempotency_key": { "type": ["string", "null"] },
+    "metadata": { "type": ["object", "null"], "additionalProperties": true }
+  }
+}

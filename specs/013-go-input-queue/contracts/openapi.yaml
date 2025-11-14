@@ -1,0 +1,116 @@
+openapi: 3.0.3
+info:
+  title: Messaging Service (Go) - Input API
+  version: 0.13.0
+  description: |
+    HTTP endpoints accept outbound message requests and enqueue them for asynchronous processing.
+    Handlers validate input and return 202 Accepted on success.
+servers:
+  - url: http://localhost:8080
+paths:
+  /api/messages/sms:
+    post:
+      summary: Submit an SMS message for asynchronous processing
+      operationId: postSms
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SmsRequest'
+      responses:
+        '202':
+          description: Accepted for processing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcceptedResponse'
+        '400':
+          description: Invalid request
+        '401':
+          description: Unauthorized
+        '429':
+          description: Rate limited
+  /api/messages/email:
+    post:
+      summary: Submit an email message for asynchronous processing
+      operationId: postEmail
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmailRequest'
+      responses:
+        '202':
+          description: Accepted for processing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcceptedResponse'
+        '400':
+          description: Invalid request
+        '401':
+          description: Unauthorized
+        '429':
+          description: Rate limited
+components:
+  schemas:
+    AcceptedResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [accepted]
+        idempotencyKey:
+          type: string
+          description: Deterministic key for idempotent processing (may be generated server-side)
+      required: [status]
+    SmsRequest:
+      type: object
+      properties:
+        customerId:
+          type: string
+          format: uuid
+        from:
+          type: string
+          description: E.164 phone number
+        to:
+          type: string
+          description: E.164 phone number
+        body:
+          type: string
+        sentAt:
+          type: string
+          format: date-time
+        idempotencyKey:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true
+      required: [customerId, from, to, body]
+    EmailRequest:
+      type: object
+      properties:
+        customerId:
+          type: string
+          format: uuid
+        from:
+          type: string
+          format: email
+        to:
+          type: string
+          format: email
+        subject:
+          type: string
+        body:
+          type: string
+        sentAt:
+          type: string
+          format: date-time
+        idempotencyKey:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true
+      required: [customerId, from, to, body]
