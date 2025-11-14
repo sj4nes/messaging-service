@@ -57,8 +57,11 @@ func TestMessagesRepository_InsertOutbound_CreatesConversationAndMessage(t *test
 	// Insert a default customer to satisfy FK on conversations.customer_id.
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	if _, err := pool.Exec(ctx, `INSERT INTO customers (id, external_id, display_name) VALUES (1, 'test-customer', 'Test Customer')`); err != nil {
+	if _, err := pool.Exec(ctx, `INSERT INTO customers (id, name) VALUES (1, 'Test Customer')`); err != nil {
 		t.Fatalf("failed to insert test customer: %v", err)
+	}
+	if _, err := pool.Exec(ctx, `INSERT INTO providers (id, customer_id, kind, name) VALUES (1, 1, 'sms', 'Test Provider')`); err != nil {
+		t.Fatalf("failed to insert test provider: %v", err)
 	}
 
 	repo := NewMessagesRepository(pool)
@@ -121,8 +124,11 @@ func TestMessagesRepository_InsertOutbound_Idempotent(t *testing.T) {
 	resetTestDB(t, pool)
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	if _, err := pool.Exec(ctx, `INSERT INTO customers (id, external_id, display_name) VALUES (1, 'test-customer', 'Test Customer')`); err != nil {
+	if _, err := pool.Exec(ctx, `INSERT INTO customers (id, name) VALUES (1, 'Test Customer')`); err != nil {
 		t.Fatalf("failed to insert test customer: %v", err)
+	}
+	if _, err := pool.Exec(ctx, `INSERT INTO providers (id, customer_id, kind, name) VALUES (1, 1, 'sms', 'Test Provider')`); err != nil {
+		t.Fatalf("failed to insert test provider: %v", err)
 	}
 
 	repo := NewMessagesRepository(pool)
@@ -165,8 +171,11 @@ func TestMessagesRepository_InsertOutbound_TimestampFallback(t *testing.T) {
 	resetTestDB(t, pool)
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	if _, err := pool.Exec(ctx, `INSERT INTO customers (id, external_id, display_name) VALUES (1, 'test-customer', 'Test Customer')`); err != nil {
+	if _, err := pool.Exec(ctx, `INSERT INTO customers (id, name) VALUES (1, 'Test Customer')`); err != nil {
 		t.Fatalf("failed to insert test customer: %v", err)
+	}
+	if _, err := pool.Exec(ctx, `INSERT INTO providers (id, customer_id, kind, name) VALUES (1, 1, 'sms', 'Test Provider')`); err != nil {
+		t.Fatalf("failed to insert test provider: %v", err)
 	}
 
 	repo := NewMessagesRepository(pool)

@@ -4,33 +4,33 @@ This plan is organized per speckit.tasks rules. Tasks are grouped by phases and 
 
 ## Phase 1: Setup
 
-- [ ] T001 Create queue package directories in go/internal/queue and go/internal/queue/memory
-- [ ] T002 Create worker package directory in go/internal/worker
-- [ ] T003 Ensure contracts exist for endpoints in specs/013-go-input-queue/contracts/openapi.yaml
-- [ ] T004 Add developer notes in specs/013-go-input-queue/quickstart.md for in-memory queue mode
+- [X] T001 Create queue package directories in go/internal/queue and go/internal/queue/memory
+- [X] T002 Create worker package directory in go/internal/worker
+- [X] T003 Ensure contracts exist for endpoints in specs/013-go-input-queue/contracts/openapi.yaml
+- [X] T004 Add developer notes in specs/013-go-input-queue/quickstart.md for in-memory queue mode
 - [ ] T005 Add Makefile targets (optional) for running server+worker if needed in Makefile
 
 ## Phase 2: Foundational
 
-- [ ] T006 Implement queue interface in go/internal/queue/queue.go (Publish, Subscribe/Receive, Ack, Nack)
-- [ ] T007 [P] Implement in-memory queue backend in go/internal/queue/memory/memory.go (bounded buffer, blocking semantics)
-- [ ] T008 Add event DTO definition (OutboundMessageEvent) in go/internal/queue/queue.go with schema_version=1
-- [ ] T009 Add worker skeleton in go/internal/worker/worker.go (constructor, Start/Stop, handler func injection)
+- [X] T006 Implement queue interface in go/internal/queue/queue.go (Publish, Subscribe/Receive, Ack, Nack)
+- [X] T007 [P] Implement in-memory queue backend in go/internal/queue/memory/memory.go (bounded buffer, blocking semantics)
+- [X] T008 Add event DTO definition (OutboundMessageEvent) in go/internal/queue/queue.go with schema_version=1
+- [X] T009 Add worker skeleton in go/internal/worker/worker.go (constructor, Start/Stop, handler func injection)
 - [ ] T010 [P] Add metrics counters/gauges for enqueue/dequeue/processed/failed/backlog in go/internal/metrics/queue.go (or extend existing metrics package)
 - [ ] T011 [P] Add HTTP test utilities to seed customers and reset DB in go/api/testutil_db.go
-- [ ] T012 Reintroduce or expose repository method for idempotent insert in go/internal/db/repository/messages_repository.go (InsertOutbound)
-- [ ] T013 [P] Ensure DB-backed store has read methods and optionally thin write wrappers in go/internal/db/store/store.go
+ - [X] T012 Reintroduce or expose repository method for idempotent insert in go/internal/db/repository/messages_repository.go (InsertOutbound)
+ - [X] T013 [P] Ensure DB-backed store has read methods and optionally thin write wrappers in go/internal/db/store/store.go
 
 ## Phase 3: User Story 1 (P1) — Enqueue valid outbound requests
 
 Goal: Handlers validate and enqueue; return 202. Independent tests use in-memory queue.
 
-- [ ] T014 [US1] Add handler contract tests for 202/4xx using in-memory queue in go/api/messages_test.go
-- [ ] T015 [P] [US1] Wire queue producer into SMS handler in go/api/messages.go (replace direct persistence)
-- [ ] T016 [P] [US1] Wire queue producer into Email handler in go/api/messages.go (replace direct persistence)
-- [ ] T017 [US1] On success, return {"status":"accepted"} (and optional idempotencyKey) in go/api/messages.go
-- [ ] T018 [US1] Validate inputs (non-empty body, valid addresses) and ensure no enqueue on 4xx in go/api/messages.go
-- [ ] T019 [US1] Add metric increments for enqueue attempts/success/failure in go/api/messages.go
+ - [X] T014 [US1] Add handler contract tests for 202/4xx using in-memory queue in go/api/messages_test.go
+ - [X] T015 [P] [US1] Wire queue producer into SMS handler in go/api/messages.go (replace direct persistence)
+ - [X] T016 [P] [US1] Wire queue producer into Email handler in go/api/messages.go (replace direct persistence)
+ - [X] T017 [US1] On success, return {"status":"accepted"} (and optional idempotencyKey) in go/api/messages.go
+ - [X] T018 [US1] Validate inputs (non-empty body, valid addresses) and ensure no enqueue on 4xx in go/api/messages.go
+ - [ ] T019 [US1] Add metric increments for enqueue attempts/success/failure in go/api/messages.go
 
 Independent Test Criteria (US1):
 - POST valid SMS/Email → 202 + exactly one event in queue.

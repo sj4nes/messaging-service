@@ -21,6 +21,7 @@ import (
 	dbstore "github.com/sj4nes/messaging-service/go/internal/db/store"
 	"github.com/sj4nes/messaging-service/go/internal/logging"
 	"github.com/sj4nes/messaging-service/go/internal/metrics"
+	qmemory "github.com/sj4nes/messaging-service/go/internal/queue/memory"
 	"github.com/sj4nes/messaging-service/go/internal/middleware"
 	"github.com/sj4nes/messaging-service/go/internal/server"
 )
@@ -77,7 +78,9 @@ func main() {
 		if err != nil {
 			log.Warn("db pool init failed; using in-memory store", zap.Error(err))
 		} else {
-			api.SetStore(dbstore.New(pool))
+			// Initialize in-memory queue for enqueueing (US1). Worker wiring is added later.
+			mq := qmemory.New(1024)
+			api.SetStore(dbstore.NewWithQueue(pool, mq))
 			log.Info("db-backed store enabled", zap.Bool("messages", true), zap.Bool("conversations", true))
 			defer pool.Close()
 		}
