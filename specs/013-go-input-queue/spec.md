@@ -92,7 +92,7 @@ As an operator, I need configuration to select the queue backend (in-memory for 
 - **FR-006**: System MUST provide logs and/or metrics sufficient to detect enqueue failures, processing errors, and backlog growth.
 - **FR-007**: System MUST document the event schema and idempotency key derivation to ensure compatibility and debuggability across components.
 - **FR-008**: System MUST support at-least-once delivery semantics with idempotent processing to guarantee correctness under retries.
-- **FR-009**: System MUST define failure handling for unprocessable events, including retention and dead-lettering. [NEEDS CLARIFICATION: retention duration and DLQ routing]
+- **FR-009**: System MUST define failure handling for unprocessable events as follows: retry with capped exponential backoff for up to 72 hours (maximum 10 attempts). After retries are exhausted or the window elapses, move the event to a dead-letter queue retained for 30 days (with sufficient metadata for investigation and replay).
 
 ### Key Entities *(include if feature involves data)*
 
