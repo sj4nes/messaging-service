@@ -65,3 +65,15 @@ func (s *InMemoryStore) ListMessages(ctx context.Context, conversationID string,
 	}
 	return msgs[start:end], total, nil
 }
+
+// CreateSmsMessage is a no-op persistence for SMS/MMS in the in-memory store.
+// It accepts the request for interface compatibility but does not mutate state.
+func (s *InMemoryStore) CreateSmsMessage(ctx context.Context, req *models.SmsRequest) error {
+	return nil
+}
+
+// CreateEmailMessage is a no-op persistence for Email in the in-memory store.
+// It accepts the request for interface compatibility but does not mutate state.
+func (s *InMemoryStore) CreateEmailMessage(ctx context.Context, req *models.EmailRequest) error {
+	return nil
+}

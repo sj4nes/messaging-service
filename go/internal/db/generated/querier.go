@@ -9,6 +9,7 @@ import (
 )
 
 type Querier interface {
+	InsertOutboundMessage(ctx context.Context, arg InsertOutboundMessageParams) (string, error)
 	ListConversations(ctx context.Context, arg ListConversationsParams) ([]ListConversationsRow, error)
 	ListMessagesForConversation(ctx context.Context, arg ListMessagesForConversationParams) ([]ListMessagesForConversationRow, error)
 }

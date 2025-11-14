@@ -36,6 +36,38 @@ func New(pool *pgxpool.Pool) *Store {
 	}
 }
 
+// CreateSmsMessage persists an outbound SMS/MMS message using the primary store,
+// falling back to in-memory behavior if configured.
+func (s *Store) CreateSmsMessage(ctx context.Context, req *models.SmsRequest) error {
+	// If no DB is configured, optionally delegate to in-memory behavior.
+	if s.pool == nil || s.msgs == nil {
+		if s.fallbackEnabled && s.mem != nil {
+			return s.mem.CreateSmsMessage(ctx, req)
+		}
+		return nil
+	}
+	channel := "sms"
+	if req.Type != "" {
+		// Accept sms|mms, mirroring Rust validation already enforced in handler.
+		channel = req.Type
+	}
+	_, err := s.msgs.InsertOutbound(ctx, channel, req.From, req.To, req.Body, req.Timestamp)
+	return err
+}
+
+// CreateEmailMessage persists an outbound Email message using the primary store,
+// falling back to in-memory behavior if configured.
+func (s *Store) CreateEmailMessage(ctx context.Context, req *models.EmailRequest) error {
+	if s.pool == nil || s.msgs == nil {
+		if s.fallbackEnabled && s.mem != nil {
+			return s.mem.CreateEmailMessage(ctx, req)
+		}
+		return nil
+	}
+	_, err := s.msgs.InsertOutbound(ctx, "email", req.From, req.To, req.Body, req.Timestamp)
+	return err
+}
+
 func (s *Store) ListConversations(ctx context.Context, page, size int) ([]models.ConversationDto, uint64, error) {
 	seed.SeedMinimumIfNeeded(ctx, s.pool)
 	items, total, err := s.conv.List(ctx, page, size)

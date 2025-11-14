@@ -15,6 +15,12 @@ type Attachment struct {
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 }
 
+type AttachmentUrl struct {
+	ID   int64  `json:"id"`
+	Raw  string `json:"raw"`
+	Hash int64  `json:"hash"`
+}
+
 type Contact struct {
 	ID          int64              `json:"id"`
 	CustomerID  int64              `json:"customer_id"`
@@ -50,6 +56,20 @@ type Customer struct {
 	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }
 
+type EmailAddress struct {
+	ID      int64  `json:"id"`
+	Raw     string `json:"raw"`
+	Hash    int64  `json:"hash"`
+	Lowered string `json:"lowered"`
+}
+
+type EmailBody struct {
+	ID         int64  `json:"id"`
+	Raw        string `json:"raw"`
+	Hash       int64  `json:"hash"`
+	Normalized string `json:"normalized"`
+}
+
 type EndpointMapping struct {
 	ID         int64              `json:"id"`
 	CustomerID int64              `json:"customer_id"`
@@ -59,6 +79,25 @@ type EndpointMapping struct {
 	Normalized string             `json:"normalized"`
 	Hash       int64              `json:"hash"`
 	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+}
+
+type InboundEvent struct {
+	ID                int64              `json:"id"`
+	EventType         string             `json:"event_type"`
+	Payload           []byte             `json:"payload"`
+	ReceivedAt        pgtype.Timestamptz `json:"received_at"`
+	AvailableAt       pgtype.Timestamptz `json:"available_at"`
+	Attempts          int32              `json:"attempts"`
+	Status            string             `json:"status"`
+	Channel           pgtype.Text        `json:"channel"`
+	From              pgtype.Text        `json:"from"`
+	To                pgtype.Text        `json:"to"`
+	ProviderMessageID pgtype.Text        `json:"provider_message_id"`
+	ProcessorID       pgtype.Text        `json:"processor_id"`
+	ErrorCode         pgtype.Text        `json:"error_code"`
+	ErrorMessage      pgtype.Text        `json:"error_message"`
+	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
+	ProcessedAt       pgtype.Timestamptz `json:"processed_at"`
 }
 
 type Message struct {
@@ -78,6 +117,25 @@ type MessageAttachment struct {
 	AttachmentID int64 `json:"attachment_id"`
 }
 
+type MessageAttachmentUrl struct {
+	MessageID       int64 `json:"message_id"`
+	AttachmentUrlID int64 `json:"attachment_url_id"`
+}
+
+type MessageBody struct {
+	ID        int64              `json:"id"`
+	Body      string             `json:"body"`
+	Snippet   pgtype.Text        `json:"snippet"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
+type PhoneNumber struct {
+	ID   int64  `json:"id"`
+	Raw  string `json:"raw"`
+	Hash int64  `json:"hash"`
+	E164 string `json:"e164"`
+}
+
 type Provider struct {
 	ID             int64              `json:"id"`
 	CustomerID     int64              `json:"customer_id"`
@@ -86,4 +144,11 @@ type Provider struct {
 	CredentialsRef pgtype.Text        `json:"credentials_ref"`
 	CreatedAt      pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
+}
+
+type XmsBody struct {
+	ID         int64  `json:"id"`
+	Raw        string `json:"raw"`
+	Hash       int64  `json:"hash"`
+	Normalized string `json:"normalized"`
 }

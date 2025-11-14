@@ -31,6 +31,12 @@ func smsHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	// Persist or enqueue the outbound SMS/MMS via configured store.
+	// Errors are treated as server errors to avoid false-acknowledging loss.
+	if err := Store.CreateSmsMessage(r.Context(), &req); err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to persist message")
+		return
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
 	_ = json.NewEncoder(w).Encode(models.Accepted{Status: "accepted"})
@@ -52,6 +58,10 @@ func emailHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	if strings.TrimSpace(req.Body) == "" {
 		writeError(w, http.StatusBadRequest, "empty body")
+		return
+	}
+	if err := Store.CreateEmailMessage(r.Context(), &req); err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to persist message")
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")

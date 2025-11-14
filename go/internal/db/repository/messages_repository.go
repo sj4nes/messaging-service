@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"time"
 
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/sj4nes/messaging-service/go/api/models"
 	"github.com/sj4nes/messaging-service/go/internal/db/generated"
@@ -24,6 +26,34 @@ func NewMessagesRepository(pool *pgxpool.Pool) *MessagesRepository {
 		q = generated.New(pool)
 	}
 	return &MessagesRepository{pool: pool, q: q}
+}
+
+// InsertOutbound persists an outbound message and ensures a durable conversation exists.
+// It mirrors the Rust insert_outbound behavior: body dedupe, conversation upsert, and idempotency
+// on (conversation, direction='outbound', sent_at, body_id).
+func (r *MessagesRepository) InsertOutbound(ctx context.Context, channel, from, to, body, timestamp string) (string, error) {
+	if r.pool == nil || r.q == nil {
+		return "", errors.New("pool nil")
+	}
+	// Parse timestamp; fall back to now on error, matching Rust logic.
+	var ts time.Time
+	if t, err := time.Parse(time.RFC3339, timestamp); err == nil {
+		ts = t
+	} else {
+		ts = time.Now().UTC()
+	}
+	params := generated.InsertOutboundMessageParams{
+		Channel: pgtype.Text{String: channel, Valid: true},
+		ParticipantA: pgtype.Text{String: from, Valid: true},
+		ParticipantB: pgtype.Text{String: to, Valid: true},
+		Body: body,
+		LastActivityAt: pgtype.Timestamptz{Time: ts, Valid: true},
+	}
+	id, err := r.q.InsertOutboundMessage(ctx, params)
+	if err != nil {
+		return "", fmt.Errorf("insert outbound message: %w", err)
+	}
+	return id, nil
 }
 
 // ListByConversation returns paged messages for a conversation in ascending timestamp order.
