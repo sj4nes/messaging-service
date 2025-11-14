@@ -19,16 +19,14 @@ type Registry struct {
 	retryTotal      prometheus.Counter
 	dlqTotal        prometheus.Counter
 	// Provider metrics
-	providerSmsAttempts       prometheus.Counter
-	providerSmsSuccess        prometheus.Counter
-	providerSmsRateLimited    prometheus.Counter
-	providerSmsError          prometheus.Counter
-	providerEmailAttempts     prometheus.Counter
-	providerEmailSuccess      prometheus.Counter
-	providerEmailRateLimited  prometheus.Counter
-	providerEmailError        prometheus.Counter
-	invalidRouting            prometheus.Counter
-	started         int64 // gauge-like via atomic load for quick introspection if needed
+	providerAttempts      *prometheus.CounterVec
+	providerSuccess       *prometheus.CounterVec
+	providerRateLimited   *prometheus.CounterVec
+	providerError         *prometheus.CounterVec
+	invalidRouting           prometheus.Counter
+	providerBreakerTransition prometheus.Counter
+	providerBreakerOpen       prometheus.Counter
+	started                  int64 // gauge-like via atomic load for quick introspection if needed
 }
 
 func NewRegistry() *Registry {
@@ -49,25 +47,21 @@ func NewRegistry() *Registry {
 	_ = reg.Register(dlq)
 
 	// provider metrics
-	psa := prometheus.NewCounter(prometheus.CounterOpts{Name: "provider_sms_mms_attempts", Help: "Per-provider attempts for sms/mms"})
-	pss := prometheus.NewCounter(prometheus.CounterOpts{Name: "provider_sms_mms_success", Help: "Per-provider success for sms/mms"})
-	psrl := prometheus.NewCounter(prometheus.CounterOpts{Name: "provider_sms_mms_rate_limited", Help: "Per-provider rate limit count for sms/mms"})
-	pser := prometheus.NewCounter(prometheus.CounterOpts{Name: "provider_sms_mms_error", Help: "Per-provider errors for sms/mms"})
-	pea := prometheus.NewCounter(prometheus.CounterOpts{Name: "provider_email_attempts", Help: "Per-provider attempts for email"})
-	pes := prometheus.NewCounter(prometheus.CounterOpts{Name: "provider_email_success", Help: "Per-provider success for email"})
-	perl := prometheus.NewCounter(prometheus.CounterOpts{Name: "provider_email_rate_limited", Help: "Per-provider rate limit count for email"})
-	peer := prometheus.NewCounter(prometheus.CounterOpts{Name: "provider_email_error", Help: "Per-provider errors for email"})
+	providerAttempts := prometheus.NewCounterVec(prometheus.CounterOpts{Name: "provider_attempts_total", Help: "Provider attempt counts (labeled by provider)"}, []string{"provider"})
+	providerSuccess := prometheus.NewCounterVec(prometheus.CounterOpts{Name: "provider_success_total", Help: "Provider success counts (labeled by provider)"}, []string{"provider"})
+	providerRateLimited := prometheus.NewCounterVec(prometheus.CounterOpts{Name: "provider_rate_limited_total", Help: "Provider rate-limited counts (labeled by provider)"}, []string{"provider"})
+	providerError := prometheus.NewCounterVec(prometheus.CounterOpts{Name: "provider_error_total", Help: "Provider error counts (labeled by provider)"}, []string{"provider"})
 	inv := prometheus.NewCounter(prometheus.CounterOpts{Name: "invalid_routing", Help: "Invalid routing attempts for outbound channel"})
-	_ = reg.Register(psa)
-	_ = reg.Register(pss)
-	_ = reg.Register(psrl)
-	_ = reg.Register(pser)
-	_ = reg.Register(pea)
-	_ = reg.Register(pes)
-	_ = reg.Register(perl)
-	_ = reg.Register(peer)
+	_ = reg.Register(providerAttempts)
+	_ = reg.Register(providerSuccess)
+	_ = reg.Register(providerRateLimited)
+	_ = reg.Register(providerError)
 	_ = reg.Register(inv)
-	r := &Registry{reg: reg, workerProcessed: wp, enqueueAttempt: enqA, enqueueSuccess: enqS, enqueueFailure: enqF, queueDepth: qd, retryTotal: rty, dlqTotal: dlq, providerSmsAttempts: psa, providerSmsSuccess: pss, providerSmsRateLimited: psrl, providerSmsError: pser, providerEmailAttempts: pea, providerEmailSuccess: pes, providerEmailRateLimited: perl, providerEmailError: peer, invalidRouting: inv}
+	btrans := prometheus.NewCounter(prometheus.CounterOpts{Name: "provider_breaker_transition_total", Help: "Per-provider circuit breaker transitions"})
+	bopen := prometheus.NewCounter(prometheus.CounterOpts{Name: "provider_breaker_open_total", Help: "Count of short-circuited requests for provider (breaker open)"})
+	_ = reg.Register(btrans)
+	_ = reg.Register(bopen)
+	r := &Registry{reg: reg, workerProcessed: wp, enqueueAttempt: enqA, enqueueSuccess: enqS, enqueueFailure: enqF, queueDepth: qd, retryTotal: rty, dlqTotal: dlq, providerAttempts: providerAttempts, providerSuccess: providerSuccess, providerRateLimited: providerRateLimited, providerError: providerError, invalidRouting: inv, providerBreakerTransition: btrans, providerBreakerOpen: bopen}
 	atomic.StoreInt64(&r.started, 1)
 	return r
 }
@@ -96,39 +90,29 @@ func (r *Registry) IncRetry() { r.retryTotal.Inc() }
 func (r *Registry) IncDLQ()   { r.dlqTotal.Inc() }
 
 func (r *Registry) RecordProviderAttempt(label string) {
-	switch label {
-	case "sms-mms":
-		r.providerSmsAttempts.Inc()
-	case "email":
-		r.providerEmailAttempts.Inc()
-	}
+	r.providerAttempts.WithLabelValues(label).Inc()
 }
 
 func (r *Registry) RecordProviderSuccess(label string) {
-	switch label {
-	case "sms-mms":
-		r.providerSmsSuccess.Inc()
-	case "email":
-		r.providerEmailSuccess.Inc()
-	}
+	r.providerSuccess.WithLabelValues(label).Inc()
 }
 
 func (r *Registry) RecordProviderRateLimited(label string) {
-	switch label {
-	case "sms-mms":
-		r.providerSmsRateLimited.Inc()
-	case "email":
-		r.providerEmailRateLimited.Inc()
-	}
+	r.providerRateLimited.WithLabelValues(label).Inc()
 }
 
 func (r *Registry) RecordProviderError(label string) {
-	switch label {
-	case "sms-mms":
-		r.providerSmsError.Inc()
-	case "email":
-		r.providerEmailError.Inc()
-	}
+	r.providerError.WithLabelValues(label).Inc()
 }
 
 func (r *Registry) RecordInvalidRouting() { r.invalidRouting.Inc() }
+
+func (r *Registry) RecordProviderBreakerTransition(label string) {
+	r.providerBreakerTransition.Inc()
+	_ = label
+}
+
+func (r *Registry) RecordProviderBreakerOpen(label string) {
+	r.providerBreakerOpen.Inc()
+	_ = label
+}

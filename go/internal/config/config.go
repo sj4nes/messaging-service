@@ -38,6 +38,14 @@ type Config struct {
 	WorkerMaxAgeHours   int
 	WorkerBackoffBaseMs int
 	WorkerBackoffCapMs  int
+
+	// Provider mock config
+	ProviderTimeoutPct    int
+	ProviderErrorPct      int
+	ProviderRatelimitPct  int
+	ProviderSeed          int64
+	ProviderSmsSeed       int64
+	ProviderEmailSeed     int64
 }
 
 func getenv(key, def string) string {
@@ -109,6 +117,12 @@ func Load() (*Config, error) {
 		WorkerMaxAgeHours:     atoiDefault(getenv("WORKER_MAX_AGE_HOURS", "72"), 72),
 		WorkerBackoffBaseMs:   atoiDefault(getenv("WORKER_BACKOFF_BASE_MS", "200"), 200),
 		WorkerBackoffCapMs:    atoiDefault(getenv("WORKER_BACKOFF_CAP_MS", "5000"), 5000),
+		ProviderTimeoutPct:    atoiDefault(getenv("PROVIDER_TIMEOUT_PCT", "0"), 0),
+		ProviderErrorPct:      atoiDefault(getenv("PROVIDER_ERROR_PCT", "0"), 0),
+		ProviderRatelimitPct:  atoiDefault(getenv("PROVIDER_RATELIMIT_PCT", "0"), 0),
+		ProviderSeed:          atollDefault(getenv("PROVIDER_SEED", "0"), 0),
+		ProviderSmsSeed:       atollDefault(getenv("PROVIDER_SMS_SEED", "0"), 0),
+		ProviderEmailSeed:     atollDefault(getenv("PROVIDER_EMAIL_SEED", "0"), 0),
 	}
 	return cfg, nil
 }
@@ -122,6 +136,13 @@ func atoiDefault(raw string, def int) int {
 
 func atofDefault(raw string, def float64) float64 {
 	if v, err := strconv.ParseFloat(strings.TrimSpace(raw), 64); err == nil && v > 0 {
+		return v
+	}
+	return def
+}
+
+func atollDefault(raw string, def int64) int64 {
+	if v, err := strconv.ParseInt(strings.TrimSpace(raw), 10, 64); err == nil && v > 0 {
 		return v
 	}
 	return def
