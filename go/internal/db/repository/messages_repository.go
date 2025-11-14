@@ -43,10 +43,10 @@ func (r *MessagesRepository) InsertOutbound(ctx context.Context, channel, from, 
 		ts = time.Now().UTC()
 	}
 	params := generated.InsertOutboundMessageParams{
-		Channel: pgtype.Text{String: channel, Valid: true},
-		ParticipantA: pgtype.Text{String: from, Valid: true},
-		ParticipantB: pgtype.Text{String: to, Valid: true},
-		Body: body,
+		Channel:        pgtype.Text{String: channel, Valid: true},
+		ParticipantA:   pgtype.Text{String: from, Valid: true},
+		ParticipantB:   pgtype.Text{String: to, Valid: true},
+		Body:           body,
 		LastActivityAt: pgtype.Timestamptz{Time: ts, Valid: true},
 	}
 	id, err := r.q.InsertOutboundMessage(ctx, params)
