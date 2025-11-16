@@ -54,11 +54,12 @@ help:
 	@echo "Available commands:"
 	@echo "  setup                - Set up the project environment and start database"
 	@echo "  run                  - Run the application via ./bin/start.sh"
-	@echo "  run-server           - Run the Rust server binary (messaging-server)"
+	@echo "  run-server-rust      - Run the Rust server binary (messaging-server)"
+	@echo "  run-server-go        - Run the Go server binary"
 	@echo "  dev                  - Run server with auto-reload if cargo-watch is available"
-	@echo "  build                - cargo build --all (debug)"
+	@echo "  build                - Build both Rust and Go servers"
 	@echo "  build-rust           - Build the Rust server"
-	@echo "  build-release        - cargo build --release --all"
+	@echo "  build-release        - Build both Rust and Go in release mode" 
 	@echo "  go.build-release     - Build Go server in release mode"
 	@echo "  test                 - Run tests (starts docker-compose and ./bin/test.sh)"
 	@echo "  lint                 - Run cargo fmt and clippy on the server crate"
@@ -146,9 +147,17 @@ run:
 	@echo "Running the application..."
 	@./bin/start.sh
 
-run-server:
-	@echo "Running messaging-server..."
+run-server: run-server-rust
+
+.PHONY: run-server-rust
+run-server-rust:
+	@echo "Running messaging-server (Rust)..."
 	@PORT=$${PORT:-8080} cargo run -p messaging-server
+
+.PHONY: run-server-go
+run-server-go:
+	@echo "Running messaging-go (Go)..."
+	@PORT=$${PORT:-8080} cd $(GO_DIR) && $(GO) run ./cmd/server
 
 .PHONY: dev
 dev:
