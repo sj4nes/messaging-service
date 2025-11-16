@@ -17,6 +17,7 @@ import (
 type Handler func(ctx context.Context, evt queue.OutboundMessageEvent) error
 
 // Worker consumes events from the queue and invokes the handler.
+// TODO: This should be changed from in-memory to use PostgreSQL for distributed processing.
 type Worker struct {
 	q        queue.Queue
 	h        Handler

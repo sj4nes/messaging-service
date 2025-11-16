@@ -1,5 +1,6 @@
 .PHONY: setup run test clean help db-up db-down db-logs db-shell build db-reset migrate-status migrate-reset-history \
 	dx-setup py-venv py-install-jsonschema validate-events rust-check rust-install rust-ensure rust-version \
+	go-ensure go-install \
 	prereqs-check prereqs-install \
 	docker-build docker-up docker-down docker-logs docker-restart go.tidy go.build go.test go.run go.docker-build go.sqlc lint lint-shell update-agent-context
 
@@ -72,6 +73,8 @@ help:
 	@echo "  validate-events      - Validate event examples against the envelope schema (uses .venv)"
 	@echo "  py-venv              - Create Python virtual environment at .venv (and upgrade pip)"
 	@echo "  py-install-jsonschema- Install/upgrade jsonschema in the .venv"
+	@echo "  go-ensure            - Ensure Go is installed on developer machine (Homebrew macOS)"
+	@echo "  go-install           - Install Go via Homebrew (macOS)"
 	@echo "  prereqs-check        - Check required developer tools are installed"
 	@echo "  prereqs-install      - Install developer tools (macOS/Homebrew)"
 	@echo "  rust-check           - Check that cargo is installed and print cargo version"
@@ -101,7 +104,7 @@ build-release:
 	@cargo build --release --all
 
 
-setup: build
+setup: dx-setup build
 	@echo "Setting up the project..."
 	@echo "Starting PostgreSQL database..."
 	@docker-compose up -d
@@ -207,7 +210,7 @@ lint-shell:
 # Developer Experience (DX)
 # -----------------------------
 
-dx-setup: py-install-jsonschema rust-ensure
+dx-setup: py-install-jsonschema rust-ensure go-ensure
 	@echo "DX setup complete. To run validation: make validate-events"
 
 .PHONY: py-venv
@@ -261,6 +264,9 @@ validate-events: py-install-jsonschema
 rust-check:
 	@command -v cargo >/dev/null 2>&1 && echo "cargo present: $$(cargo --version)" || { echo "cargo not found" >&2; exit 1; }
 
+.PHONY: go-ensure go-install
+go-ensure:
+	@command -v go >/dev/null 2>&1 || { echo "go not found; running 'make go-install'"; $(MAKE) go-install; }
 .PHONY: rust-install
 rust-install:
 	@echo "Installing Rust toolchain via rustup (non-interactive)..."
