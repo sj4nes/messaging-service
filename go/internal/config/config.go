@@ -46,6 +46,9 @@ type Config struct {
 	ProviderSeed         int64
 	ProviderSmsSeed      int64
 	ProviderEmailSeed    int64
+	// EnableInmemoryFallback allows using in-memory store even if DATABASE_URL is
+	// supplied. This is useful for local self-tests where a DB is not desired.
+	EnableInmemoryFallback bool
 }
 
 func getenv(key, def string) string {
@@ -123,6 +126,9 @@ func Load() (*Config, error) {
 		ProviderSeed:          atollDefault(getenv("PROVIDER_SEED", "0"), 0),
 		ProviderSmsSeed:       atollDefault(getenv("PROVIDER_SMS_SEED", "0"), 0),
 		ProviderEmailSeed:     atollDefault(getenv("PROVIDER_EMAIL_SEED", "0"), 0),
+		// Dedicated Go-specific variable takes precedence if set; otherwise fall back
+		// to the cross-language compatibility flag used by the Rust server.
+		EnableInmemoryFallback: strings.EqualFold(getenv("GO_API_ENABLE_INMEMORY_FALLBACK", getenv("API_ENABLE_INMEMORY_FALLBACK", "false")), "true"),
 	}
 	return cfg, nil
 }

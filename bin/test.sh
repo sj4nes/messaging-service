@@ -328,6 +328,7 @@ run_test() {
 
 PASS_COUNT=0
 FAIL_COUNT=0
+FAILED_TESTS=()
 
 if [ "$USE_JSON_TESTS" = true ]; then
   # Validate tests file schema before running
@@ -399,6 +400,7 @@ if [ "$USE_JSON_TESTS" = true ]; then
       PASS_COUNT=$((PASS_COUNT+1))
     else
       FAIL_COUNT=$((FAIL_COUNT+1))
+      FAILED_TESTS+=("$name")
     fi
     INDEX=$((INDEX+1))
   done < <(jq -c '.[]' "$TESTS_FILE")
@@ -457,12 +459,59 @@ else
       PASS_COUNT=$((PASS_COUNT+1))
     else
       FAIL_COUNT=$((FAIL_COUNT+1))
+      FAILED_TESTS+=("$name")
     fi
   done
 fi
 
+# Optional: confirm that DB persisted messages (useful when running CI against Docker Postgres)
+# Set DB_PERSISTENCE_CHECK=true to enable. This checks the `messages` table (via psql or docker-compose)
+check_db_persistence() {
+
+  echo "Checking database persistence via DB_PERSISTENCE_CHECK=true..."
+  # Try psql with DATABASE_URL first
+  local count=""
+  if [ -n "$DATABASE_URL" ] && command -v psql >/dev/null 2>&1; then
+    count=$(psql "$DATABASE_URL" -t -A -c "SELECT COUNT(*) FROM messages;" 2>/dev/null || true)
+  fi
+
+  # Fall back to docker-compose postgres service if present
+  if [ -z "$count" ] && command -v docker-compose >/dev/null 2>&1; then
+    count=$(docker-compose exec -T postgres psql -U messaging_user -d messaging_service -t -A -c "SELECT COUNT(*) FROM messages;" 2>/dev/null || true)
+  fi
+
+  if [ -z "$count" ]; then
+    echo "DB persistence check skipped: no way to query DB (psql or docker-compose not available or DATABASE_URL unset)" >&2
+    return 0
+  fi
+
+  if [ "$count" -ge 1 ] 2>/dev/null; then
+    echo "DB persistence check passed (messages count: $count)"
+    return 0
+  else
+    echo "DB persistence check failed (messages count: $count)" >&2
+    return 1
+  fi
+}
+
+# If DB persistence check is enabled and fails, mark as failed test
+if check_db_persistence; then
+  true
+else
+  FAIL_COUNT=$((FAIL_COUNT+1))
+  FAILED_TESTS+=("DB persistence")
+fi
+
 echo "=== Summary ==="
 echo "  Total: ${TOTAL:-$((PASS_COUNT+FAIL_COUNT))}  Passed: $PASS_COUNT  Failed: $FAIL_COUNT"
+
+if [ "$FAIL_COUNT" -gt 0 ]; then
+  echo
+  echo "Failed tests:" 
+  for ft in "${FAILED_TESTS[@]}"; do
+    echo "  - $ft"
+  done
+fi
 
 if [ "$FAIL_COUNT" -gt 0 ]; then
   exit 1

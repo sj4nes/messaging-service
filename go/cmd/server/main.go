@@ -80,7 +80,8 @@ func main() {
 	r.Handle(cfg.MetricsPath, api.MetricsHandler(reg))
 
 	// Optional: if DATABASE_URL is provided, initialize DB store (conversations backed by Postgres)
-	if dbURL := strings.TrimSpace(os.Getenv("DATABASE_URL")); dbURL != "" {
+	// If API_ENABLE_INMEMORY_FALLBACK=true, prefer in-memory store even when DATABASE_URL is supplied.
+	if dbURL := strings.TrimSpace(os.Getenv("DATABASE_URL")); dbURL != "" && !cfg.EnableInmemoryFallback {
 		pool, err := pgxpool.New(context.Background(), dbURL)
 		if err != nil {
 			log.Warn("db pool init failed; using in-memory store", zap.Error(err))
@@ -115,6 +116,15 @@ func main() {
 			log.Info("db-backed store enabled", zap.Bool("messages", true), zap.Bool("conversations", true))
 			defer pool.Close()
 		}
+	} else if cfg.EnableInmemoryFallback {
+		// Prefer Go-specific env var name in the message if it was set, otherwise show the legacy var
+		var envUsed string
+		if strings.TrimSpace(os.Getenv("GO_API_ENABLE_INMEMORY_FALLBACK")) != "" {
+			envUsed = "GO_API_ENABLE_INMEMORY_FALLBACK"
+		} else {
+			envUsed = "API_ENABLE_INMEMORY_FALLBACK"
+		}
+		log.Info("in-memory store enabled for self-test (env)", zap.String("env", envUsed))
 	}
 
 	// Protected endpoints grouping (messages, conversations, webhooks)

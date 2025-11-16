@@ -217,6 +217,30 @@ make test
     - Conversations and messages list endpoints read from DB when available and return accurate `meta.total`
     - Fallback to in-memory queue/store when `DATABASE_URL` is unset
 
+    #### Self-testing / In-memory mode (Go)
+
+    The Go server supports a dedicated environment variable to prefer a lightweight in-memory store for self-testing and local development even when a `DATABASE_URL` is present.
+
+    - `GO_API_ENABLE_INMEMORY_FALLBACK=true` — force the Go server to use the in-memory store (useful for fast local runs or deterministic tests that don't require DB persistence). This variable takes precedence over the cross-language `API_ENABLE_INMEMORY_FALLBACK` if set.
+
+    Examples:
+
+    Run the Go server in-memory locally:
+
+    ```bash
+    GO_API_ENABLE_INMEMORY_FALLBACK=true make go.run
+    ```
+
+    Override Docker compose to use the in-memory mode (not recommended for multi-service integration tests that depend on DB persistence):
+
+    ```yaml
+        messaging-go:
+            environment:
+                GO_API_ENABLE_INMEMORY_FALLBACK: "true"
+    ```
+
+    By default the Docker Compose stack uses the database-backed store for the Go service (so messages persist across restarts). If you previously used `INMEMORY_FALLBACK` in your Compose file, prefer `GO_API_ENABLE_INMEMORY_FALLBACK` for an explicit Go-only flag or `API_ENABLE_INMEMORY_FALLBACK` for cross-language parity with the Rust server.
+
 Apply migrations:
 
 ```bash

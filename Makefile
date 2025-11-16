@@ -191,14 +191,16 @@ migrate-new:
 
 .PHONY: migrate-status migrate-reset-history
 migrate-status:
-	@echo "_sqlx_migrations contents:" \
-	&& docker-compose exec -T postgres psql -U messaging_user -d messaging_service -c "SELECT version, description, success, installed_on FROM _sqlx_migrations ORDER BY version;" || true
+	@echo "DB migration history (detecting SQLx vs golang-migrate)..."
+	@docker-compose exec -T postgres psql -U messaging_user -d messaging_service -tAc "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='_sqlx_migrations');" | grep -q "t" && \
+		(echo "SQLx migrations (_sqlx_migrations table):" && docker-compose exec -T postgres psql -U messaging_user -d messaging_service -c "SELECT version, description, success, installed_on FROM _sqlx_migrations ORDER BY version;") || \
+		(echo "_sqlx_migrations not found; attempting golang-migrate schema_migrations (if used):" && docker-compose exec -T postgres psql -U messaging_user -d messaging_service -c "SELECT version, dirty FROM schema_migrations ORDER BY version;" ) || true
 
 .PHONY: migrate-status-client
 migrate-status-client:
 	@echo "db-migrate status (DATABASE_URL):" \
 	&& [ -n "$$DATABASE_URL" ] || { echo "DATABASE_URL not set (hint: copy .env.example to .env or set it inline)" >&2; exit 1; } \
-	&& cargo run -p db-migrate -- status
+	&& (command -v migrate >/dev/null 2>&1 && ./bin/migrate.sh version || cargo run -p db-migrate -- status)
 
 migrate-reset-history:
 	@echo "WARNING: Truncating _sqlx_migrations (dev only). This will cause all migrations to re-apply." \

@@ -50,7 +50,9 @@ services:
       PORT: 8080
       HEALTH_PATH: /healthz
       LOG_LEVEL: info
-      INMEMORY_FALLBACK: "true"
+      # Control whether the Go service uses an in-memory fallback store.
+      # Prefer the Go-specific variable; default here is to persist to the DB.
+      GO_API_ENABLE_INMEMORY_FALLBACK: "false"
     depends_on:
       postgres:
         condition: service_healthy
