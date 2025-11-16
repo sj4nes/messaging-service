@@ -57,7 +57,9 @@ help:
 	@echo "  run-server           - Run the Rust server binary (messaging-server)"
 	@echo "  dev                  - Run server with auto-reload if cargo-watch is available"
 	@echo "  build                - cargo build --all (debug)"
+	@echo "  build-rust           - Build the Rust server"
 	@echo "  build-release        - cargo build --release --all"
+	@echo "  go.build-release     - Build Go server in release mode"
 	@echo "  test                 - Run tests (starts docker-compose and ./bin/test.sh)"
 	@echo "  lint                 - Run cargo fmt and clippy on the server crate"
 	@echo "  clean                - Clean up temporary files and stop containers"
@@ -99,6 +101,7 @@ help:
 	@echo "  go.docker-build      - Build the Go service Docker image (messaging-go:dev)"
 	@echo "  go.sqlc              - Generate Go code from SQL schemas using sqlc"
 	@echo "  sqlc-install         - Install sqlc via Homebrew (macOS)"
+	@echo "  cargo-sqlx           - Install SQLx CLI (cargo install sqlx-cli)"
 	@echo ""
 	@echo "Docker Compose targets:"
 	@echo "  docker-build         - Build Docker images for the application"
@@ -108,10 +111,27 @@ help:
 	@echo "  docker-restart       - Restart all containers"
 
 build:
-	@cargo build --all
+	@$(MAKE) build-rust
+	@$(MAKE) build-go
 
 build-release:
+	@$(MAKE) build-rust-release
+	@$(MAKE) go.build-release
+
+.PHONY: build-rust build-rust-release build-go
+build-go: go.sqlc go.build
+build-rust:
+	@echo "Generating SQLx offline data (if sqlx CLI is present)"
+	@command -v cargo-sqlx >/dev/null 2>&1 && cargo sqlx prepare --workspace || true
+	@cargo build --all
+
+build-rust-release:
 	@cargo build --release --all
+
+.PHONY: go.build-release
+go.build-release: go.sqlc
+	@echo "Building Go (release)"
+	cd $(GO_DIR) && $(GO) build -ldflags "-s -w" ./...
 
 
 setup: dx-setup build
@@ -253,6 +273,8 @@ prereqs-install: FORCE
 		@command -v brew >/dev/null 2>&1 || { echo "Homebrew not found; please install it from https://brew.sh/" >&2; exit 1; }
 		@brew install sqlc golang-migrate jq shellcheck || true
 		@$(MAKE) py-install-jsonschema || true
+		# Optionally: install SQLx CLI via cargo for offline prepare
+		@command -v cargo >/dev/null 2>&1 && cargo install sqlx-cli --no-default-features --features postgres || true
 		@$(MAKE) rust-ensure || true
 		@echo "Prereqs install attempted. Verify with 'make prereqs-check'."
 
