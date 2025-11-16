@@ -2,6 +2,7 @@
 	dx-setup py-venv py-install-jsonschema validate-events rust-check rust-install rust-ensure rust-version \
 	go-ensure go-install \
 	prereqs-check prereqs-install \
+	sqlc-install \
 	docker-build docker-up docker-down docker-logs docker-restart go.tidy go.build go.test go.run go.docker-build go.sqlc lint lint-shell update-agent-context
 
 .DEFAULT_GOAL := help
@@ -18,6 +19,7 @@ go.tidy:
 go.build:
 	cd $(GO_DIR) && $(GO) build ./...
 
+.PHONY: go.tidy
 .PHONY: go.test
 go.test:
 	cd $(GO_DIR) && $(GO) test ./...
@@ -32,8 +34,15 @@ go.docker-build:
 
 .PHONY: go.sqlc
 go.sqlc:
-	@command -v sqlc >/dev/null 2>&1 || { echo "sqlc not found. Install from https://docs.sqlc.dev/" >&2; exit 1; }
+	@command -v sqlc >/dev/null 2>&1 || { echo "sqlc not found; running 'make sqlc-install'"; $(MAKE) sqlc-install; }
 	cd $(GO_DIR) && sqlc generate
+
+.PHONY: sqlc-install
+sqlc-install:
+	@echo "Installing sqlc (macOS/Homebrew)..."
+	@command -v brew >/dev/null 2>&1 || { echo "Homebrew not found; please install it from https://brew.sh/" >&2; exit 1; }
+	@brew install sqlc || true
+	@echo "sqlc installation attempted; verify with: sqlc version"
 # Load local env vars from .env if present (export to all recipes)
 ifneq (,$(wildcard .env))
 include .env
@@ -89,6 +98,7 @@ help:
 	@echo "  go.run               - Run the Go server (./cmd/server)"
 	@echo "  go.docker-build      - Build the Go service Docker image (messaging-go:dev)"
 	@echo "  go.sqlc              - Generate Go code from SQL schemas using sqlc"
+	@echo "  sqlc-install         - Install sqlc via Homebrew (macOS)"
 	@echo ""
 	@echo "Docker Compose targets:"
 	@echo "  docker-build         - Build Docker images for the application"

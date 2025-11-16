@@ -9,6 +9,7 @@ import (
 )
 
 type Querier interface {
+	GetProviderByName(ctx context.Context, name string) (int64, error)
 	InsertOutboundMessage(ctx context.Context, arg InsertOutboundMessageParams) (string, error)
 	ListConversations(ctx context.Context, arg ListConversationsParams) ([]ListConversationsRow, error)
 	ListMessagesForConversation(ctx context.Context, arg ListMessagesForConversationParams) ([]ListMessagesForConversationRow, error)
