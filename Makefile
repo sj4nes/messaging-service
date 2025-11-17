@@ -26,7 +26,8 @@ go.test:
 
 .PHONY: go.run
 go.run:
-	cd $(GO_DIR) && $(GO) run ./cmd/server
+	@echo "Starting Go server (DATABASE_URL=$(if $(DATABASE_URL),set,NOT SET))"
+	cd $(GO_DIR) && DATABASE_URL="$(DATABASE_URL)" $(GO) run ./cmd/server
 
 .PHONY: go.docker-build
 go.docker-build:
@@ -69,6 +70,7 @@ help:
 	@echo "  db-up                - Start the PostgreSQL database via docker-compose"
 	@echo "  db-down              - Stop the PostgreSQL database"
 	@echo "  db-reset             - Stop containers and remove the database volume (re-runs init.sql on next db-up)"
+	@echo "  db-seed              - Seed database with baseline data (depends on migrate-apply)"
 	@echo "  db-logs              - Show database logs"
 	@echo "  db-shell             - Connect to the database shell"
 	@echo ""
@@ -178,11 +180,16 @@ lint:
 	@echo "Running clippy on server crate..."
 	@cargo clippy -p messaging-server -- -W clippy::all || true
 
-.PHONY: migrate-apply migrate-new
+.PHONY: migrate-apply migrate-new db-seed
 migrate-apply:
 	@echo "Applying migrations via Go migrate helper..."
 	@[ -n "$$DATABASE_URL" ] || { echo "DATABASE_URL not set (hint: copy .env.example to .env or set it inline)" >&2; exit 1; }
 	@cd $(GO_DIR) && MIGRATIONS_DIR="../crates/db-migrate/migrations_sqlx" DATABASE_URL="$$DATABASE_URL" $(GO) run ./cmd/migrate
+
+db-seed: migrate-apply
+	@echo "Seeding database with baseline data..."
+	@[ -n "$$DATABASE_URL" ] || { echo "DATABASE_URL not set (hint: copy .env.example to .env or set it inline)" >&2; exit 1; }
+	@cd $(GO_DIR) && DATABASE_URL="$$DATABASE_URL" $(GO) run ./cmd/seed
 
 # Usage: make migrate-new NAME=add_customers_table
 migrate-new:
@@ -211,8 +218,10 @@ test:
 	@echo "Running tests..."
 	@echo "Starting test database if not running..."
 	@docker-compose up -d
+	@echo "Applying database migrations and seeding..."
+	@DATABASE_URL="postgres://messaging_user:messaging_pass@localhost:5432/messaging_service?sslmode=disable" $(MAKE) db-seed || true
 	@echo "Running test script..."
-	@./bin/test.sh
+	@DATABASE_URL="postgres://messaging_user:messaging_pass@localhost:5432/messaging_service?sslmode=disable" ./bin/test.sh
 
 clean:
 	@echo "Cleaning up..."

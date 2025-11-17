@@ -2,6 +2,7 @@ package worker
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/sj4nes/messaging-service/go/internal/db/repository"
@@ -20,7 +21,14 @@ func PersistHandler(repo *repository.MessagesRepository) Handler {
 		if evt.SentAt != nil {
 			ts = evt.SentAt.UTC().Format(time.RFC3339)
 		}
-		_, err := repo.InsertOutbound(ctx, ch, from, to, body, ts)
-		return err
+		id, err := repo.InsertOutbound(ctx, ch, from, to, body, ts)
+		if err != nil {
+			// Log to help tests show worker errors
+			fmt.Printf("PersistHandler: InsertOutbound failed channel=%s from=%s to=%s err=%v\n", ch, from, to, err)
+			return err
+		}
+		// Log success (non-sensitive) for debugging
+		fmt.Printf("PersistHandler: InsertOutbound success id=%s channel=%s\n", id, ch)
+		return nil
 	}
 }

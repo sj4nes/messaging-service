@@ -29,6 +29,11 @@ func webhookSmsHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	// Persist inbound SMS/MMS webhook event
+	if err := Store.CreateInboundSmsEvent(r.Context(), &req); err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to persist inbound event")
+		return
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
 	_ = json.NewEncoder(w).Encode(models.Accepted{Status: "accepted"})
@@ -49,6 +54,11 @@ func webhookEmailHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	if strings.TrimSpace(req.Body) == "" {
 		writeError(w, http.StatusBadRequest, "empty body")
+		return
+	}
+	// Persist inbound Email webhook event
+	if err := Store.CreateInboundEmailEvent(r.Context(), &req); err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to persist inbound event")
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")

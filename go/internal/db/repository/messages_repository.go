@@ -51,8 +51,13 @@ func (r *MessagesRepository) InsertOutbound(ctx context.Context, channel, from, 
 	}
 	id, err := r.q.InsertOutboundMessage(ctx, params)
 	if err != nil {
+		// Emit a helpful debug line for local testing / CI diagnostics
+		// Use fmt.Println so logs surface in server logs even when zap isn't globally configured
+		fmt.Printf("InsertOutbound: failed channel=%s from=%s to=%s err=%v\n", channel, from, to, err)
 		return "", fmt.Errorf("insert outbound message: %w", err)
 	}
+	// Debug: log successful insertion id for diagnostics
+	fmt.Printf("InsertOutbound: success id=%s channel=%s from=%s to=%s\n", id, channel, from, to)
 	return id, nil
 }
 

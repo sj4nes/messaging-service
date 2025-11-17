@@ -12,6 +12,8 @@ type StoreInterface interface {
 	ListMessages(ctx context.Context, conversationID string, page, size int) ([]models.MessageDto, uint64, error)
 	CreateSmsMessage(ctx context.Context, req *models.SmsRequest) error
 	CreateEmailMessage(ctx context.Context, req *models.EmailRequest) error
+	CreateInboundSmsEvent(ctx context.Context, req *models.SmsRequest) error
+	CreateInboundEmailEvent(ctx context.Context, req *models.EmailRequest) error
 }
 
 // Store is the global store used by handlers. Defaults to in-memory.

@@ -77,3 +77,13 @@ func (s *InMemoryStore) CreateSmsMessage(ctx context.Context, req *models.SmsReq
 func (s *InMemoryStore) CreateEmailMessage(ctx context.Context, req *models.EmailRequest) error {
 	return nil
 }
+
+// CreateInboundSmsEvent is a no-op for inbound SMS/MMS webhooks in the in-memory store.
+func (s *InMemoryStore) CreateInboundSmsEvent(ctx context.Context, req *models.SmsRequest) error {
+	return nil
+}
+
+// CreateInboundEmailEvent is a no-op for inbound Email webhooks in the in-memory store.
+func (s *InMemoryStore) CreateInboundEmailEvent(ctx context.Context, req *models.EmailRequest) error {
+	return nil
+}

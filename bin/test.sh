@@ -167,8 +167,11 @@ if [ "$START_SERVER" = "true" ]; then
     echo "Starting Go server in background via 'make go.run' (log: $SERVER_LOG)"
     (
       cd "$REPO_ROOT" || exit 1
-      # Ensure server uses the port implied by BASE_URL
-      PORT="$BASE_PORT" make go.run >"$SERVER_LOG" 2>&1
+      # Ensure server uses the port implied by BASE_URL. When the test harness
+      # starts a local Go server for tests we explicitly disable the in-memory
+      # fallback so test.sh always exercises DB persistence logic.
+      # Pass DATABASE_URL explicitly so server can connect to DB
+      DATABASE_URL="${DATABASE_URL:-postgres://messaging_user:messaging_pass@localhost:5432/messaging_service?sslmode=disable}" GO_API_ENABLE_INMEMORY_FALLBACK=false API_ENABLE_INMEMORY_FALLBACK=false PORT="$BASE_PORT" make go.run >"$SERVER_LOG" 2>&1
     ) &
     SERVER_PID=$!
     STARTED_SERVER="true"
@@ -469,27 +472,108 @@ fi
 check_db_persistence() {
 
   echo "Checking database persistence via DB_PERSISTENCE_CHECK=true..."
+  echo "  DATABASE_URL: ${DATABASE_URL:-(not set)}"
+  
   # Try psql with DATABASE_URL first
-  local count=""
+  local count="0"
+  local conv_count="0"
+  local bodies_count="0"
+  local providers_count="0"
+  
   if [ -n "$DATABASE_URL" ] && command -v psql >/dev/null 2>&1; then
-    count=$(psql "$DATABASE_URL" -t -A -c "SELECT COUNT(*) FROM messages;" 2>/dev/null || true)
+    echo "  Using psql with DATABASE_URL to query tables..."
+    count=$(psql "$DATABASE_URL" -t -A -c "SELECT COUNT(*) FROM messages;" 2>/dev/null || echo "0")
+    conv_count=$(psql "$DATABASE_URL" -t -A -c "SELECT COUNT(*) FROM conversations;" 2>/dev/null || echo "0")
+    bodies_count=$(psql "$DATABASE_URL" -t -A -c "SELECT COUNT(*) FROM message_bodies;" 2>/dev/null || echo "0")
+    providers_count=$(psql "$DATABASE_URL" -t -A -c "SELECT COUNT(*) FROM providers;" 2>/dev/null || echo "0")
+    echo "  psql results: messages=$count conversations=$conv_count message_bodies=$bodies_count providers=$providers_count"
   fi
 
   # Fall back to docker-compose postgres service if present
-  if [ -z "$count" ] && command -v docker-compose >/dev/null 2>&1; then
-    count=$(docker-compose exec -T postgres psql -U messaging_user -d messaging_service -t -A -c "SELECT COUNT(*) FROM messages;" 2>/dev/null || true)
+  if [ "$count" = "0" ] && command -v docker-compose >/dev/null 2>&1; then
+    echo "  Trying docker-compose exec to query tables..."
+    count=$(docker-compose exec -T postgres psql -U messaging_user -d messaging_service -t -A -c "SELECT COUNT(*) FROM messages;" 2>/dev/null || echo "0")
+    conv_count=$(docker-compose exec -T postgres psql -U messaging_user -d messaging_service -t -A -c "SELECT COUNT(*) FROM conversations;" 2>/dev/null || echo "0")
+    bodies_count=$(docker-compose exec -T postgres psql -U messaging_user -d messaging_service -t -A -c "SELECT COUNT(*) FROM message_bodies;" 2>/dev/null || echo "0")
+    providers_count=$(docker-compose exec -T postgres psql -U messaging_user -d messaging_service -t -A -c "SELECT COUNT(*) FROM providers;" 2>/dev/null || echo "0")
+    echo "  docker-compose results: messages=$count conversations=$conv_count message_bodies=$bodies_count providers=$providers_count"
   fi
 
-  if [ -z "$count" ]; then
+  if [ "$count" = "0" ] && [ "$conv_count" = "0" ]; then
+    echo "DB persistence check: attempt to detect in-memory fallback..." >&2
+    # If the Go container is present, check its env var for fallback
+    if command -v docker-compose >/dev/null 2>&1; then
+      # Container env check (best-effort)
+      memflag=$(docker-compose exec -T messaging-go env | grep -E '^GO_API_ENABLE_INMEMORY_FALLBACK=' || true)
+      if [ -n "$memflag" ]; then
+        echo "Go container env: $memflag" >&2
+        if echo "$memflag" | grep -qi "=\"t" || echo "$memflag" | grep -qi "=true"; then
+          echo "Detected in-memory fallback enabled in Go container; DB persistence will not occur." >&2
+          return 1
+        fi
+          # If the server was started outside of docker-compose, detect whether it was
+          # started with in-memory fallback by inspecting the process environment.
+          if command -v lsof >/dev/null 2>&1; then
+            pid=$(lsof -t -i TCP:"$BASE_PORT" -sTCP:LISTEN 2>/dev/null | head -n 1 || true)
+            if [ -n "$pid" ] && command -v ps >/dev/null 2>&1; then
+              envline=$(ps eww -p "$pid" | tr ' ' '\n' | grep -E '^GO_API_ENABLE_INMEMORY_FALLBACK=|^API_ENABLE_INMEMORY_FALLBACK=' || true)
+              if [ -n "$envline" ]; then
+                echo "Server process environ: $envline" >&2
+                if echo "$envline" | grep -qiE "=(true|1|\"true\")"; then
+                  echo "Detected in-memory fallback enabled in local server environment; DB persistence will not occur." >&2
+                  return 1
+                fi
+              fi
+            fi
+          fi
+      fi
+      # Cross-language fallback flag
+      memflag2=$(docker-compose exec -T messaging-go env | grep -E '^API_ENABLE_INMEMORY_FALLBACK=' || true)
+      if [ -n "$memflag2" ]; then
+        echo "Go container env: $memflag2" >&2
+        if echo "$memflag2" | grep -qi "=\"t" || echo "$memflag2" | grep -qi "=true"; then
+          echo "Detected in-memory fallback enabled (API_ENABLE_INMEMORY_FALLBACK); DB persistence will not occur." >&2
+          return 1
+        fi
+      fi
+    fi
     echo "DB persistence check skipped: no way to query DB (psql or docker-compose not available or DATABASE_URL unset)" >&2
     return 0
   fi
 
+  # if there are zero messages, give the worker a short time to process queued events
+  local waited=0
+  # Allow more time for worker/queue to process outbound events in slower dev/CI
+  local timeout_ms="${DB_PERSISTENCE_TIMEOUT_MS:-10000}"
+  local interval_ms="${DB_PERSISTENCE_POLL_MS:-250}"
+  echo "  Polling for messages (timeout: ${timeout_ms}ms, interval: ${interval_ms}ms)..."
+  while [ "$count" -eq 0 ] && [ "$waited" -lt "$timeout_ms" ]; do
+    sleep $(awk -v ms="$interval_ms" 'BEGIN { printf "%.3f", ms/1000 }')
+    waited=$((waited+interval_ms))
+    if [ -n "$DATABASE_URL" ] && command -v psql >/dev/null 2>&1; then
+      count=$(psql "$DATABASE_URL" -t -A -c "SELECT COUNT(*) FROM messages;" 2>/dev/null || echo "0")
+      conv_count=$(psql "$DATABASE_URL" -t -A -c "SELECT COUNT(*) FROM conversations;" 2>/dev/null || echo "0")
+    elif command -v docker-compose >/dev/null 2>&1; then
+      count=$(docker-compose exec -T postgres psql -U messaging_user -d messaging_service -t -A -c "SELECT COUNT(*) FROM messages;" 2>/dev/null || echo "0")
+      conv_count=$(docker-compose exec -T postgres psql -U messaging_user -d messaging_service -t -A -c "SELECT COUNT(*) FROM conversations;" 2>/dev/null || echo "0")
+    fi
+    if [ "$count" -gt 0 ] || [ "$conv_count" -gt 0 ]; then
+      echo "  Poll update (${waited}ms): messages=$count conversations=$conv_count"
+    fi
+  done
+
+  echo "  Final counts after polling: messages=$count conversations=$conv_count message_bodies=$bodies_count providers=$providers_count"
+  
   if [ "$count" -ge 1 ] 2>/dev/null; then
     echo "DB persistence check passed (messages count: $count)"
     return 0
   else
     echo "DB persistence check failed (messages count: $count)" >&2
+    echo "  Debug: Check server logs for InsertOutbound/SeedMinimumIfNeeded output" >&2
+    if [ -f "$SERVER_LOG" ]; then
+      echo "  Server log tail (last 50 lines):" >&2
+      tail -n 50 "$SERVER_LOG" >&2
+    fi
     return 1
   fi
 }

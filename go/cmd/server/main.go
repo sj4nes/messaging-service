@@ -81,7 +81,9 @@ func main() {
 
 	// Optional: if DATABASE_URL is provided, initialize DB store (conversations backed by Postgres)
 	// If API_ENABLE_INMEMORY_FALLBACK=true, prefer in-memory store even when DATABASE_URL is supplied.
-	if dbURL := strings.TrimSpace(os.Getenv("DATABASE_URL")); dbURL != "" && !cfg.EnableInmemoryFallback {
+	dbURL := strings.TrimSpace(os.Getenv("DATABASE_URL"))
+	log.Info("database configuration", zap.Bool("has_database_url", dbURL != ""), zap.Bool("inmemory_fallback", cfg.EnableInmemoryFallback))
+	if dbURL != "" && !cfg.EnableInmemoryFallback {
 		pool, err := pgxpool.New(context.Background(), dbURL)
 		if err != nil {
 			log.Warn("db pool init failed; using in-memory store", zap.Error(err))
@@ -113,6 +115,7 @@ func main() {
 			outboundHandler := outbound.DispatchHandler(provReg, pb, msgRepo, reg)
 			w2 := worker.New(mq, outboundHandler)
 			go w2.Start(context.Background())
+			
 			log.Info("db-backed store enabled", zap.Bool("messages", true), zap.Bool("conversations", true))
 			defer pool.Close()
 		}
