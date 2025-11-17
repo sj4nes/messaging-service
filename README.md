@@ -83,7 +83,6 @@ At Hatch, we work with several message providers to offer a unified way for our 
 - You may use whatever libraries or frameworks you'd like within your chosen language. We strongly encourage you to use whatever you're most familiar with so that you can showcase your skills and know-how.
 - You are welcome to use AI, Google, StackOverflow, etc as resources while you're developing. We just ask that you understand the code very well, because we will continue developing on it during your onsite interview.
 - For ease of assessment, we strongly encourage you to use the `start.sh` script provided in the `bin/` directory, and implement it to run your service. We will run this script to start your project during our assessment.
-- The existing Rust and Go implementations in this repository can serve as reference architectures, but you should implement your solution in one of the languages listed above. 
 
 ### Project-specific guidelines
 
@@ -174,7 +173,7 @@ The service should implement:
 
 ### Project Structure
 
-This project structure is laid out for you already. You are welcome to move or change things, just update the Makefile, scripts, and/or docker resources accordingly. As part of the evaluation of your code, we will run 
+This project structure is laid out for you already. You are welcome to move or change things, just update the Makefile, scripts, and/or docker resources accordingly. As part of the evaluation of your code, we will run
 
 ```
 .
