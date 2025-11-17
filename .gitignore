@@ -18,3 +18,4 @@ release/
 *.rlib
 *.prof*
 go/server
+go/seed

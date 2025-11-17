@@ -50,3 +50,4 @@ go/**/tmp/
 go/**/testdata/
 *.bench
 *.trace
+go/seed
