@@ -1,0 +1,4 @@
+target
+go/seed
+go/server
+.env
