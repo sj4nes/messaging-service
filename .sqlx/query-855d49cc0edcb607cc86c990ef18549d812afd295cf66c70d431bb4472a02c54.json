@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE inbound_events SET status='pending', updated_at=now()\n            WHERE status='processing' AND updated_at < $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "855d49cc0edcb607cc86c990ef18549d812afd295cf66c70d431bb4472a02c54"
+}

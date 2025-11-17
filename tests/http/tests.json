@@ -1,0 +1,343 @@
+[
+  {
+    "name": "Send SMS",
+    "method": "POST",
+    "path": "/api/messages/sms",
+    "headers": [],
+    "body": {
+      "from": "+12016661234",
+      "to": "+18045551234",
+      "type": "sms",
+      "body": "Hello! This is a test SMS message.",
+      "attachments": null,
+      "timestamp": "2024-11-01T14:00:00Z"
+    },
+    "expect": 202
+  },
+  {
+    "name": "Send MMS",
+    "method": "POST",
+    "path": "/api/messages/sms",
+    "headers": [],
+    "body": {
+      "from": "+12016661234",
+      "to": "+18045551234",
+      "type": "mms",
+      "body": "Hello! This is a test MMS message with attachment.",
+      "attachments": [
+        "https://example.com/image.jpg"
+      ],
+      "timestamp": "2024-11-01T14:00:00Z"
+    },
+    "expect": 202
+  },
+  {
+    "name": "Send Email",
+    "method": "POST",
+    "path": "/api/messages/email",
+    "headers": [],
+    "body": {
+      "from": "user@usehatchapp.com",
+      "to": "contact@gmail.com",
+      "body": "Hello! This is a test email message with <b>HTML</b> formatting.",
+      "attachments": [
+        "https://example.com/document.pdf"
+      ],
+      "timestamp": "2024-11-01T14:00:00Z"
+    },
+    "expect": 202
+  },
+  {
+    "name": "Webhook SMS",
+    "method": "POST",
+    "path": "/api/webhooks/sms",
+    "headers": [],
+    "body": {
+      "from": "+18045551234",
+      "to": "+12016661234",
+      "type": "sms",
+      "messaging_provider_id": "message-1",
+      "body": "This is an incoming SMS message",
+      "attachments": null,
+      "timestamp": "2024-11-01T14:00:00Z"
+    },
+    "expect": 202
+  },
+  {
+    "name": "Webhook MMS",
+    "method": "POST",
+    "path": "/api/webhooks/sms",
+    "headers": [],
+    "body": {
+      "from": "+18045551234",
+      "to": "+12016661234",
+      "type": "mms",
+      "messaging_provider_id": "message-2",
+      "body": "This is an incoming MMS message",
+      "attachments": [
+        "https://example.com/received-image.jpg"
+      ],
+      "timestamp": "2024-11-01T14:00:00Z"
+    },
+    "expect": 202
+  },
+  {
+    "name": "Webhook Email",
+    "method": "POST",
+    "path": "/api/webhooks/email",
+    "headers": [],
+    "body": {
+      "from": "contact@gmail.com",
+      "to": "user@usehatchapp.com",
+      "xillio_id": "message-3",
+      "body": "<html><body>This is an incoming email with <b>HTML</b> content</body></html>",
+      "attachments": [
+        "https://example.com/received-document.pdf"
+      ],
+      "timestamp": "2024-11-01T14:00:00Z"
+    },
+    "expect": 202
+  },
+  {
+    "name": "Wait for worker (1s)",
+    "method": "GET",
+    "path": "/healthz",
+    "headers": [],
+    "body": null,
+    "expect": 200,
+    "delay_ms": 1000
+  },
+  {
+    "name": "List conversations",
+    "method": "GET",
+    "path": "/api/conversations",
+    "headers": [],
+    "body": null,
+    "expect": 200,
+    "assert": ".items | length > 0",
+    "assert_poll_ms": 250,
+    "assert_max_tries": 8
+  },
+  {
+    "name": "List conversations returns array type",
+    "method": "GET",
+    "path": "/api/conversations",
+    "headers": [],
+    "body": null,
+    "expect": 200,
+    "assert": ".items | type == \"array\""
+  },
+  {
+    "name": "Conversations pagination: pageSize reflects in meta (bounded)",
+    "method": "GET",
+    "path": "/api/conversations?page=1&pageSize=10",
+    "headers": [],
+    "body": null,
+    "expect": 200,
+    "assert": ".meta.page_size == 10"
+  },
+  {
+    "name": "Conversations pagination: pageSize=0 defaults to 50",
+    "method": "GET",
+    "path": "/api/conversations?page=1&pageSize=0",
+    "headers": [],
+    "body": null,
+    "expect": 200,
+    "assert": ".meta.page_size == 50"
+  },
+  {
+    "name": "List messages for conversation",
+    "method": "GET",
+    "path": "/api/conversations/1/messages",
+    "headers": [],
+    "body": null,
+    "expect": 200,
+    "assert": ".items | length > 0",
+    "assert_poll_ms": 250,
+    "assert_max_tries": 8
+  },
+  {
+    "name": "List messages returns array type",
+    "method": "GET",
+    "path": "/api/conversations/1/messages",
+    "headers": [],
+    "body": null,
+    "expect": 200,
+    "assert": ".items | type == \"array\""
+  },
+  {
+    "name": "Idempotent SMS (first)",
+    "method": "POST",
+    "path": "/api/messages/sms",
+    "headers": [
+      "Idempotency-Key: idem-sms-001"
+    ],
+    "body": {
+      "from": "+12016661234",
+      "to": "+18045551234",
+      "type": "sms",
+      "body": "Idempotent test SMS.",
+      "attachments": null,
+      "timestamp": "2024-11-01T14:05:00Z"
+    },
+    "expect": 202
+  },
+  {
+    "name": "Idempotent SMS (second)",
+    "method": "POST",
+    "path": "/api/messages/sms",
+    "headers": [
+      "Idempotency-Key: idem-sms-001"
+    ],
+    "body": {
+      "from": "+12016661234",
+      "to": "+18045551234",
+      "type": "sms",
+      "body": "Idempotent test SMS.",
+      "attachments": null,
+      "timestamp": "2024-11-01T14:05:00Z"
+    },
+    "expect": 202
+  },
+  {
+    "name": "Idempotent Email (first)",
+    "method": "POST",
+    "path": "/api/messages/email",
+    "headers": [
+      "Idempotency-Key: idem-email-001"
+    ],
+    "body": {
+      "from": "user@usehatchapp.com",
+      "to": "contact@gmail.com",
+      "body": "Idempotent email message.",
+      "attachments": [
+        "https://example.com/doc.pdf"
+      ],
+      "timestamp": "2024-11-01T14:06:00Z"
+    },
+    "expect": 202
+  },
+  {
+    "name": "Idempotent Email (second)",
+    "method": "POST",
+    "path": "/api/messages/email",
+    "headers": [
+      "Idempotency-Key: idem-email-001"
+    ],
+    "body": {
+      "from": "user@usehatchapp.com",
+      "to": "contact@gmail.com",
+      "body": "Idempotent email message.",
+      "attachments": [
+        "https://example.com/doc.pdf"
+      ],
+      "timestamp": "2024-11-01T14:06:00Z"
+    },
+    "expect": 202
+  },
+  {
+    "name": "Idempotent Webhook SMS (first)",
+    "method": "POST",
+    "path": "/api/webhooks/sms",
+    "headers": [
+      "Idempotency-Key: idem-wh-sms-001"
+    ],
+    "body": {
+      "from": "+18045551234",
+      "to": "+12016661234",
+      "type": "sms",
+      "messaging_provider_id": "message-idem-1",
+      "body": "Incoming idempotent SMS",
+      "attachments": null,
+      "timestamp": "2024-11-01T14:07:00Z"
+    },
+    "expect": 202
+  },
+  {
+    "name": "Idempotent Webhook SMS (second)",
+    "method": "POST",
+    "path": "/api/webhooks/sms",
+    "headers": [
+      "Idempotency-Key: idem-wh-sms-001"
+    ],
+    "body": {
+      "from": "+18045551234",
+      "to": "+12016661234",
+      "type": "sms",
+      "messaging_provider_id": "message-idem-1",
+      "body": "Incoming idempotent SMS",
+      "attachments": null,
+      "timestamp": "2024-11-01T14:07:00Z"
+    },
+    "expect": 202
+  },
+  {
+    "name": "Invalid SMS type",
+    "method": "POST",
+    "path": "/api/messages/sms",
+    "headers": [],
+    "body": {
+      "from": "+12016661234",
+      "to": "+18045551234",
+      "type": "smsx",
+      "body": "Invalid type should fail",
+      "attachments": null,
+      "timestamp": "2024-11-01T14:10:00Z"
+    },
+    "expect": 400
+  },
+  {
+    "name": "MMS without attachments",
+    "method": "POST",
+    "path": "/api/messages/sms",
+    "headers": [],
+    "body": {
+      "from": "+12016661234",
+      "to": "+18045551234",
+      "type": "mms",
+      "body": "MMS requires at least one attachment",
+      "attachments": null,
+      "timestamp": "2024-11-01T14:11:00Z"
+    },
+    "expect": 400
+  },
+  {
+    "name": "Email empty body",
+    "method": "POST",
+    "path": "/api/messages/email",
+    "headers": [],
+    "body": {
+      "from": "user@usehatchapp.com",
+      "to": "contact@gmail.com",
+      "body": "",
+      "attachments": null,
+      "timestamp": "2024-11-01T14:12:00Z"
+    },
+    "expect": 400
+  },
+  {
+    "name": "GET conversations unacceptable Accept",
+    "method": "GET",
+    "path": "/api/conversations",
+    "headers": [
+      "Accept: text/plain"
+    ],
+    "body": null,
+    "expect": 406
+  },
+  {
+    "name": "MMS with empty attachments array",
+    "method": "POST",
+    "path": "/api/messages/sms",
+    "headers": [],
+    "body": {
+      "from": "+12016661234",
+      "to": "+18045551234",
+      "type": "mms",
+      "body": "Empty attachments array should fail",
+      "attachments": [],
+      "timestamp": "2024-11-01T14:13:00Z"
+    },
+    "expect": 400
+  }
+]

@@ -1,4 +1,21 @@
-target
-go/seed
-go/server
 .env
+# Universal ignores
+.DS_Store
+Thumbs.db
+*.tmp
+*.swp
+*.log
+.vscode/
+.idea/
+# Environment files
+.env*
+
+# Rust / Cargo
+target/
+debug/
+release/
+*.rs.bk
+*.rlib
+*.prof*
+go/server
+go/seed

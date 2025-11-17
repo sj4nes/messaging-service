@@ -1,0 +1,16 @@
+{
+  "event_name": "ChannelMapped",
+  "event_id": "01HZYX4A2J3K4L5M6N7P8Q9R0S",
+  "aggregate_type": "Channel",
+  "aggregate_id": "chan_001",
+  "occurred_at": "2025-11-05T14:05:00Z",
+  "actor": "admin:user_42",
+  "version": 1,
+  "idempotency_key": "idem-01HZYX4A2J3K4L5M6N7P",
+  "channel_id": "chan_001",
+  "customer_id": "cust_123",
+  "kind": "sms",
+  "address": "+18045551234",
+  "normalized": "+18045551234",
+  "provider_id": "prov_twilio_01"
+}

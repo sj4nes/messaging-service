@@ -1,0 +1,67 @@
+-- name: ListMessagesForConversation :many
+SELECT m.id::text,
+       c.channel,
+       c.participant_a AS from_participant,
+       c.participant_b AS to_participant,
+       m.direction,
+       m.sent_at AS timestamp
+FROM messages m
+JOIN conversations c ON c.id = m.conversation_id
+WHERE c.id = $1
+ORDER BY m.sent_at ASC
+LIMIT $2 OFFSET $3;
+
+-- name: InsertOutboundMessage :one
+WITH body_row AS (
+    INSERT INTO message_bodies (body)
+    VALUES ($4)
+    ON CONFLICT (body) DO NOTHING
+    RETURNING id
+), ensured_body AS (
+    SELECT id FROM body_row
+    UNION ALL
+    SELECT id FROM message_bodies WHERE body = $4 LIMIT 1
+), convo AS (
+    SELECT c.id AS conversation_id
+    FROM conversations c
+    WHERE c.channel = $1 AND c.participant_a = $2 AND c.participant_b = $3
+    LIMIT 1
+), upserted AS (
+    INSERT INTO conversations (customer_id, topic, channel, participant_a, participant_b, message_count, last_activity_at, key)
+    SELECT 1, NULL, $1, $2, $3, 0, $5, NULL
+    WHERE NOT EXISTS (SELECT 1 FROM convo)
+    RETURNING id AS conversation_id
+), chosen_convo AS (
+    SELECT conversation_id FROM convo
+    UNION ALL
+    SELECT conversation_id FROM upserted
+    LIMIT 1
+), existing_msg AS (
+    SELECT m.id
+    FROM messages m
+    JOIN chosen_convo c ON m.conversation_id = c.conversation_id
+    LEFT JOIN ensured_body b ON m.body_id = b.id
+    WHERE m.direction = 'outbound'
+      AND m.sent_at = $5
+      AND (m.body_id IS NOT DISTINCT FROM b.id)
+    LIMIT 1
+), ins AS (
+    INSERT INTO messages (conversation_id, provider_id, direction, sent_at, received_at, body_id)
+    SELECT c.conversation_id, 1, 'outbound', $5, $5, b.id
+    FROM chosen_convo c
+    LEFT JOIN ensured_body b ON TRUE
+    WHERE NOT EXISTS (SELECT 1 FROM existing_msg)
+    RETURNING id, conversation_id
+), updated AS (
+    UPDATE conversations
+    SET message_count    = message_count + 1,
+        last_activity_at = GREATEST(last_activity_at, $5)
+    WHERE id IN (SELECT conversation_id FROM ins)
+)
+SELECT id::text
+FROM (
+    SELECT id FROM ins
+    UNION ALL
+    SELECT id FROM existing_msg
+) x
+LIMIT 1;

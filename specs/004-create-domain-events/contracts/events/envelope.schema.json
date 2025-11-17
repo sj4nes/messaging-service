@@ -1,0 +1,59 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://example.com/schemas/event-envelope.schema.json",
+  "title": "EventEnvelope",
+  "description": "Common envelope for all events; transport-agnostic. See catalog.md for per-event fields.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "event_name",
+    "event_id",
+    "aggregate_type",
+    "aggregate_id",
+    "occurred_at",
+    "actor",
+    "version"
+  ],
+  "properties": {
+    "event_name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "PascalCase event name (e.g., CustomerCreated)"
+    },
+    "event_id": {
+      "type": "string",
+      "minLength": 8,
+      "description": "Globally unique identifier (ULID or UUID)"
+    },
+    "aggregate_type": {
+      "type": "string",
+      "enum": ["Customer", "Contact", "Provider", "Channel", "Conversation"],
+      "description": "Which aggregate this event primarily concerns"
+    },
+    "aggregate_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Stable identifier of the aggregate in its source system"
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "UTC timestamp in ISO 8601 format (e.g., 2025-11-05T14:00:00Z)"
+    },
+    "actor": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Originator of the event (e.g., system, admin:user_42)"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Event definition version; increment for backward-compatible additions"
+    },
+    "idempotency_key": {
+      "type": "string",
+      "minLength": 4,
+      "description": "Stable key to detect duplicate deliveries of the same logical event"
+    }
+  }
+}

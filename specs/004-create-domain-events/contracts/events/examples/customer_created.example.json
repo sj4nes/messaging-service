@@ -1,0 +1,11 @@
+{
+  "event_name": "CustomerCreated",
+  "event_id": "01HZYX3X9Q2F7J5V7KX9A1B2C3",
+  "aggregate_type": "Customer",
+  "aggregate_id": "cust_123",
+  "occurred_at": "2025-11-05T14:00:00Z",
+  "actor": "system",
+  "version": 1,
+  "customer_id": "cust_123",
+  "name": "Acme, Inc."
+}

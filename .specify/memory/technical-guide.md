@@ -1,0 +1,21 @@
+- Architecture and work decisions are guided by Domain-Driven Development philosophy and Software Engineering at Google, Architecting for Scale, and Site Reliability Engineering.
+- We focus on Rust for high-performance and high-reliability.
+    - Follow strict test-driven development, write tests before implementing, check all tests are green after significant work or refactoring.
+    - Write unit tests with the rstest tools when possible, and fall back to vanilla Rust when not.
+    - For tests that require comparisons of lots of fields in structs, use insta for snapshot testing instead of hard-coded assertions.
+    - For resilience of code paths, proptest and arbitrary crates will be used to discover errors of undefined behavior.
+    - For hardening honngfuzz will be used for fuzzing the system.
+    - Try to share the generators for arbitrary and honngfuzz for data generation.
+    - Criterion will be used for benchmarking. The ‘fake’ crate will be used for test data generation.
+- The server application and admin tooling follow the 12-Factor Applications model.
+    - Logging provided by log, tracing, tracing-subscriber crates.
+    - Scripting is bash based and unit tested with bats.
+- The environment loader will use dotenvy.  External secrets management is outside the scope of work at this time.
+- We are required to use PostgreSQL as our storage persistence system.
+    - Use best known practices for schema design e.g. Joe Celko.
+    - Whenever possible recommend opportunities where PL/SQL could be used to significantly increase the resilience of the system and reduce load on the back end server.
+    - SQLx and sqlx_migrations will be used to manage and use PostgreSQL.
+- When systems are involved for REST APIs we standardize on Axum/Tokio and the Utoipa crates for documentation generation for the Swagger/OpenAPI documentation and presentation.
+- Rate limiting and circuit breakers are to be implemented using governor and scc.
+- Data deduplication of small amounts of repetitive text should be handled with the rapidhash crate.
+- Do not introduce new crates without approval. When adding crates use the `crate add` command instead of guessing versions.

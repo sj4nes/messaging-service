@@ -1,0 +1,11 @@
+# cargo-audit configuration for messaging-service
+# Deny any unsound, critical, or high vulnerabilities; warn on medium; allow unmaintained with review.
+
+[advisories]
+denies = ["unsound", "critical", "high"]
+warnings = ["medium", "unmaintained", "yanked"]
+ignore = []
+
+[output]
+format = "terminal"
+quiet = false

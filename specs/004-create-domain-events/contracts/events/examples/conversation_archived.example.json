@@ -1,0 +1,12 @@
+{
+  "event_name": "ConversationArchived",
+  "event_id": "01J0000T8U9V0W1X2Y3Z4A5B6C",
+  "aggregate_type": "Conversation",
+  "aggregate_id": "conv_777",
+  "occurred_at": "2025-11-05T14:30:00Z",
+  "actor": "system",
+  "version": 1,
+  "conversation_id": "conv_777",
+  "customer_id": "cust_123",
+  "reason": "retention policy"
+}

@@ -1,0 +1,158 @@
+openapi: 3.0.3
+info:
+  title: Messaging Service API (Ingest)
+  version: 0.1.0
+servers:
+  - url: http://localhost:8080
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+  /api/messages/sms:
+    post:
+      summary: Ingest an SMS/MMS message
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                from: { type: string }
+                to: { type: string }
+                type: { type: string, enum: [sms, mms] }
+                body: { type: string }
+                attachments:
+                  type: array
+                  items: { type: string }
+                timestamp: { type: string, format: date-time }
+      responses:
+        '202':
+          description: Accepted for processing
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: accepted }
+        '400': { description: Bad request }
+        '415': { description: Unsupported media type }
+        '429': { description: Rate limited }
+        '503': { description: Service unavailable }
+  /api/messages/email:
+    post:
+      summary: Ingest an email message
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                from: { type: string }
+                to: { type: string }
+                body: { type: string }
+                attachments:
+                  type: array
+                  items: { type: string }
+                timestamp: { type: string, format: date-time }
+      responses:
+        '202': { description: Accepted for processing }
+        '400': { description: Bad request }
+        '415': { description: Unsupported media type }
+        '429': { description: Rate limited }
+        '503': { description: Service unavailable }
+  /api/webhooks/sms:
+    post:
+      summary: Provider webhook for SMS/MMS
+      responses:
+        '202': { description: Accepted for processing }
+  /api/webhooks/email:
+    post:
+      summary: Provider webhook for email
+      responses:
+        '202': { description: Accepted for processing }
+  /api/conversations:
+    get:
+      summary: List conversations
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 1 }
+        - in: query
+          name: pageSize
+          schema: { type: integer, minimum: 0 }
+      responses:
+        '200':
+          description: JSON conversations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: string }
+                  meta:
+                    type: object
+                    properties:
+                      page: { type: integer }
+                      page_size: { type: integer }
+                      total: { type: integer, format: int64 }
+        '406': { description: Not acceptable }
+  /api/conversations/{id}/messages:
+    get:
+      summary: Get messages for a conversation
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 1 }
+        - in: query
+          name: pageSize
+          schema: { type: integer, minimum: 0 }
+      responses:
+        '200':
+          description: JSON messages
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: string }
+                        from: { type: string }
+                        to: { type: string }
+                        type: { type: string }
+                        snippet: { type: string }
+                        timestamp: { type: string, format: date-time }
+                  meta:
+                    type: object
+                    properties:
+                      page: { type: integer }
+                      page_size: { type: integer }
+                      total: { type: integer, format: int64 }
+        '406': { description: Not acceptable }
+components:
+  securitySchemes: {}

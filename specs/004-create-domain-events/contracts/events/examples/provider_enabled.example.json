@@ -1,0 +1,11 @@
+{
+  "event_name": "ProviderEnabled",
+  "event_id": "01J0000J9K0L1M2N3P4Q5R6S7T",
+  "aggregate_type": "Provider",
+  "aggregate_id": "prov_twilio_01",
+  "occurred_at": "2025-11-05T14:21:00Z",
+  "actor": "system",
+  "version": 1,
+  "provider_id": "prov_twilio_01",
+  "customer_id": "cust_123"
+}

@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT id FROM inbound_events\n            WHERE status = 'pending' AND available_at <= now()\n            ORDER BY id\n            FOR UPDATE SKIP LOCKED LIMIT $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "6559616e41990d2fa5094e6333eb67ec170b95172791a5973c112cc2d40342b6"
+}

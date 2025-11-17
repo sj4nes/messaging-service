@@ -1,0 +1,40 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT channel, \"from\", \"to\", payload FROM inbound_events WHERE id=$1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "channel",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "from",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "to",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "payload",
+        "type_info": "Jsonb"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      true,
+      true,
+      true,
+      false
+    ]
+  },
+  "hash": "1e313f4686e13f5a054c82803e8156594610f4eef73245fb33fdfbc8828586bb"
+}

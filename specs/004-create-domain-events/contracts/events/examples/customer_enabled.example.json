@@ -1,0 +1,11 @@
+{
+  "event_name": "CustomerEnabled",
+  "event_id": "01J0000D4E5F6G7H8J9K0L1M2N",
+  "aggregate_type": "Customer",
+  "aggregate_id": "cust_123",
+  "occurred_at": "2025-11-05T14:16:00Z",
+  "actor": "system",
+  "version": 1,
+  "customer_id": "cust_123",
+  "reason": "compliance cleared"
+}

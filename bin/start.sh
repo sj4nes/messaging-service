@@ -9,38 +9,43 @@ echo "Starting messaging-service"
 echo "Environment: $ENVIRONMENT"
 echo "Port: $PORT"
 
-# Check for docker-compose
-if ! command -v docker-compose >/dev/null 2>&1; then
-    echo "Error: docker-compose not found. Please install Docker Compose." >&2
-    echo "See: https://docs.docker.com/compose/install/" >&2
-    exit 1
+# Check for make
+if ! command -v make >/dev/null 2>&1; then
+	echo "Error: make not found. Please install make." >&2
+	exit 1
 fi
 
-# Start all services via docker-compose
-echo "Starting services via docker-compose..."
-docker-compose up -d
+# Build Docker images, start database, and seed data
+echo "Building Docker images..."
+make docker-build
 
-# Wait for services to be healthy
+echo "Starting database..."
+make db-up
+
+echo "Seeding database..."
+make db-seed
+
+# Wait for services to be ready
 echo "Waiting for services to be ready..."
 sleep 3
 
 # Check if the service is responding
 if command -v curl >/dev/null 2>&1; then
-    MAX_RETRIES=30
-    RETRY_COUNT=0
-    while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-        if curl -sS --max-time 2 "http://localhost:$PORT/healthz" >/dev/null 2>&1; then
-            echo "Service is ready at http://localhost:$PORT"
-            echo "Health check: http://localhost:$PORT/healthz"
-            exit 0
-        fi
-        RETRY_COUNT=$((RETRY_COUNT + 1))
-        sleep 1
-    done
-    echo "Warning: Service did not respond within expected time. Check logs with: docker-compose logs" >&2
+	MAX_RETRIES=30
+	RETRY_COUNT=0
+	while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+		if curl -sS --max-time 2 "http://localhost:$PORT/healthz" >/dev/null 2>&1; then
+			echo "Service is ready at http://localhost:$PORT"
+			echo "Health check: http://localhost:$PORT/healthz"
+			exit 0
+		fi
+		RETRY_COUNT=$((RETRY_COUNT + 1))
+		sleep 1
+	done
+	echo "Warning: Service did not respond within expected time. Check logs with: docker-compose logs" >&2
 else
-    echo "Service started. Check status with: docker-compose ps"
-    echo "View logs with: docker-compose logs -f"
+	echo "Service started. Check status with: docker-compose ps"
+	echo "View logs with: docker-compose logs -f"
 fi
 
-exit 0 
+exit 0

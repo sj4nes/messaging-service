@@ -1,0 +1,12 @@
+{
+  "event_name": "ContactCreated",
+  "event_id": "01J0000B2C3D4E5F6G7H8J9K0L",
+  "aggregate_type": "Contact",
+  "aggregate_id": "cont_555",
+  "occurred_at": "2025-11-05T14:12:00Z",
+  "actor": "admin:user_42",
+  "version": 1,
+  "contact_id": "cont_555",
+  "customer_id": "cust_123",
+  "display_name": "Jane Doe"
+}

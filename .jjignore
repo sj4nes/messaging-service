@@ -1,0 +1,53 @@
+# Ignore patterns for Jujutsu (jj)
+
+# Universal
+.DS_Store
+Thumbs.db
+*.tmp
+*.swp
+*.log
+.vscode/
+.idea/
+
+# Environment files
+.env
+.env.*
+
+# Rust / Cargo
+target/
+debug/
+release/
+*.rs.bk
+*.rlib
+*.prof*
+
+# Node, Python, etc. (future-proof)
+node_modules/
+dist/
+build/
+__pycache__/
+*.pyc
+
+# Virtualenvs
+.venv/
+venv/
+
+# Go build artifacts
+go/**/.DS_Store
+go/**/.idea/
+go/**/.vscode/
+go/**/vendor/
+go/**/*.exe
+go/**/*.test
+go/**/*.out
+go/**/coverage.out
+go/bin/
+go/pkg/
+go/build/
+go/server
+go/.cache/
+go/**/tmp/
+go/**/testdata/
+*.bench
+*.trace
+go/seed

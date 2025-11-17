@@ -1,0 +1,12 @@
+{
+  "event_name": "ProviderUpdated",
+  "event_id": "01J0000H8J9K0L1M2N3P4Q5R6S",
+  "aggregate_type": "Provider",
+  "aggregate_id": "prov_twilio_01",
+  "occurred_at": "2025-11-05T14:20:00Z",
+  "actor": "admin:user_42",
+  "version": 1,
+  "provider_id": "prov_twilio_01",
+  "customer_id": "cust_123",
+  "changed_fields": ["status"]
+}

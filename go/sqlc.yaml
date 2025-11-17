@@ -1,0 +1,31 @@
+version: "2"
+sql:
+  - engine: postgresql
+    schema:
+      - ../crates/db-migrate/migrations_sqlx/0001_create_core_tables.up.sql
+      - ../crates/db-migrate/migrations_sqlx/0002_create_dedup_tables.up.sql
+      - ../crates/db-migrate/migrations_sqlx/0003_add_indexes.up.sql
+      - ../crates/db-migrate/migrations_sqlx/0004_triggers_audit_utc.up.sql
+      - ../crates/db-migrate/migrations_sqlx/0005_views.up.sql
+      - ../crates/db-migrate/migrations_sqlx/0006_queue_inbound_events.up.sql
+      - ../crates/db-migrate/migrations_sqlx/0007_alter_inbound_events_unified.up.sql
+      - ../crates/db-migrate/migrations_sqlx/0008_messages_body_attachments.up.sql
+      - ../crates/db-migrate/migrations_sqlx/0009_fix_attachment_urls_and_links.up.sql
+      - ../crates/db-migrate/migrations_sqlx/0010_message_bodies_dedup.up.sql
+      - ../crates/db-migrate/migrations_sqlx/0011_fix_attachment_urls_id_default.up.sql
+      - ../crates/db-migrate/migrations_sqlx/0012_update_conversation_messages_view.up.sql
+      - ../crates/db-migrate/migrations_sqlx/0013_update_conversation_messages_view_fallback.up.sql
+      - ../crates/db-migrate/migrations_sqlx/0014_add_conversation_key_columns.up.sql
+      - ../crates/db-migrate/migrations_sqlx/0015_add_messages_conversation_fk.up.sql
+      - ../crates/db-migrate/migrations_sqlx/0016_add_message_direction_check.up.sql
+    queries:
+      - queries
+    gen:
+      go:
+        package: generated
+        out: internal/db/generated
+        sql_package: pgx/v5
+        emit_json_tags: true
+        emit_prepared_queries: false
+        emit_interface: true
+        overrides: []

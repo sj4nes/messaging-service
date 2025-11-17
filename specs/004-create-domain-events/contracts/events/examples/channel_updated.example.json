@@ -1,0 +1,12 @@
+{
+  "event_name": "ChannelUpdated",
+  "event_id": "01J0000L1M2N3P4Q5R6S7T8U9V",
+  "aggregate_type": "Channel",
+  "aggregate_id": "chan_001",
+  "occurred_at": "2025-11-05T14:23:00Z",
+  "actor": "admin:user_42",
+  "version": 1,
+  "channel_id": "chan_001",
+  "customer_id": "cust_123",
+  "changed_fields": ["normalized"]
+}
