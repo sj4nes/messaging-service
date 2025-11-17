@@ -115,7 +115,7 @@ func main() {
 			outboundHandler := outbound.DispatchHandler(provReg, pb, msgRepo, reg)
 			w2 := worker.New(mq, outboundHandler)
 			go w2.Start(context.Background())
-			
+
 			log.Info("db-backed store enabled", zap.Bool("messages", true), zap.Bool("conversations", true))
 			defer pool.Close()
 		}

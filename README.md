@@ -2,6 +2,8 @@
 
 This is a scaffold for Hatch's backend interview project. It includes basic setup for development, testing, and deployment.
 
+> **Note on Implementation Language**: This repository contains a **Rust reference implementation** that was created as an initial scaffold. The original interview assignment requirements were later modified to allow **Python, Golang, Elixir, Java, TypeScript/JavaScript, or C/C++**. This Rust codebase serves as a reference architecture and can be used as inspiration, but your solution should be implemented in one of the specified languages. A **Go port** is also available in the `go/` directory as an example of language conversion.
+
 ## Prerequisites
 
 Before running this project, ensure you have the following installed:
@@ -12,12 +14,13 @@ Before running this project, ensure you have the following installed:
 - **Minimum 4GB available RAM** (2GB for PostgreSQL, 2GB for application)
 - **Git** or **Jujutsu** (jj) for version control
 
-### Optional (for local development without containers)
-- **Rust** latest stable (1.83+) ([Install via rustup](https://rustup.rs/))
+### Optional (for local development of the reference implementations)
+- **Rust** latest stable (1.83+) ([Install via rustup](https://rustup.rs/)) - for the Rust reference implementation
+- **Go** 1.22+ ([Install Go](https://go.dev/dl/)) - for the Go port
 - **cargo** (included with Rust installation)
 - **sqlx-cli** (for updating query cache): `cargo install sqlx-cli --no-default-features --features postgres`
 
-**Note**: The `bin/start.sh` script will automatically attempt to install Rust via `make rust-ensure` if not present. However, for containerized deployment via `docker-compose`, Rust is **not required** on the host machine. The Docker build uses latest stable Rust internally.
+**Note**: The `bin/start.sh` script will automatically attempt to install Rust via `make rust-ensure` if not present. However, for containerized deployment via `docker-compose`, Rust is **not required** on the host machine. The Docker build uses latest stable Rust internally. When implementing in other languages, you can use this repository structure and Docker setup as a template.
 
 ### First-Time Setup
 
@@ -70,10 +73,17 @@ At Hatch, we work with several message providers to offer a unified way for our 
 
 ### General Guidelines
 
-- You may use whatever programming language, libraries, or frameworks you'd like. 
-- We strongly encourage you to use whatever you're most familiar with so that you can showcase your skills and know-how. Candidates will not receive any kind of 'bonus points' or 'red flags' regarding their specific choices of language.
+- You must use one of the following programming languages:
+  - **Python**
+  - **Golang**
+  - **Elixir**
+  - **Java**
+  - **TypeScript/JavaScript**
+  - **C/C++**
+- You may use whatever libraries or frameworks you'd like within your chosen language. We strongly encourage you to use whatever you're most familiar with so that you can showcase your skills and know-how.
 - You are welcome to use AI, Google, StackOverflow, etc as resources while you're developing. We just ask that you understand the code very well, because we will continue developing on it during your onsite interview.
-- For ease of assessment, we strongly encourage you to use the `start.sh` script provided in the `bin/` directory, and implement it to run your service. We will run this script to start your project during our assessment. 
+- For ease of assessment, we strongly encourage you to use the `start.sh` script provided in the `bin/` directory, and implement it to run your service. We will run this script to start your project during our assessment.
+- The existing Rust and Go implementations in this repository can serve as reference architectures, but you should implement your solution in one of the languages listed above. 
 
 ### Project-specific guidelines
 

@@ -86,7 +86,7 @@ func (s *Store) CreateSmsMessage(ctx context.Context, req *models.SmsRequest) er
 		if evt.Metadata == nil {
 			evt.Metadata = map[string]any{}
 		}
-		 evt.Metadata["message_id"] = id
+		evt.Metadata["message_id"] = id
 	}
 	_, err := s.q.Publish(ctx, evt)
 	return err
@@ -130,27 +130,27 @@ func (s *Store) CreateInboundSmsEvent(ctx context.Context, req *models.SmsReques
 	if s.pool == nil {
 		return errors.New("pool not configured")
 	}
-	
+
 	channel := "sms"
 	if strings.ToLower(req.Type) == "mms" {
 		channel = "mms"
 	}
-	
+
 	// Build payload as jsonb
 	payload, err := json.Marshal(req)
 	if err != nil {
 		return fmt.Errorf("failed to marshal payload: %w", err)
 	}
-	
+
 	// Insert into inbound_events with idempotency on provider_message_id
 	providerMsgID := req.MessagingProviderID // from SmsRequest (Twilio message SID, etc.)
-	
+
 	_, err = s.pool.Exec(ctx, `
 		INSERT INTO inbound_events (event_type, payload, available_at, status, channel, "from", "to", provider_message_id)
 		VALUES ('sms_received', $1, now(), 'pending', $2, $3, $4, $5)
 		ON CONFLICT (channel, provider_message_id) WHERE provider_message_id IS NOT NULL DO NOTHING
 	`, payload, channel, req.From, req.To, sql.NullString{String: providerMsgID, Valid: providerMsgID != ""})
-	
+
 	if err != nil {
 		return fmt.Errorf("failed to insert inbound sms event: %w", err)
 	}
@@ -162,22 +162,22 @@ func (s *Store) CreateInboundEmailEvent(ctx context.Context, req *models.EmailRe
 	if s.pool == nil {
 		return errors.New("pool not configured")
 	}
-	
+
 	// Build payload as jsonb
 	payload, err := json.Marshal(req)
 	if err != nil {
 		return fmt.Errorf("failed to marshal payload: %w", err)
 	}
-	
+
 	// Insert into inbound_events with idempotency on provider_message_id
 	providerMsgID := req.XillioID
-	
+
 	_, err = s.pool.Exec(ctx, `
 		INSERT INTO inbound_events (event_type, payload, available_at, status, channel, "from", "to", provider_message_id)
 		VALUES ('email_received', $1, now(), 'pending', 'email', $2, $3, $4)
 		ON CONFLICT (channel, provider_message_id) WHERE provider_message_id IS NOT NULL DO NOTHING
 	`, payload, req.From, req.To, sql.NullString{String: providerMsgID, Valid: providerMsgID != ""})
-	
+
 	if err != nil {
 		return fmt.Errorf("failed to insert inbound email event: %w", err)
 	}
