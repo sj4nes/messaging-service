@@ -8,7 +8,13 @@ This feature wires inbound_events persistence and a background worker using Post
 
 - PostgreSQL running (docker-compose up -d)
 - DATABASE_URL exported or present in .env
-- Apply migrations:
+- Apply migrations and seed baseline data:
+
+```bash
+make db-seed
+```
+
+Or just apply migrations without seeding:
 
 ```bash
 make migrate-apply

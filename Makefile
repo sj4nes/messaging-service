@@ -76,6 +76,7 @@ help:
 	@echo ""
 	@echo "Migration targets (SQLx/db-migrate):"
 	@echo "  migrate-apply        - Apply SQLx migrations using db-migrate (requires DATABASE_URL)"
+	@echo "  db-seed              - Apply migrations and seed baseline data (customers, providers, conversations)"
 	@echo "  migrate-new          - Create a new timestamped migration file (NAME=...)"
 	@echo "  migrate-status       - Show applied migrations in _sqlx_migrations via docker-compose exec"
 	@echo "  migrate-status-client- Show status via db-migrate (uses DATABASE_URL)"

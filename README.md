@@ -247,6 +247,12 @@ Apply migrations:
 make migrate-apply
 ```
 
+Apply migrations and seed baseline data:
+
+```bash
+make db-seed
+```
+
 Or directly:
 
 ```bash
@@ -288,7 +294,7 @@ docker-compose down            # Stop database
 ### Development Tips
 - Changes to source code require rebuild: `make docker-up` (rebuilds automatically)
 - Database persists across restarts via Docker volume `postgres_data`
-- To reset database: `make db-reset` then restart services
+- To reset database: `make db-reset` then `make db-up db-seed` to restart and seed baseline data
 - **After modifying SQLx queries**: Run `cargo sqlx prepare --workspace` to update offline cache in `.sqlx/` directory (required for Docker builds)
 
 ### Contracts
@@ -322,12 +328,16 @@ This repo includes a small utility `db-migrate` to manage SQLx migrations:
 
 - Apply pending migrations:
     - `make migrate-apply` (uses `DATABASE_URL` from `.env` if present)
+- Apply migrations and seed baseline data:
+    - `make db-seed` (runs `migrate-apply` first, then seeds customers/providers/conversations)
 - Create a new migration pair:
     - `make migrate-new NAME=add_feature`
 - Show applied migrations from inside the container:
     - `make migrate-status`
 - Show status via client (which DB am I pointing at?):
     - `make migrate-status-client`
+
+**Note**: The `db-seed` target is automatically run by `make test` to ensure baseline test data exists. For fresh database setups, use `make db-reset db-up db-seed` to reset, start, migrate, and seed in one sequence.
 
 CI tip: set `SQLX_OFFLINE=true` to build without a live database connection when using SQLx elsewhere. Local development can remain online.
 

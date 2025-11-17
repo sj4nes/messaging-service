@@ -18,7 +18,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-- TBD
+### Added
+- Database seeding: `make db-seed` target to populate baseline test data (customers, providers, conversations)
+  - Automatically runs migrations first via dependency on `migrate-apply`
+  - Updates PostgreSQL sequences after seeding to prevent ID conflicts
+  - Integrated into `make test` workflow for consistent test environments
+  - Standalone seed command at `go/cmd/seed/main.go`
 
 ## [0.2.0] - 2025-11-05
 
@@ -43,7 +48,7 @@ All notable changes to this project will be documented in this file.
   - Added indexes and audit/normalization triggers (`updated_at` maintenance; normalization stubs)
   - Added views: `conversation_overview`, `conversation_messages`
   - Added queue PoC: `inbound_events` + visibility/dispatch indexes
-- Makefile tasks: migrate-apply, migrate-new, migrate-status, migrate-status-client
+- Makefile tasks: migrate-apply, migrate-new, migrate-status, migrate-status-client, db-seed
 - Documentation updates: Quickstart, Data Model (sample inserts), README (SQLX_OFFLINE), DATABASE_URL in `.env.example`
 
 ### Changed
